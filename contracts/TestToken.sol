@@ -38,7 +38,6 @@ contract TestToken is StandardToken, Ownable {
   /// @param  _decimals         Decimal precision
   /// @param  _initialSupply    Initial total supply of tokens
   /// @param  _faucetAmount     Amount to faucet with each request
-  /// @return success           Operation successful
   function TestToken(
     string _name,
     string _symbol,
