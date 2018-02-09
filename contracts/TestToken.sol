@@ -16,8 +16,10 @@
 */
 
 pragma solidity ^0.4.18;
-import "./lib/StandardToken.sol";
-import "./lib/SafeMath.sol";
+
+import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
  * @title TestToken
@@ -36,7 +38,6 @@ contract TestToken is StandardToken, Ownable {
   /// @param  _decimals         Decimal precision
   /// @param  _initialSupply    Initial total supply of tokens
   /// @param  _faucetAmount     Amount to faucet with each request
-  /// @return success           Operation successful
   function TestToken(
     string _name,
     string _symbol,
@@ -45,9 +46,8 @@ contract TestToken is StandardToken, Ownable {
     uint _faucetAmount
   )
     public
-    returns (bool success)
   {
-    totalSupply = _initialSupply;
+    totalSupply_ = _initialSupply;
     balances[msg.sender] = _initialSupply;
     owner = msg.sender;
     name = _name;
@@ -69,8 +69,8 @@ contract TestToken is StandardToken, Ownable {
 
   /// @dev Creates new tokens
   /// @return success           Operation successful
-  function mint(uint _value) onlyOwner returns (bool) {
-    totalSupply = totalSupply.add(_value);
+  function mint(uint _value) public onlyOwner returns (bool) {
+    totalSupply_ = totalSupply_.add(_value);
     balances[owner] = balances[owner].add(_value);
     return true;
   }

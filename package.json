@@ -21,5 +21,8 @@
     "dotenv": "^5.0.0",
     "ethereumjs-wallet": "^0.6.0",
     "truffle-wallet-provider": "^0.0.5"
+  },
+  "dependencies": {
+    "zeppelin-solidity": "^1.6.0"
   }
 }

@@ -1,5 +1,5 @@
 pragma solidity ^0.4.18;
-import "./lib/StandardToken.sol";
+import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 
 /**
  * @title Basket
@@ -9,17 +9,17 @@ import "./lib/StandardToken.sol";
 
 contract BasketFactory {
   address[] public baskets;
-  
+
   function createBasket(
     address[] _tokens,
     uint[] _weights
   )
     public
     returns (address newBasket)
-  { 
+  {
     Basket b = new Basket(_tokens, _weights);
     baskets.push(b);
-    return b;  
+    return b;
   }
 }
 
@@ -37,7 +37,6 @@ contract Basket is StandardToken {
     uint[] _weights
   )
     public
-    returns (bool success)
   {
     tokens = _tokens;
     weights = _weights;
@@ -74,7 +73,7 @@ contract Basket is StandardToken {
 
   }
 
-  // as a maker, cancel an order 
+  // as a maker, cancel an order
   function cancel(
     bytes32[] orderHashes,
     bytes32[] orderSignatures
