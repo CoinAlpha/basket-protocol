@@ -1,12 +1,14 @@
-const Basket6 = artifacts.require('Basket');
+const Basket = artifacts.require('Basket');
 // const BasketFactory6 = artifacts.require('BasketFactory');
 const TestToken = artifacts.require('TestToken');
+const TestTokenFactory = artifacts.require('TestTokenFactory');
 
 // helpers
 const ethToWei = eth => eth * 1e18;
 
 module.exports = (deployer, network, accounts) => {
   console.log('*************** START CONTRACT DEPLOYMENT ***************');
+
   // Accounts
   const ARRANGER = accounts[0];
   const TOKEN_CREATOR = accounts[0];                 // set token creator to the same address to simplify testing
@@ -25,7 +27,7 @@ module.exports = (deployer, network, accounts) => {
       { from: TOKEN_CREATOR },
     )
       .then(() => {
-        testToken1 = TestToken.address;
+        testToken1 = TestToken;
         return deployer.deploy(
           TestToken,
           'test2',                                     // name
@@ -37,7 +39,7 @@ module.exports = (deployer, network, accounts) => {
         );
       })
       .then(() => {
-        testToken2 = TestToken.address;
+        testToken2 = TestToken;
         return deployer.deploy(
           TestToken,
           'test3',                                     // name
@@ -49,12 +51,15 @@ module.exports = (deployer, network, accounts) => {
         );
       })
       .then(() => {
-        testToken3 = TestToken.address;
         return deployer.deploy(
-          Basket6,
-          'Basket6',                                   // name
+          Basket,
+          'Basket',                                   // name
           'BSK',                                       // symbol
-          [testToken1, testToken2, testToken3],        // tokenAddresses
+          [
+            testToken1.address,
+            testToken2.address,
+            testToken3.address,
+          ],                                           // tokenAddresses
           [ethToWei(1), ethToWei(2), ethToWei(3)],     // weights
           { from: ARRANGER },
         );

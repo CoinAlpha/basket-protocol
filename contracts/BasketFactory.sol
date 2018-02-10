@@ -16,13 +16,13 @@
 */
 
 pragma solidity ^0.4.18;
-import './Basket6.sol';
+import './Basket.sol';
 
 /**
-  * @title BasketFactory6 -- Factory contract for creating different baskets
+  * @title BasketFactory -- Factory contract for creating different baskets
   * @author CoinAlpha, Inc. <contact@coinalpha.com>
   */
-contract BasketFactory6 {
+contract BasketFactory {
   address[] public baskets;
 
   // deploy a new basket
