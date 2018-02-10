@@ -11,11 +11,12 @@ module.exports = (deployer, network, accounts) => {
 
   // Accounts
   const ARRANGER = accounts[0];
-  const TOKEN_CREATOR = accounts[0];
+  const TOKEN_CREATOR = accounts[0];                 // set token creator to the same address to simplify testing
 
   let testToken1, testToken2, testToken3;
 
   if (network === 'development' || network === 'test') {
+    // deployer.deploy(TestTokenFactory, { from: TOKEN_CREATOR })
     deployer.deploy(
       TestToken,
       'test1',                                       // name
@@ -50,7 +51,6 @@ module.exports = (deployer, network, accounts) => {
         );
       })
       .then(() => {
-        testToken3 = TestToken;
         return deployer.deploy(
           Basket,
           'Basket',                                   // name
@@ -66,6 +66,10 @@ module.exports = (deployer, network, accounts) => {
       })
       .then(() => {
         console.log('Contracts successfully deployed');
+        return TestToken.deployed();
+      })
+      .then((_testToken) => {
+        console.log(Object.keys(_testToken));
       })
       .catch((e) => {
         console.log('Error: ', e);

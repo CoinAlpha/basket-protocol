@@ -25,20 +25,23 @@ import './TestToken.sol';
 contract TestTokenFactory {
   address[] public testTokens;
 
-  // deploy a new basket
+  /// @dev Constructor
+  function TestTokenFactory() {
+  }
+  /// @dev Deploy a new test token
   function createTestToken(
     string _name,
     string _symbol,
     uint _decimals,
     uint _initialSupply,
-    uint _faucetAmount,
+    uint _faucetAmount
   )
     public
     returns (address newTestToken)
   {
-    TestToken b = new TestToken(_name, _symbol, _decimals, _initialSupply, _faucetAmount);
-    testTokens.push(b);
-    return b;
+    TestToken t = new TestToken(_name, _symbol, _decimals, _initialSupply, _faucetAmount);
+    testTokens.push(t);
+    return t;
   }
 
 }
