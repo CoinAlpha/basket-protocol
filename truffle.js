@@ -11,10 +11,6 @@ const kovanPrivateKey = new Buffer(process.env.KOVAN_PRIVATE_KEY, 'hex');
 const kovanWallet = Wallet.fromPrivateKey(kovanPrivateKey);
 const kovanProvider = new WalletProvider(kovanWallet, process.env.KOVAN_URL);
 
-const mainNetPrivateKey = new Buffer(process.env.MAINNET_PRIVATE_KEY, 'hex');
-const mainNetWallet = Wallet.fromPrivateKey(mainNetPrivateKey);
-const mainNetProvider = new WalletProvider(mainNetWallet, process.env.MAINNET_URL);
-
 module.exports = {
   networks: {
     development: {
@@ -42,12 +38,6 @@ module.exports = {
       gas: 7000000,
       gasPrice: 20000000000, // 20 GWei
       network_id: '42',
-    },
-    mainnet: {
-      provider: mainNetProvider,
-      gas: 7000000,
-      gasPrice: 20000000000, // 20 GWei
-      network_id: '1',
     },
   },
 };

@@ -16,27 +16,28 @@
 */
 
 pragma solidity ^0.4.18;
-import './Basket6.sol';
+import './TestToken.sol';
 
 /**
-  * @title BasketFactory6 -- Factory contract for creating different baskets
+  * @title TestTokenFactory -- Factory contract for creating different testTokens
   * @author CoinAlpha, Inc. <contact@coinalpha.com>
   */
-contract BasketFactory6 {
-  address[] public baskets;
+contract TestTokenFactory {
+  address[] public testTokens;
 
   // deploy a new basket
-  function createBasket(
+  function createTestToken(
     string _name,
     string _symbol,
-    address[] _tokens,
-    uint[] _weights
+    uint _decimals,
+    uint _initialSupply,
+    uint _faucetAmount,
   )
     public
-    returns (address newBasket)
+    returns (address newTestToken)
   {
-    Basket b = new Basket(_name, _symbol, _tokens, _weights);
-    baskets.push(b);
+    TestToken b = new TestToken(_name, _symbol, _decimals, _initialSupply, _faucetAmount);
+    testTokens.push(b);
     return b;
   }
 
