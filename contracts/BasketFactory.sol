@@ -16,14 +16,25 @@
 */
 
 pragma solidity ^0.4.18;
-import './Basket.sol';
+import "./Basket.sol";
 
 /**
   * @title BasketFactory -- Factory contract for creating different baskets
   * @author CoinAlpha, Inc. <contact@coinalpha.com>
   */
 contract BasketFactory {
-  address[] public baskets;
+
+  // Basket register
+  struct BasketStruct {
+    address basketAddress;
+    address arranger;
+  }
+  mapping(uint => BasketStruct) baskets;
+  uint public basketIndex;
+  address[] public basketList;
+
+  // Events
+  event LogBasketCreated(uint basketIndex, address basketAddress, address arranger);
 
   // deploy a new basket
   function createBasket(
@@ -36,7 +47,10 @@ contract BasketFactory {
     returns (address newBasket)
   {
     Basket b = new Basket(_name, _symbol, _tokens, _weights);
-    baskets.push(b);
+    basketList.push(b);
+    baskets[basketIndex] = BasketStruct(b, msg.sender);
+    LogBasketCreated(basketIndex, b, msg.sender);
+    basketIndex += 1;
     return b;
   }
 
