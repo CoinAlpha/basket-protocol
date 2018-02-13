@@ -1,6 +1,7 @@
 const path = require('path');
 const Promise = require('bluebird');
 
+const BasketFactory6 = artifacts.require('./BasketFactory6.sol');
 const { constructors } = require('../migrations/constructors.js');
 
 const scriptName = path.basename(__filename);
@@ -11,9 +12,18 @@ if (typeof web3.eth.getAccountsPromise === 'undefined') {
 
 contract('TestToken | Basket', (accounts) => {
 
-  const HOLDER_A = accounts[0];
-  const HOLDER_B = accounts[1];
-  
+  // Accounts
+  const [
+    ADMINISTRATOR,
+    ARRANGER,
+    MARKETMAKER,
+    HOLDER_A,
+    HOLDER_B,
+  ] = accounts.slice(5);
+
+  // Contract instances
+  let basketFactory;
+
   // Token instances
   let tokenA;
   let tokenB;
@@ -41,8 +51,10 @@ contract('TestToken | Basket', (accounts) => {
   before('Before: deploy tokens', () => {
     console.log(`  ****** START TEST [ ${scriptName} ] *******`);
 
-    return Promise.all([tokenParamsA, tokenParamsB].map(({ owner, name, symbol, decimals, initialSupply, faucetAmount }) =>
-      constructors.TestToken(owner, name, symbol, decimals, initialSupply, faucetAmount)))
+    return BasketFactory6.deployed()
+      .then(_instance => basketFactory = _instance)
+      .then(() => Promise.all([tokenParamsA, tokenParamsB].map(({ owner, name, symbol, decimals, initialSupply, faucetAmount }) =>
+        constructors.TestToken(owner, name, symbol, decimals, initialSupply, faucetAmount))))
       .then(_instances => [tokenA, tokenB] = _instances)
       .catch(err => assert.throw(`Failed to create Tokens: ${err.toString()}`));
   });
