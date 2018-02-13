@@ -1,8 +1,6 @@
 const path = require('path');
 const Promise = require('bluebird');
 
-// const TestToken = artifacts.require('./TestToken.sol');
-
 const { constructors } = require('../migrations/constructors.js');
 
 const scriptName = path.basename(__filename);
@@ -19,22 +17,25 @@ contract('TestToken | Basket', (accounts) => {
   // Token instances
   let tokenA;
   let tokenB;
+  const decimals = 18;
+  const initialSupply = 100e18;
+  const faucetAmount = 1e18;
   
   const tokenParamsA = {
     owner: HOLDER_A,
     name: 'Token A',
     symbol: 'TOKA',
-    decimals: 18,
-    initialSupply: 100e18,
-    faucetAmount: 1e18,
+    decimals,
+    initialSupply,
+    faucetAmount,
   };
   const tokenParamsB = {
     owner: HOLDER_B,
     name: 'Token B',
     symbol: 'TOKB',
-    decimals: 18,
-    initialSupply: 100e18,
-    faucetAmount: 1e18,
+    decimals,
+    initialSupply,
+    faucetAmount,
   };
 
   before('Before: deploy tokens', () => {
@@ -51,9 +52,10 @@ contract('TestToken | Basket', (accounts) => {
     let fundStorageDetails;
 
     it('get token balances', () => Promise.all([tokenA.totalSupply(), tokenB.totalSupply()])
-      .then(_supply => console.log(_supply.map(x => Number(x)))) 
+      .then(_supply => _supply.map(x => assert.strictEqual(Number(x), initialSupply, 'Incorrect token supply')))
+      .then(() => Promise.all([tokenA.balanceOf(tokenParamsA.owner), tokenB.balanceOf(tokenParamsB.owner)]))
+      .then(_balances => _balances.map(x => assert.strictEqual(Number(x), initialSupply, 'Incorrect owner balances')))
     );
-
   });  // describe
 
 });
