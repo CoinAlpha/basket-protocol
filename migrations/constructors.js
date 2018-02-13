@@ -3,12 +3,12 @@
  */
 
 const allArtifacts = {
-  TestToken: allArtifacts.require('./TestToken.sol'), 
+  TestToken: artifacts.require('./TestToken.sol'), 
 };
 
 const constructors = {
   TestToken: (_owner, _name, _symbol, _decimals, _initialSupply, _faucetAmount) => allArtifacts.TestToken.new(
-    _owner, _name, _symbol, _decimals, _initialSupply, _faucetAmount,
+    _name, _symbol, _decimals, _initialSupply, _faucetAmount,
     { from: _owner },
   ),
 };

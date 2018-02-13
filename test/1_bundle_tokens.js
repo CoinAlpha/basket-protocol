@@ -11,7 +11,7 @@ if (typeof web3.eth.getAccountsPromise === 'undefined') {
   Promise.promisifyAll(web3.eth, { suffix: 'Promise' });
 }
 
-contract('TestToken | Basket', (acounts) => {
+contract('TestToken | Basket', (accounts) => {
 
   const HOLDER_A = accounts[0];
   const HOLDER_B = accounts[1];
