@@ -7,7 +7,7 @@ import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
  *
 */
 
-contract BasketFactory {
+contract BasketFactory1 {
   address[] public baskets;
 
   function createBasket(
@@ -17,13 +17,13 @@ contract BasketFactory {
     public
     returns (address newBasket)
   {
-    Basket b = new Basket(_tokens, _weights);
+    Basket1 b = new Basket1(_tokens, _weights);
     baskets.push(b);
     return b;
   }
 }
 
-contract Basket is StandardToken {
+contract Basket1 is StandardToken {
 
   // basket composition
   address[] public tokens;
@@ -32,7 +32,7 @@ contract Basket is StandardToken {
   // mapping of orders
   mapping (bytes32 => uint) orders;
 
-  function Basket(
+  function Basket1(
     address[] _tokens,
     uint[] _weights
   )

@@ -57,7 +57,7 @@ contract('TestToken | Basket', (accounts) => {
     faucetAmount,
   };
   const tokenParamsB = {
-    owner: HOLDER_B,
+    owner: HOLDER_A,
     name: 'Token B',
     symbol: 'TOKB',
     decimals,
@@ -89,8 +89,6 @@ contract('TestToken | Basket', (accounts) => {
   });
 
   describe('tokens and balances should be correct', () => {
-    let newFundDetails;
-    let fundStorageDetails;
 
     it('get token balances', () => Promise.all([tokenA.totalSupply(), tokenB.totalSupply()])
       .then(_supply => _supply.map(x => assert.strictEqual(Number(x), initialSupply, 'Incorrect token supply')))
@@ -105,7 +103,7 @@ contract('TestToken | Basket', (accounts) => {
       'BASK',
       [tokenA.address, tokenB.address],
       [1, 1],
-      { from: ARRANGER, gas: 5e6 },
+      { from: ARRANGER },
     )
       .then((_txObj) => {
 
@@ -123,10 +121,38 @@ contract('TestToken | Basket', (accounts) => {
         const newContract = web3.eth.contract(basketAbi);
         basketAB = newContract.at(basketABAddress);
 
+        console.log(Object.keys(basketAB));
+
         return basketFactory.basketIndex.call();
       })
       .then(_index => assert.isAbove(Number(_index), basketIndex, 'basketIndex was not incremented'))
+      .catch(err => assert.throw(`Error deploying basketAB: ${err.toString()}`)));
+  });
+
+  describe('HOLDER_A: create 50 basketAB tokens', () => {
+    it('approve token contracts for basketAB', () => Promise.all(
+      [tokenA, tokenB].map(token => token.approve(basketABAddress, 50e18, { from: HOLDER_A })))
+      .then(() => Promise.all(['name', 'symbol', 'decimals'].map(field => basketAB[field].call())))
+      .then(_data => console.log(_data))
     );
+
+    it('should allow get the balance of basketAB tokens', () => basketAB.balanceOf.call(HOLDER_A)
+    .then(_bal => console.log(`Balance: ${Number(_bal)}`))  
+    );
+
+    // TODO: 
+    it('should allow HOLDER_A to deposit tokenA', () => basketAB.deposit(tokenA.address, 10e18, { from: HOLDER_A }));
+
+    it('should allow HOLDER_A to deposit tokenB', () => basketAB.deposit(tokenB.address, 10e18, { from: HOLDER_A }));
+
+    it('should allow HOLDER_A to bundle tokens', () => basketAB.bundle(10e18, { from: HOLDER_A }));
+
+    it('should allow get the balance of basketAB tokens', () => basketAB.balanceOf.call(HOLDER_A)
+      .then(_bal => console.log(`Balance: ${Number(_bal)}`))
+    );
+
   });  // describe
+
+  xdescribe('test depositAndBundle', () => { });
 
 });
