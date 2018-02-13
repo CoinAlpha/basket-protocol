@@ -32,7 +32,7 @@ contract('TestToken | Basket', (accounts) => {
   };
 
   console.log('  Accounts:');
-  Object.keys(accountsObj).forEach(account => console.log(`  - ${String(account + '                  ').slice(0, 20)} : ${accountsObj[account]}`));
+  Object.keys(accountsObj).forEach(account => console.log(`  - ${account} = '${accountsObj[account]}'`));
 
   // Contract instances
   let basketFactory;
@@ -81,8 +81,8 @@ contract('TestToken | Basket', (accounts) => {
 
       .then(() => {
         console.log(`\n  Token Contracts:`);
-        console.log(`  - Token A: ${tokenA.address}`);
-        console.log(`  - Token B: ${tokenB.address}\n`);
+        console.log(`  - tokenAAddress = '${tokenA.address}'`);
+        console.log(`  - tokenBAddress = '${tokenB.address}'\n`);
       })
 
       .catch(err => assert.throw(`Failed to create Tokens: ${err.toString()}`));
@@ -121,7 +121,9 @@ contract('TestToken | Basket', (accounts) => {
         const newContract = web3.eth.contract(basketAbi);
         basketAB = newContract.at(basketABAddress);
 
-        console.log(Object.keys(basketAB));
+        Promise.promisifyAll(basketAB, { suffix: 'Promise' });
+
+        console.log(`\n  - basketABAddress = '${basketABAddress}'\n`);
 
         return basketFactory.basketIndex.call();
       })
@@ -129,26 +131,35 @@ contract('TestToken | Basket', (accounts) => {
       .catch(err => assert.throw(`Error deploying basketAB: ${err.toString()}`)));
   });
 
-  describe('HOLDER_A: create 50 basketAB tokens', () => {
+  describe('HOLDER_A: create 25 basketAB tokens', () => {
+
+    const amount = 25e18;
+
+    before('HOLDER_A\'s amount of basketAB tokens should be zero', () => basketAB.balanceOfPromise(HOLDER_A)
+      .then(_bal => assert.strictEqual(Number(_bal), 0, 'basketAB token balance is not zero'))
+      .catch(err => assert.throw(`balanceOf error: ${err.toString()}`))
+    );
+
+    after(`HOLDER_A's amount of basketAB tokens should be ${amount}`, () => basketAB.balanceOfPromise(HOLDER_A)
+      .then(_bal => assert.strictEqual(Number(_bal), amount, 'incorrect amount of basketAB tokens'))
+      .catch(err => assert.throw(`balanceOf error: ${err.toString()}`))
+    );
+
     it('approve token contracts for basketAB', () => Promise.all(
       [tokenA, tokenB].map(token => token.approve(basketABAddress, 50e18, { from: HOLDER_A })))
       .then(() => Promise.all(['name', 'symbol', 'decimals'].map(field => basketAB[field].call())))
-      .then(_data => console.log(_data))
+      .then(_data => console.log(`      Conatract data: ${_data}`))
     );
 
-    it('should allow get the balance of basketAB tokens', () => basketAB.balanceOf.call(HOLDER_A)
-    .then(_bal => console.log(`Balance: ${Number(_bal)}`))  
+    it('should allow HOLDER_A to deposit tokenA', () => basketAB.depositPromise(tokenA.address, amount, { from: HOLDER_A })
+      .catch(err => assert.throw(`Error depositing tokenA: ${err.toString()}`))
     );
 
-    // TODO: 
-    it('should allow HOLDER_A to deposit tokenA', () => basketAB.deposit(tokenA.address, 10e18, { from: HOLDER_A }));
+    it('should allow HOLDER_A to deposit tokenB', () => basketAB.depositPromise(tokenB.address, amount, { from: HOLDER_A })
+      .catch(err => assert.throw(`Error depositing tokenA: ${err.toString()}`))
+    );
 
-    it('should allow HOLDER_A to deposit tokenB', () => basketAB.deposit(tokenB.address, 10e18, { from: HOLDER_A }));
-
-    it('should allow HOLDER_A to bundle tokens', () => basketAB.bundle(10e18, { from: HOLDER_A }));
-
-    it('should allow get the balance of basketAB tokens', () => basketAB.balanceOf.call(HOLDER_A)
-      .then(_bal => console.log(`Balance: ${Number(_bal)}`))
+    it('should allow HOLDER_A to bundle tokens', () => basketAB.bundlePromise(amount, { from: HOLDER_A })
     );
 
   });  // describe
