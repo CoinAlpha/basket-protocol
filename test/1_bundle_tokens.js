@@ -50,7 +50,7 @@ contract('TestToken | Basket', (accounts) => {
     let newFundDetails;
     let fundStorageDetails;
 
-    it('get token balances', () => Promise.all(tokenA.totalSupply(), tokenB.totalSupply())
+    it('get token balances', () => Promise.all([tokenA.totalSupply(), tokenB.totalSupply()])
       .then(_supply => console.log(_supply.map(x => Number(x)))) 
     );
 

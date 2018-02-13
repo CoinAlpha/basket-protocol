@@ -94,7 +94,6 @@ contract Basket is StandardToken {
   }
 
   /// @dev Convert tokens inside the contract into basketTokens
-  /// @dev Calculation of best
   /// @param  _quantity                            Quantity of tokens to bundle into basket tokens
   /// @return success                              Operation successful
   function bundle(uint _quantity) public returns (bool success) {
@@ -112,6 +111,21 @@ contract Basket is StandardToken {
     totalSupply_ = totalSupply_.add(_quantity);
 
     LogBundle(msg.sender, _quantity);
+    return true;
+  }
+
+  /// @dev Combined deposit of all component tokens (not yet deposited) and bundle
+  /// @param  _quantity                            Quantity of tokens to bundle into basket tokens
+  /// @return success                              Operation successful
+  function depositAndBundle(uint _quantity) public returns (bool success) {
+    // decrease balance of each of the tokens by their weights
+    for (uint i = 0; i < tokens.length; i++) {
+      address t = tokens[i];
+      uint w = weights[i];
+      deposit(t, w.mul(_quantity));
+    }
+
+    bundle(_quantity);
     return true;
   }
 
