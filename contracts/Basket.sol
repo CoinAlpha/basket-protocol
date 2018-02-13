@@ -103,6 +103,7 @@ contract Basket is StandardToken {
       uint w = weights[i];
       uint tokenBalance = vault[msg.sender][t];
 
+      // check if holder has enough tokens to convert
       vault[msg.sender][t] = tokenBalance.sub(w.mul(_quantity));
     }
 

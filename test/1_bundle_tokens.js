@@ -1,7 +1,7 @@
 const path = require('path');
 const Promise = require('bluebird');
 
-const BasketFactory6 = artifacts.require('./BasketFactory6.sol');
+const BasketFactory = artifacts.require('./BasketFactory.sol');
 const { constructors } = require('../migrations/constructors.js');
 
 const scriptName = path.basename(__filename);
@@ -51,7 +51,7 @@ contract('TestToken | Basket', (accounts) => {
   before('Before: deploy tokens', () => {
     console.log(`  ****** START TEST [ ${scriptName} ] *******`);
 
-    return BasketFactory6.deployed()
+    return BasketFactory.deployed()
       .then(_instance => basketFactory = _instance)
       .then(() => Promise.all([tokenParamsA, tokenParamsB].map(({ owner, name, symbol, decimals, initialSupply, faucetAmount }) =>
         constructors.TestToken(owner, name, symbol, decimals, initialSupply, faucetAmount))))
