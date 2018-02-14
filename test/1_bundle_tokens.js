@@ -242,12 +242,12 @@ contract('TestToken | Basket', (accounts) => {
       .catch(err => assert.throw(`before error: ${err.toString()}`))
     );
 
-    after(`HOLDER_A should have ${amount / 1e18} of tokens A and B, 0 of basketAB`, () => Promise.all([
+    after(`HOLDER_A should have additional ${basketABBalance / 1e18} of tokens A and B, 0 of basketAB`, () => Promise.all([
       tokenA.balanceOf(HOLDER_A),
       tokenB.balanceOf(HOLDER_A),
       basketAB.balanceOf(HOLDER_A),
     ])
-      .then(([_balTokenA, _balTokenB, balBasketAB]) => {
+      .then(([_balTokenA, _balTokenB, _balBasketAB]) => {
         assert.strictEqual(Number(_balTokenA), tokenABalance + basketABBalance, `tokenA balance is not ${basketABBalance / 1e18}`);
         assert.strictEqual(Number(_balTokenB), tokenBBalance + basketABBalance, `tokenB balance is not ${basketABBalance / 1e18}`);
         assert.strictEqual(Number(_balBasketAB), 0, `basketAB balance is not 0`);
@@ -255,7 +255,7 @@ contract('TestToken | Basket', (accounts) => {
       .catch(err => assert.throw(`after error: ${err.toString()}`))
     );
 
-    it('should allow HOLDER_A to depositAndBundle', () => basketAB.debundleAndWithdrawPromise(basketABBalance, { from: HOLDER_A, gas: 1e6 })
+    it('should allow HOLDER_A to debundleAndWithdraw', () => basketAB.debundleAndWithdrawPromise(basketABBalance, { from: HOLDER_A, gas: 1e6 })
     );
   });
 

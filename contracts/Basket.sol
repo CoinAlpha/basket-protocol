@@ -40,6 +40,7 @@ contract Basket is StandardToken {
   event LogWithdraw(address indexed holder, address tokenAddress, uint quantity);
   event LogBundle(address indexed holder, uint quantity);
   event LogDebundle(address indexed holder, uint quantity);
+  event LogDebundleAndWithdraw(address indexed holder, uint quantity);
 
   /// @dev Basket constructor
   /// @param  _name                                Token name
@@ -147,6 +148,26 @@ contract Basket is StandardToken {
     }
 
     LogDebundle(msg.sender, _quantity);
+    return true;
+  }
+
+  /// @dev Convert basketTokens back to original tokens and transfer to requester
+  /// @param  _quantity                            Quantity of basket tokens to convert back to original tokens
+  /// @return success                              Operation successful
+  function debundleAndWithdraw(uint _quantity) public returns (bool success) {
+    require(balances[msg.sender] >= _quantity);
+    // decrease holder balance and total supply by _quantity
+    balances[msg.sender] = balances[msg.sender].sub(_quantity);
+    totalSupply_ = totalSupply_.sub(_quantity);
+
+    // increase balance of each of the tokens by their weights
+    for (uint i = 0; i < tokens.length; i++) {
+      address t = tokens[i];
+      uint w = weights[i];
+      assert(ERC20(t).transfer(msg.sender, w.mul(_quantity)));
+    }
+
+    LogDebundleAndWithdraw(msg.sender, _quantity);
     return true;
   }
 
