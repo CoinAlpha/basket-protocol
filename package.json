@@ -25,12 +25,12 @@
     "eslint-plugin-react": "^7.6.1"
   },
   "dependencies": {
+    "bluebird": "^3.5.1",
     "dotenv": "^5.0.0",
     "ethereumjs-wallet": "^0.6.0",
     "ganache-cli": "^6.0.3",
     "truffle-wallet-provider": "^0.0.5",
     "web3": "0.20",
-    "bluebird": "^3.5.1",
     "zeppelin-solidity": "^1.6.0"
   }
 }
