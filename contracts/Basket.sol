@@ -16,8 +16,8 @@
 */
 
 pragma solidity ^0.4.18;
-import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
-import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "node_modules/zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "node_modules/zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 /// @title Basket -- Basket contract for bundling and debundling tokens
 /// @author CoinAlpha, Inc. <contact@coinalpha.com>
