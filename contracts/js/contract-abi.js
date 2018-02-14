@@ -1,7 +1,13 @@
-const basket = require('../../build/contracts/Basket.json');
-const erc20 = require('../../build/contracts/ERC20.json');
+// @dev Stringified ABI's for copying and pasting (e.g. truffle console / parity / wallet)
 
-console.log('Basket ABI');
+const basketFactory = require('../../build/contracts/BasketFactory.json');
+const basket = require('../../build/contracts/Basket.json');
+const testToken = require('../../build/contracts/TestToken.json');
+
+console.log('BasketFactory ABI');
+console.log(JSON.stringify(basketFactory.abi));
+
+console.log('\nBasket ABI');
 console.log(JSON.stringify(basket.abi));
 
 /*
@@ -13,8 +19,8 @@ basketContract = web3.eth.contract(basketAbi);
 basketAB = basketContract.at(basketABAddress);
 */
 
-console.log('ERC20 ABI');
-console.log(JSON.stringify(erc20.abi));
+console.log('\nTestToken ABI');
+console.log(JSON.stringify(testToken.abi));
 
 /*
 @dev Truffle console commands
