@@ -73,7 +73,7 @@ contract('TestToken | Basket', (accounts) => {
       .then(() => basketFactory.basketIndex.call())
       .then(_index => {
         basketIndex = Number(_index);
-        assert.strictEqual(basketIndex, 0, 'basketIndex not initialized to zero');
+        assert.strictEqual(basketIndex, 1, 'basketIndex not initialized to one');
       })
       .then(() => Promise.all([tokenParamsA, tokenParamsB].map(({ owner, name, symbol, decimals, initialSupply, faucetAmount }) =>
         constructors.TestToken(owner, name, symbol, decimals, initialSupply, faucetAmount))))
@@ -114,7 +114,7 @@ contract('TestToken | Basket', (accounts) => {
         assert.strictEqual(txLog.event, 'LogBasketCreated', 'incorrect event label');
         const { basketIndex, basketAddress, arranger: _arranger } = txLog.args;
         basketABAddress = basketAddress;
-        assert.strictEqual(Number(basketIndex), 0, 'incorrect basketIndex');
+        assert.strictEqual(Number(basketIndex), 1, 'incorrect basketIndex');
         assert.strictEqual(_arranger, ARRANGER, 'incorrect arranger address');
 
         // Get basketAB instance

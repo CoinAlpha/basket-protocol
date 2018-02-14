@@ -26,30 +26,60 @@ contract BasketFactory {
 
   // Basket register
   struct BasketStruct {
-    address basketAddress;
-    address arranger;
+    address   basketAddress;
+    string    name;
+    string    symbol;
+    address   arranger;
+    address[] tokens;
+    uint[]    weights;
   }
-  mapping(uint => BasketStruct) baskets;
-  uint public basketIndex;
-  address[] public basketList;
+
+  // Baskets index starting from index = 1
+  uint                          public basketIndex;
+  mapping(uint => BasketStruct) public baskets;
+  address[]                     public basketList;
+  mapping(address => uint)      public basketIndexfromAddress;
 
   // Events
   event LogBasketCreated(uint basketIndex, address basketAddress, address arranger);
+  event LogBasketCloned(uint basketIndexOld, uint basketIndexClone, address newBasketAddress, address creator);
+
+  // Constructor
+  function BasketFactory () {
+    basketIndex = 1;
+  }
 
   // deploy a new basket
   function createBasket(
-    string _name,
-    string _symbol,
+    string    _name,
+    string    _symbol,
     address[] _tokens,
-    uint[] _weights
+    uint[]    _weights
   )
     public
     returns (address newBasket)
   {
     Basket b = new Basket(_name, _symbol, _tokens, _weights);
+    baskets[basketIndex] = BasketStruct(b, _name, _symbol, msg.sender, _tokens, _weights);
     basketList.push(b);
-    baskets[basketIndex] = BasketStruct(b, msg.sender);
+    basketIndexfromAddress[b] = basketIndex;
     LogBasketCreated(basketIndex, b, msg.sender);
+    basketIndex += 1;
+    return b;
+  }
+
+  // clone an existing basket
+  function cloneBasket(uint _sourceBasketIndex)
+    public
+    returns (address newBasket)
+  {
+    require(_sourceBasketIndex < basketIndex);
+    BasketStruct source = baskets[_sourceBasketIndex];
+    Basket b = new Basket(source.name, source.symbol, source.tokens, source.weights);
+    baskets[basketIndex] = BasketStruct(b, source.name, source.symbol, source.arranger, source.tokens, source.weights);
+    basketList.push(b);
+    basketIndexfromAddress[b] = basketIndex;
+    LogBasketCloned(_sourceBasketIndex, basketIndex, b, msg.sender);
     basketIndex += 1;
     return b;
   }
