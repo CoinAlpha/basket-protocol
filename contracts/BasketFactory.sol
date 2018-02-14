@@ -57,7 +57,7 @@ contract BasketFactory {
   event LogBasketCloned(uint basketIndexOld, uint basketIndexClone, address newBasketAddress, address creator);
 
   // Constructor
-  function BasketFactory () {
+  function BasketFactory () public {
     basketIndex = 1;
   }
 
@@ -93,7 +93,7 @@ contract BasketFactory {
     public
     returns (address newBasket)
   {
-    BasketStruct source = baskets[_sourceBasketIndex];
+    BasketStruct memory source = baskets[_sourceBasketIndex];
     Basket b = new Basket(source.name, source.symbol, source.tokens, source.weights);
     baskets[basketIndex] = BasketStruct(b, source.name, source.symbol, source.arranger, source.tokens, source.weights);
     basketList.push(b);
