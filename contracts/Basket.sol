@@ -86,7 +86,7 @@ contract Basket is StandardToken {
     uint tokenBalance = vault[msg.sender][_token];
     require(tokenBalance >= _quantity);
 
-    assert(transfer(msg.sender, _quantity));
+    assert(ERC20(_token).transfer(msg.sender, _quantity));
     vault[msg.sender][_token] = tokenBalance.sub(_quantity);
 
     LogWithdraw(msg.sender, _token, _quantity);
