@@ -208,6 +208,21 @@ contract('TestToken | Basket', (accounts) => {
 
   });  // describe
 
-  describe('Combined depositAndBundle', () => { });
+  describe('Combined depositAndBundle', () => {
+
+    let basketABBalance;
+
+    before('get HOLDER_A\'s balance', () => basketAB.balanceOfPromise(HOLDER_A)
+      .then(_balBasketAB => basketABBalance = Number(_balBasketAB))
+    );
+
+    after(`HOLDER_A's balance should have increased by ${amount / 1e18} basketAB tokens`, () => basketAB.balanceOfPromise(HOLDER_A)
+      .then(_balBasketAB => assert.strictEqual(Number(_balBasketAB), basketABBalance + amount, 'incorrect increase'))
+      .catch(err => assert.throw(`after error: ${err.toString()}`))
+    );
+
+    it('should allow HOLDER_A to depositAndBundle', () => basketAB.depositAndBundlePromise(amount / 1e18, { from: HOLDER_A })
+    );
+  });
 
 });
