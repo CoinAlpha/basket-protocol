@@ -135,6 +135,8 @@ contract Basket is StandardToken {
   /// @param  _quantity                            Quantity of basket tokens to convert back to original tokens
   /// @return success                              Operation successful
   function debundle(uint _quantity) public returns (bool success) {
+    require(balances[msg.sender] >= _quantity);
+    
     // decrease holder balance and total supply by _quantity
     balances[msg.sender] = balances[msg.sender].sub(_quantity);
     totalSupply_ = totalSupply_.sub(_quantity);
