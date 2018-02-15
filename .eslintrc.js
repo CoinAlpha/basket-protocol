@@ -20,7 +20,8 @@ module.exports = {
     "no-buffer-constructor": "off",
   },
   "globals": {
-    "after" : true,
+    "after": true,
+    "afterEach": true,
     "artifacts" : true,
     "assert" : true,
     "before" : true,

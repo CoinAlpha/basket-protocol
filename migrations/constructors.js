@@ -3,7 +3,10 @@
  */
 
 const allArtifacts = {
-  TestToken: artifacts.require('./TestToken.sol'), 
+  TestToken: artifacts.require('./TestToken.sol'),
+  BasketFactory: artifacts.require('./BasketFactory.sol'),
+  Basket: artifacts.require('./Basket.sol'),
+  TokenWallet: artifacts.require('./TokenWallet.sol'),
 };
 
 const constructors = {
@@ -11,6 +14,10 @@ const constructors = {
     _name, _symbol, _decimals, _initialSupply, _faucetAmount,
     { from: _owner },
   ),
+  BasketFactory: _owner => allArtifacts.BasketFactory.new({ from: _owner }),
+  Basket: (_owner, _name, _symbol, _tokens, _weights) =>
+    allArtifacts.Basket.new(_name, _symbol, _tokens, _weights, { from: _owner }),
+  TokenWallet: (_owner, _user) => allArtifacts.TokenWallet.new(_user, { from: _owner }),
 };
 
 module.exports = {
