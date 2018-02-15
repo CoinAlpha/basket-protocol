@@ -17,12 +17,24 @@
 
 pragma solidity ^0.4.18;
 import "./Basket.sol";
+import "./TokenWalletFactory.sol";
+
+contract IBasketFactory {
+  // Create TokenWallet: for segregatint assets
+  function createTokenWallet(address) public returns (address) {}
+}
+
 
 /**
   * @title BasketFactory -- Factory contract for creating different baskets
   * @author CoinAlpha, Inc. <contact@coinalpha.com>
   */
 contract BasketFactory {
+
+  address                       public creator;
+
+  // Modules
+  ITokenWalletFactory           public tokenWalletFactory;
 
   // Basket register
   struct BasketStruct {
@@ -40,11 +52,17 @@ contract BasketFactory {
   address[]                     public basketList;
   mapping(address => uint)      public basketIndexFromAddress;
 
-  // Arrangers register
+  // Arrangers register starting from index = 1
   uint                          public arrangerIndex;
   mapping(address => uint)      public arrangerBasketCount;
   address[]                     public arrangerList;
   mapping(address => uint)      public arrangerIndexFromAddress;
+
+  // TokenWallet register
+  uint                          public tokenWalletIndex;
+  mapping(uint => address)      public tokenWallets;
+  address[]                     public tokenWalletList;
+  mapping(address => uint)      public tokenWalletIndexFromAddress;
 
   // Modifiers
   modifier onlyBasket {
@@ -55,10 +73,15 @@ contract BasketFactory {
   // Events
   event LogBasketCreated(uint basketIndex, address basketAddress, address arranger);
   event LogBasketCloned(uint basketIndexOld, uint basketIndexClone, address newBasketAddress, address creator);
+  event LogTokenWalletCreated(address tokenWallet, address owner);
+
+  event LogSetTokenWalletFactory(address newTokenWalletFactory);
 
   // Constructor
-  function BasketFactory () {
+  function BasketFactory () public {
     basketIndex = 1;
+    arrangerIndex = 1;
+    creator = msg.sender;
   }
 
   // deploy a new basket
@@ -93,7 +116,7 @@ contract BasketFactory {
     public
     returns (address newBasket)
   {
-    BasketStruct source = baskets[_sourceBasketIndex];
+    BasketStruct memory source = baskets[_sourceBasketIndex];
     Basket b = new Basket(source.name, source.symbol, source.tokens, source.weights);
     baskets[basketIndex] = BasketStruct(b, source.name, source.symbol, source.arranger, source.tokens, source.weights);
     basketList.push(b);
@@ -112,6 +135,30 @@ contract BasketFactory {
   {
     uint sourceBasketIndex = basketIndexFromAddress[msg.sender];
     return copyBasket(sourceBasketIndex);
+  }
+
+  // Create TokenWallet: for segregatint assets
+  function createTokenWallet(address _owner)
+    public
+    onlyBasket
+    returns (address newTokenWallet)
+  {
+    address tw = tokenWalletFactory.createTokenWallet(_owner);
+    tokenWalletList.push(tw);
+    tokenWallets[tokenWalletIndex] = tw;
+    tokenWalletIndexFromAddress[tw] = tokenWalletIndex;
+    tokenWalletIndex += 1;
+
+    LogTokenWalletCreated(tw, _owner);
+    return tw;
+  }
+
+  // Link to TokenWalletFactory
+  function setTokenWalletFactory(address _tokenWalletFactory) public returns (bool success) {
+    require(msg.sender == creator);
+    tokenWalletFactory = ITokenWalletFactory(_tokenWalletFactory);
+    LogSetTokenWalletFactory(_tokenWalletFactory);
+    return true;
   }
 
 }

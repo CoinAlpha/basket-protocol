@@ -16,8 +16,12 @@
 */
 
 pragma solidity ^0.4.18;
-import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
-import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+
+import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../node_modules/zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "../node_modules/zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+
+import "./BasketFactory.sol";
 
 /// @title Basket -- Basket contract for bundling and debundling tokens
 /// @author CoinAlpha, Inc. <contact@coinalpha.com>
@@ -25,11 +29,15 @@ contract Basket is StandardToken {
   using SafeMath for uint;
 
   // Constants set at contract inception
-  string    public name;
-  string    public symbol;
-  uint      public decimals;
-  address[] public tokens;
-  uint[]    public weights;
+  string                  public name;
+  string                  public symbol;
+  uint                    public decimals;
+  address[]               public tokens;
+  uint[]                  public weights;
+  address                 public basketFactoryAddress;
+
+  // Modules
+  IBasketFactory          public basketFactory;
 
   // This mapping tracks each of the token balances for a specific holder address
   // HOLDER_ADDRESS | TOKEN_ADDRESS | TOKEN_BALANCE
@@ -41,6 +49,7 @@ contract Basket is StandardToken {
   event LogBundle(address indexed holder, uint quantity);
   event LogDebundle(address indexed holder, uint quantity);
   event LogDebundleAndWithdraw(address indexed holder, uint quantity);
+  event LogExtract(address indexed holder, uint quantity, address tokenWalletAddress);
 
   /// @dev Basket constructor
   /// @param  _name                                Token name
@@ -53,9 +62,7 @@ contract Basket is StandardToken {
     address[] _tokens,
     uint[] _weights
   ) public {
-    require(_tokens.length > 0);
-    require(_weights.length > 0);
-    require(_tokens.length == _weights.length);
+    require(_tokens.length > 0 && _tokens.length == _weights.length);
 
     name = _name;
     symbol = _symbol;
@@ -63,6 +70,8 @@ contract Basket is StandardToken {
     weights = _weights;
     decimals = 18;                                 // Default to 18 decimals to allow accomodate all types of ERC20 token
     totalSupply_ = 0;                              // Baskets can only be created by depositing and forging underlying tokens
+    basketFactoryAddress = msg.sender;             // This contract is created only by the Factory
+    basketFactory = IBasketFactory(msg.sender);
   }
 
   /// @dev Basket transfer tokens to contract
@@ -170,6 +179,28 @@ contract Basket is StandardToken {
     }
 
     LogDebundleAndWithdraw(msg.sender, _quantity);
+    return true;
+  }
+
+  /// @dev Extracts tokens into a prive TokenWallet contract
+  /// @param  _quantity                            Quantity of basket tokens to extract
+  /// @return success                              Operation successful
+  function extract(uint _quantity) public returns (bool success) {
+    require(balances[msg.sender] >= _quantity);
+    // decrease holder balance and total supply by _quantity
+    balances[msg.sender] = balances[msg.sender].sub(_quantity);
+    totalSupply_ = totalSupply_.sub(_quantity);
+
+    address tokenWalletAddress = basketFactory.createTokenWallet(msg.sender);
+
+    // increase balance of each of the tokens by their weights
+    for (uint i = 0; i < tokens.length; i++) {
+      address t = tokens[i];
+      uint w = weights[i];
+      assert(ERC20(t).transfer(tokenWalletAddress, w.mul(_quantity)));
+    }
+
+    LogExtract(msg.sender, _quantity, tokenWalletAddress);
     return true;
   }
 

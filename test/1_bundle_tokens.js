@@ -3,6 +3,7 @@ const Promise = require('bluebird');
 
 const BasketFactory = artifacts.require('./BasketFactory.sol');
 const { abi: basketAbi } = require('../build/contracts/Basket.json');
+const { abi: tokenWalletAbi } = require('../build/contracts/TokenWallet.json');
 
 const { constructors } = require('../migrations/constructors.js');
 
@@ -37,6 +38,8 @@ contract('TestToken | Basket', (accounts) => {
   // Contract instances
   let basketFactory;
   let basketIndex;
+
+  let tokenWalletFactory;
 
   let basketAB;
   let basketABAddress;
@@ -190,11 +193,9 @@ contract('TestToken | Basket', (accounts) => {
         basketAB.withdrawPromise(tokenB.address, amount, { from: HOLDER_B }),
       ]))
       .catch(err => assert.throw(`Error debundling and withdrawing: ${err.toString()}`)));
-
-  });  // describe
+  });
 
   describe('Combined depositAndBundle', () => {
-
     let basketABBalance;
 
     before('get HOLDER_A\'s balance', () => basketAB.balanceOfPromise(HOLDER_A)
@@ -236,5 +237,36 @@ contract('TestToken | Basket', (accounts) => {
       .catch(err => assert.throw(`after error: ${err.toString()}`)));
 
     it('should allow HOLDER_A to debundleAndWithdraw', () => basketAB.debundleAndWithdrawPromise(basketABBalance, { from: HOLDER_A, gas: 1e6 }));
+  });
+
+  describe('Extract to private TokenWallet contract', () => {
+    let basketABBalance;
+    let tokenWalletAddress;
+
+    before('get HOLDER_A\'s balance', () => basketAB.balanceOfPromise(HOLDER_A)
+      .then(_balBasketAB => basketABBalance = Number(_balBasketAB))
+      .then(() => Promise.all([tokenA, tokenB]
+        .map(token => token.approve(basketABAddress, amount, { from: HOLDER_A })))
+        .then(() => basketAB.depositAndBundlePromise(amount, { from: HOLDER_A, gas: 1e6 }))
+        .then(() => basketAB.balanceOfPromise(HOLDER_A))
+        .then(_balBasketAB => basketABBalance = Number(_balBasketAB))
+        .then(() => assert.isAbove(basketABBalance, 0, 'HOLDER_A does not own any BasketAB tokens'))
+        .catch(err => assert.throw(`Error retrieving basketAB contract data: ${err.toString()}`))));
+
+    it('should allow HOLDER_A to basketAB tokens', () => basketAB.extractPromise(basketABBalance, { from: HOLDER_A, gas: 7e6 })
+      .then(() => basketFactory.tokenWallets.call(0))
+      .then(_twAddress => tokenWalletAddress = _twAddress)
+      .catch(err => assert.throw(`Error extracting: ${err.toString()}`)));
+
+    it('tokenWallet should contain the tokenBalance', () => {
+      // Get tokenWallet instance
+      const newContract = web3.eth.contract(tokenWalletAbi);
+      const tokenWallet = newContract.at(tokenWalletAddress);
+      Promise.promisifyAll(tokenWallet, { suffix: 'Promise' });
+      console.log(`\n  - tokenWalletAddress = '${tokenWallet.address}'\n`);
+
+      return Promise.all([tokenWallet.balanceOfTokenPromise(tokenA.address), tokenWallet.balanceOfTokenPromise(tokenB.address)])
+        .then(_balances => _balances.map(x => assert.strictEqual(Number(x), basketABBalance, 'incorrect token balance in wallet')));
+    });
   });
 });
