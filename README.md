@@ -9,8 +9,8 @@ MVP smart contract for use with the demo app
 [https://github.com/OpenZeppelin/zeppelin-solidity](https://github.com/OpenZeppelin/zeppelin-solidity)
 
 # Coding Guides
-- [Contributing](contributing.md): git workflow
-- [Style guide](style-guide.md)
+- [Contributing](CONTRIBUTING.md): git workflow
+- [Style guide](STYLE-GUIDE.md)
 
 ### Testing ###
 ```
