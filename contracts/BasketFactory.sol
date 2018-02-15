@@ -60,6 +60,7 @@ contract BasketFactory {
 
   // TokenWallet register
   uint                          public tokenWalletIndex;
+  mapping(uint => address)      public tokenWallets;
   address[]                     public tokenWalletList;
   mapping(address => uint)      public tokenWalletIndexFromAddress;
 
@@ -144,6 +145,7 @@ contract BasketFactory {
   {
     address tw = tokenWalletFactory.createTokenWallet(_owner);
     tokenWalletList.push(tw);
+    tokenWallets[tokenWalletIndex] = tw;
     tokenWalletIndexFromAddress[tw] = tokenWalletIndex;
     tokenWalletIndex += 1;
 
