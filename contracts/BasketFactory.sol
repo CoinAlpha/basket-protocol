@@ -19,6 +19,12 @@ pragma solidity ^0.4.18;
 import "./Basket.sol";
 import "./TokenWalletFactory.sol";
 
+contract IBasketFactory {
+  // Create TokenWallet: for segregatint assets
+  function createTokenWallet(address) public returns (address) {}
+}
+
+
 /**
   * @title BasketFactory -- Factory contract for creating different baskets
   * @author CoinAlpha, Inc. <contact@coinalpha.com>
