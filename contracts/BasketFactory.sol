@@ -17,13 +17,18 @@
 
 pragma solidity ^0.4.18;
 import "./Basket.sol";
-import "./TokenWallet.sol";
+import "./TokenWalletFactory.sol";
 
 /**
   * @title BasketFactory -- Factory contract for creating different baskets
   * @author CoinAlpha, Inc. <contact@coinalpha.com>
   */
 contract BasketFactory {
+
+  address                       public creator;
+
+  // Modules
+  ITokenWalletFactory           public tokenWalletFactory;
 
   // Basket register
   struct BasketStruct {
@@ -61,12 +66,15 @@ contract BasketFactory {
   // Events
   event LogBasketCreated(uint basketIndex, address basketAddress, address arranger);
   event LogBasketCloned(uint basketIndexOld, uint basketIndexClone, address newBasketAddress, address creator);
-  event LogTokenWalletCreated(address owner);
+  event LogTokenWalletCreated(address tokenWallet, address owner);
+
+  event LogSetTokenWalletFactory(address newTokenWalletFactory);
 
   // Constructor
   function BasketFactory () public {
     basketIndex = 1;
     arrangerIndex = 1;
+    creator = msg.sender;
   }
 
   // deploy a new basket
@@ -128,13 +136,21 @@ contract BasketFactory {
     onlyBasket
     returns (address newTokenWallet)
   {
-    TokenWallet tw = new TokenWallet(_owner);
+    address tw = tokenWalletFactory.createTokenWallet(_owner);
     tokenWalletList.push(tw);
     tokenWalletIndexFromAddress[tw] = tokenWalletIndex;
     tokenWalletIndex += 1;
 
-    LogTokenWalletCreated(_owner);
+    LogTokenWalletCreated(tw, _owner);
     return tw;
+  }
+
+  // Link to TokenWalletFactory
+  function setTokenWalletFactory(address _tokenWalletFactory) public returns (bool success) {
+    require(msg.sender == creator);
+    tokenWalletFactory = ITokenWalletFactory(_tokenWalletFactory);
+    LogSetTokenWalletFactory(_tokenWalletFactory);
+    return true;
   }
 
 }

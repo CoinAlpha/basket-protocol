@@ -6,6 +6,7 @@ const { constructors } = require('../migrations/constructors');
 
 const BasketFactory = artifacts.require('./BasketFactory.sol');
 const Basket = artifacts.require('./Basket.sol');
+const TokenWalletFactory = artifacts.require('./TokenWalletFactory.sol');
 const TokenWallet = artifacts.require('./TokenWallet.sol');
 
 const scriptName = path.basename(__filename);
@@ -20,6 +21,7 @@ let creatorBalance;
 // Contract Instances
 let basketFactory;
 let basket;
+let tokenWalletFactory;
 let tokenWallet;
 let gasPriceGwei;
 
@@ -74,5 +76,11 @@ contract('Deployment costs', (accounts) => {
 
     it('TokenWallet cost', () => constructors.TokenWallet(CREATOR, USER)
       .then(_instance => tokenWallet = _instance));
+
+    it('TokenWalletFactory cost', () => constructors.TokenWalletFactory(CREATOR, basketFactory.address)
+      .then(_instance => tokenWalletFactory = _instance));
+
+    it('BasketFactory: set TokenWalletFactory', () => basketFactory.setTokenWalletFactory(basketFactory.address, { from: CREATOR })
+      .catch(err => assert.throw(`Error setting TokenWalletFactory: ${err.toString()}`)));
   });
 });
