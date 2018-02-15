@@ -17,6 +17,7 @@
 
 pragma solidity ^0.4.18;
 import "./Basket.sol";
+import "./TokenWallet.sol";
 
 /**
   * @title BasketFactory -- Factory contract for creating different baskets
@@ -40,11 +41,16 @@ contract BasketFactory {
   address[]                     public basketList;
   mapping(address => uint)      public basketIndexFromAddress;
 
-  // Arrangers register
+  // Arrangers register starting from index = 1
   uint                          public arrangerIndex;
   mapping(address => uint)      public arrangerBasketCount;
   address[]                     public arrangerList;
   mapping(address => uint)      public arrangerIndexFromAddress;
+
+  // TokenWallet register
+  uint                          public tokenWalletIndex;
+  address[]                     public tokenWalletList;
+  mapping(address => uint)      public tokenWalletIndexFromAddress;
 
   // Modifiers
   modifier onlyBasket {
@@ -55,10 +61,12 @@ contract BasketFactory {
   // Events
   event LogBasketCreated(uint basketIndex, address basketAddress, address arranger);
   event LogBasketCloned(uint basketIndexOld, uint basketIndexClone, address newBasketAddress, address creator);
+  event LogTokenWalletCreated(address owner);
 
   // Constructor
   function BasketFactory () public {
     basketIndex = 1;
+    arrangerIndex = 1;
   }
 
   // deploy a new basket
@@ -112,6 +120,21 @@ contract BasketFactory {
   {
     uint sourceBasketIndex = basketIndexFromAddress[msg.sender];
     return copyBasket(sourceBasketIndex);
+  }
+
+  // Create TokenWallet: for segregatint assets
+  function createTokenWallet(address _owner)
+    public
+    onlyBasket
+    returns (address newTokenWallet)
+  {
+    TokenWallet tw = new TokenWallet(_owner);
+    tokenWalletList.push(tw);
+    tokenWalletIndexFromAddress[tw] = tokenWalletIndex;
+    tokenWalletIndex += 1;
+
+    LogTokenWalletCreated(_owner);
+    return tw;
   }
 
 }
