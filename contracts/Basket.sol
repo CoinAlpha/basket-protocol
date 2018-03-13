@@ -39,15 +39,8 @@ contract Basket is StandardToken {
   // Modules
   IBasketFactory          public basketFactory;
 
-  // This mapping tracks each of the token balances for a specific holder address
-  // HOLDER_ADDRESS | TOKEN_ADDRESS | TOKEN_BALANCE
-  mapping(address => mapping(address => uint)) public vault;
-
   // Events
-  event LogDeposit(address indexed holder, address tokenAddress, uint quantity);
-  event LogWithdraw(address indexed holder, address tokenAddress, uint quantity);
-  event LogBundle(address indexed holder, uint quantity);
-  event LogDebundle(address indexed holder, uint quantity);
+  event LogDepositAndBundle(address indexed holder, uint quantity);
   event LogDebundleAndWithdraw(address indexed holder, uint quantity);
   event LogExtract(address indexed holder, uint quantity, address tokenWalletAddress);
 
@@ -74,93 +67,23 @@ contract Basket is StandardToken {
     basketFactory = IBasketFactory(msg.sender);
   }
 
-  /// @dev Basket transfer tokens to contract
-  /// @param  _token                               Address of token to deposit
-  /// @param  _quantity                            Quantity of tokens to deposit
+  /// @dev Combined deposit of all component tokens (not yet deposited) and bundle
+  /// @param  _quantity                            Quantity of basket tokens to mint
   /// @return success                              Operation successful
-  function deposit(address _token, uint _quantity) public returns (bool success) {
-    uint tokenBalance = vault[msg.sender][_token];
-
-    assert(ERC20(_token).transferFrom(msg.sender, this, _quantity));
-    vault[msg.sender][_token] = tokenBalance.add(_quantity);
-
-    LogDeposit(msg.sender, _token, _quantity);
-    return true;
-  }
-
-  /// @dev Basket transfer tokens from contract to holder's address
-  /// @param  _token                               Address of token to withdraw
-  /// @param  _quantity                            Quantity of tokens to withdraw
-  /// @return success                              Operation successful
-  function withdraw(address _token, uint _quantity) public returns (bool success) {
-    uint tokenBalance = vault[msg.sender][_token];
-    require(tokenBalance >= _quantity);
-
-    assert(ERC20(_token).transfer(msg.sender, _quantity));
-    vault[msg.sender][_token] = tokenBalance.sub(_quantity);
-
-    LogWithdraw(msg.sender, _token, _quantity);
-    return true;
-  }
-
-  /// @dev Convert tokens inside the contract into basketTokens
-  /// @param  _quantity                            Quantity of tokens to bundle into basket tokens
-  /// @return success                              Operation successful
-  function bundle(uint _quantity) public returns (bool success) {
-    // decrease balance of each of the tokens by their weights
+  function depositAndBundle(uint _quantity) public returns (bool success) {
     for (uint i = 0; i < tokens.length; i++) {
       address t = tokens[i];
       uint w = weights[i];
-      uint tokenBalance = vault[msg.sender][t];
-
-      // check if holder has enough tokens to convert
-      vault[msg.sender][t] = tokenBalance.sub(w.mul(_quantity));
+      assert(ERC20(t).transferFrom(msg.sender, this, w.mul(_quantity)));
     }
 
-    // increment holder balance and total supply by _quantity
     balances[msg.sender] = balances[msg.sender].add(_quantity);
     totalSupply_ = totalSupply_.add(_quantity);
 
-    LogBundle(msg.sender, _quantity);
+    LogDepositAndBundle(msg.sender, _quantity);
     return true;
   }
 
-  /// @dev Combined deposit of all component tokens (not yet deposited) and bundle
-  /// @param  _quantity                            Quantity of tokens to bundle into basket tokens
-  /// @return success                              Operation successful
-  function depositAndBundle(uint _quantity) public returns (bool success) {
-    // decrease balance of each of the tokens by their weights
-    for (uint i = 0; i < tokens.length; i++) {
-      address t = tokens[i];
-      uint w = weights[i];
-      deposit(t, w.mul(_quantity));
-    }
-
-    bundle(_quantity);
-    return true;
-  }
-
-  /// @dev Convert basketTokens back to original tokens
-  /// @param  _quantity                            Quantity of basket tokens to convert back to original tokens
-  /// @return success                              Operation successful
-  function debundle(uint _quantity) public returns (bool success) {
-    require(balances[msg.sender] >= _quantity);
-    
-    // decrease holder balance and total supply by _quantity
-    balances[msg.sender] = balances[msg.sender].sub(_quantity);
-    totalSupply_ = totalSupply_.sub(_quantity);
-
-    // increase balance of each of the tokens by their weights
-    for (uint i = 0; i < tokens.length; i++) {
-      address t = tokens[i];
-      uint w = weights[i];
-      uint tokenBalance = vault[msg.sender][t];
-      vault[msg.sender][t] = tokenBalance.add(w.mul(_quantity));
-    }
-
-    LogDebundle(msg.sender, _quantity);
-    return true;
-  }
 
   /// @dev Convert basketTokens back to original tokens and transfer to requester
   /// @param  _quantity                            Quantity of basket tokens to convert back to original tokens
@@ -182,7 +105,7 @@ contract Basket is StandardToken {
     return true;
   }
 
-  /// @dev Extracts tokens into a prive TokenWallet contract
+  /// @dev Extracts tokens into a private TokenWallet contract
   /// @param  _quantity                            Quantity of basket tokens to extract
   /// @return success                              Operation successful
   function extract(uint _quantity) public returns (bool success) {
@@ -202,16 +125,6 @@ contract Basket is StandardToken {
 
     LogExtract(msg.sender, _quantity, tokenWalletAddress);
     return true;
-  }
-
-  /// @dev Read vault balance of current investor
-  /// @return tokenBalances                        Array of token balances arranged in the order declared at contract creation
-  function getVault() public view returns (uint[]) {
-    uint[] memory tokenBalances;
-    for (uint i = 0; i < tokens.length; i++) {
-      tokenBalances[i] = vault[msg.sender][tokens[i]];
-    }
-    return tokenBalances;
   }
 
   /// @dev Fallback to reject any ether sent to contract

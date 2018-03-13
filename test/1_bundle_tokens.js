@@ -2,6 +2,7 @@ const path = require('path');
 const Promise = require('bluebird');
 
 const BasketFactory = artifacts.require('./BasketFactory.sol');
+const TokenWalletFactory = artifacts.require('./TokenWalletFactory.sol');
 const { abi: basketAbi } = require('../build/contracts/Basket.json');
 const { abi: tokenWalletAbi } = require('../build/contracts/TokenWallet.json');
 
@@ -14,24 +15,9 @@ if (typeof web3.eth.getAccountsPromise === 'undefined') {
 }
 
 contract('TestToken | Basket', (accounts) => {
-
   // Accounts
-  const [
-    ADMINISTRATOR,
-    ARRANGER,
-    MARKETMAKER,
-    HOLDER_A,
-    HOLDER_B,
-  ] = accounts.slice(5);
-
-  const accountsObj = {
-    ADMINISTRATOR,
-    ARRANGER,
-    MARKETMAKER,
-    HOLDER_A,
-    HOLDER_B,
-  };
-
+  const [ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B] = accounts.slice(5);
+  const accountsObj = { ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B };
   console.log('  Accounts:');
   Object.keys(accountsObj).forEach(account => console.log(`  - ${account} = '${accountsObj[account]}'`));
 
@@ -51,53 +37,44 @@ contract('TestToken | Basket', (accounts) => {
   const initialSupply = 100e18;
   const faucetAmount = 1e18;
 
-  const tokenParamsA = {
-    owner: HOLDER_A,
-    name: 'Token A',
-    symbol: 'TOKA',
-    decimals,
-    initialSupply,
-    faucetAmount,
-  };
-  const tokenParamsB = {
-    owner: HOLDER_A,
-    name: 'Token B',
-    symbol: 'TOKB',
-    decimals,
-    initialSupply,
-    faucetAmount,
-  };
+  const tokenParamsA = [HOLDER_A, 'Token A', 'TOKA', decimals, initialSupply, faucetAmount];
+  const tokenParamsB = [HOLDER_A, 'Token B', 'TOKB', decimals, initialSupply, faucetAmount];
 
-  before('Before: deploy tokens', () => {
+  before('Before: deploy tokens', async () => {
     console.log(`  ****** START TEST [ ${scriptName} ] *******`);
+    try {
+      basketFactory = await BasketFactory.deployed();
+      const index = await basketFactory.basketIndex.call();
+      basketIndex = Number(index);
 
-    return BasketFactory.deployed()
-      .then(_instance => basketFactory = _instance)
-      .then(() => basketFactory.basketIndex.call())
-      .then((_index) => {
-        basketIndex = Number(_index);
-        assert.strictEqual(basketIndex, 1, 'basketIndex not initialized to one');
-      })
-      .then(() => Promise.all([tokenParamsA, tokenParamsB].map(({ owner, name, symbol, decimals, initialSupply, faucetAmount }) =>
-        constructors.TestToken(owner, name, symbol, decimals, initialSupply, faucetAmount))))
-      .then(_instances => [tokenA, tokenB] = _instances)
+      tokenWalletFactory = await TokenWalletFactory.deployed();
 
-      .then(() => {
-        console.log('\n  Token Contracts:');
-        console.log(`  - tokenAAddress = '${tokenA.address}'`);
-        console.log(`  - tokenBAddress = '${tokenB.address}'\n`);
-      })
+      assert.strictEqual(basketIndex, 1, 'basketIndex not initialized to one');
 
-      .catch(err => assert.throw(`Failed to create Tokens: ${err.toString()}`));
+      tokenA = await constructors.TestToken(...tokenParamsA);
+      tokenB = await constructors.TestToken(...tokenParamsB);
+
+      console.log('\n  Token Contracts:');
+      console.log(`  - tokenAAddress = '${tokenA.address}'`);
+      console.log(`  - tokenBAddress = '${tokenB.address}'\n`);
+    } catch (err) {
+      assert.throw(`Failed to create Tokens: ${err.toString()}`);
+    }
   });
 
   describe('tokens and balances should be correct', () => {
+    it('get token balances', async () => {
+      const supplyA = await tokenA.totalSupply();
+      const supplyB = await tokenB.totalSupply();
+      assert.strictEqual(Number(supplyA), initialSupply, 'Incorrect token supply');
+      assert.strictEqual(Number(supplyB), initialSupply, 'Incorrect token supply');
 
-    it('get token balances', () => Promise.all([tokenA.totalSupply(), tokenB.totalSupply()])
-      .then(_supply => _supply.map(x => assert.strictEqual(Number(x), initialSupply, 'Incorrect token supply')))
-      .then(() => Promise.all([tokenA.balanceOf(tokenParamsA.owner), tokenB.balanceOf(tokenParamsB.owner)]))
-      .then(_balances => _balances.map(x => assert.strictEqual(Number(x), initialSupply, 'Incorrect owner balances'))));
-  });  // describe
+      const balanceA = await tokenA.balanceOf(HOLDER_A);
+      const balanceB = await tokenB.balanceOf(HOLDER_A);
+      assert.strictEqual(Number(balanceA), initialSupply, 'Incorrect owner balances');
+      assert.strictEqual(Number(balanceB), initialSupply, 'Incorrect owner balances');
+    });
+  });
 
   describe('deploy basket A:B @ 1:1', () => {
     it('deploy the basket', () => basketFactory.createBasket(
@@ -113,9 +90,9 @@ contract('TestToken | Basket', (accounts) => {
         assert.strictEqual(txLogs.length, 1, 'incorrect number of logs');
         const txLog = txLogs[0];
         assert.strictEqual(txLog.event, 'LogBasketCreated', 'incorrect event label');
-        const { basketIndex, basketAddress, arranger: _arranger } = txLog.args;
+        const { basketIndex: _basketIndex, basketAddress, arranger: _arranger } = txLog.args;
         basketABAddress = basketAddress;
-        assert.strictEqual(Number(basketIndex), 1, 'incorrect basketIndex');
+        assert.strictEqual(Number(_basketIndex), 1, 'incorrect basketIndex');
         assert.strictEqual(_arranger, ARRANGER, 'incorrect arranger address');
 
         // Get basketAB instance
@@ -135,10 +112,17 @@ contract('TestToken | Basket', (accounts) => {
   const amount = 25e18;
 
   describe(`HOLDER_A: create ${amount / 1e18} basketAB tokens`, () => {
-
-    before('HOLDER_A\'s amount of basketAB tokens should be zero', () => basketAB.balanceOfPromise(HOLDER_A)
-      .then(_bal => assert.strictEqual(Number(_bal), 0, 'basketAB token balance is not zero'))
-      .catch(err => assert.throw(`balanceOf error: ${err.toString()}`)));
+    before('HOLDER_A\'s amount of basketAB tokens should be zero', () => Promise.all([
+      tokenA.balanceOf(HOLDER_A),
+      tokenB.balanceOf(HOLDER_A),
+      basketAB.balanceOfPromise(HOLDER_A),
+    ])
+      .then(([_balTokenA, _balTokenB, _balBasketAB]) => {
+        assert.notEqual(Number(_balTokenA), 0, 'tokenA balance is zero');
+        assert.notEqual(Number(_balTokenB), 0, 'tokenB balance is zero');
+        assert.strictEqual(Number(_balBasketAB), 0, 'basketAB token balance is not zero');
+      })
+      .catch(err => assert.throw(`before error: ${err.toString()}`)));
 
     after(`HOLDER_A's amount of basketAB tokens should be ${amount}`, () => basketAB.balanceOfPromise(HOLDER_A)
       .then(_bal => assert.strictEqual(Number(_bal), amount, 'incorrect amount of basketAB tokens'))
@@ -150,49 +134,8 @@ contract('TestToken | Basket', (accounts) => {
       .then(_data => console.log(`      Contract data: ${_data}`))
       .catch(err => assert.throw(`Error retrieving basketAB contract data: ${err.toString()}`)));
 
-    it('should allow HOLDER_A to deposit tokenA', () => basketAB.depositPromise(tokenA.address, amount, { from: HOLDER_A })
-      .catch(err => assert.throw(`Error depositing tokenA: ${err.toString()}`)));
-
-    it('should allow HOLDER_A to deposit tokenB', () => basketAB.depositPromise(tokenB.address, amount, { from: HOLDER_A })
-      .catch(err => assert.throw(`Error depositing tokenA: ${err.toString()}`)));
-
-    it('should allow HOLDER_A to bundle tokens', () => basketAB.bundlePromise(amount, { from: HOLDER_A }));
-  });
-
-  describe('Transfer + debundle basketAB', () => {
-    before('HOLDER_B should have 0 tokens', () => Promise.all([
-      tokenA.balanceOf(HOLDER_B),
-      tokenB.balanceOf(HOLDER_B),
-      basketAB.balanceOfPromise(HOLDER_B),
-    ])
-      .then(([_balTokenA, _balTokenB, _balBasketAB]) => {
-        assert.strictEqual(Number(_balTokenA), 0, 'tokenA balance is not zero');
-        assert.strictEqual(Number(_balTokenB), 0, 'tokenB balance is not zero');
-        assert.strictEqual(Number(_balBasketAB), 0, 'basketAB token balance is not zero');
-      })
-      .catch(err => assert.throw(`before error: ${err.toString()}`)));
-
-    after(`HOLDER_B should have ${amount / 1e18} of tokens A and B, 0 of basketAB`, () => Promise.all([
-      tokenA.balanceOf(HOLDER_B),
-      tokenB.balanceOf(HOLDER_B),
-    ])
-      .then(([_balTokenA, _balTokenB]) => {
-        assert.strictEqual(Number(_balTokenA), amount, `tokenA balance is not ${amount / 1e18}`);
-        assert.strictEqual(Number(_balTokenB), amount, `tokenB balance is not ${amount / 1e18}`);
-      })
-      .catch(err => assert.throw(`after error: ${err.toString()}`)));
-
-    it('should allow HOLDER_A to transfer basketAB tokens to HOLDER_B', () => basketAB.transferPromise(HOLDER_B, amount, { from: HOLDER_A })
-      .then(() => basketAB.balanceOfPromise(HOLDER_B))
-      .then(_bal => assert.strictEqual(Number(_bal), amount, 'incorrect amount transferred'))
-      .catch(err => assert.throw(`Error transferring tokenA: ${err.toString()}`)));
-
-    it('should allow HOLDER_B to debundle and withdraw tokens', () => basketAB.debundlePromise(amount, { from: HOLDER_B })
-      .then(() => Promise.all([
-        basketAB.withdrawPromise(tokenA.address, amount, { from: HOLDER_B }),
-        basketAB.withdrawPromise(tokenB.address, amount, { from: HOLDER_B }),
-      ]))
-      .catch(err => assert.throw(`Error debundling and withdrawing: ${err.toString()}`)));
+    it('should allow HOLDER_A to deposit and bundle tokens', () => basketAB.depositAndBundlePromise(amount, { from: HOLDER_A, gas: 1e6 })
+      .catch(err => assert.throw(`Error depositing and bundling ${err.toString()}`)));
   });
 
   describe('Combined depositAndBundle', () => {
@@ -253,9 +196,10 @@ contract('TestToken | Basket', (accounts) => {
         .then(() => assert.isAbove(basketABBalance, 0, 'HOLDER_A does not own any BasketAB tokens'))
         .catch(err => assert.throw(`Error retrieving basketAB contract data: ${err.toString()}`))));
 
-    it('should allow HOLDER_A to basketAB tokens', () => basketAB.extractPromise(basketABBalance, { from: HOLDER_A, gas: 7e6 })
+    it('should allow HOLDER_A to extract basketAB tokens', () => basketAB.extractPromise(basketABBalance, { from: HOLDER_A, gas: 1e7 })
+      .then(data => console.log(data))
       .then(() => basketFactory.tokenWallets.call(0))
-      .then(_twAddress => tokenWalletAddress = _twAddress)
+      .then((_twAddress) => { tokenWalletAddress = _twAddress; })
       .catch(err => assert.throw(`Error extracting: ${err.toString()}`)));
 
     it('tokenWallet should contain the tokenBalance', () => {
