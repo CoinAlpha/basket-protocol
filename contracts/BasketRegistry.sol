@@ -37,10 +37,12 @@ contract BasketRegistry {
   // Constants set at contract inception
   address                           public creator;
   address                           public basketFactoryAddress;
+
   uint                              public basketIndex;           // Baskets index starting from index = 1
   address[]                         public basketList;
   mapping(address => BasketStruct)  public basketMap;
   mapping(address => uint)          public basketIndexFromAddress;
+
   uint                              public arrangerIndex;         // Arrangers register starting from index = 1
   address[]                         public arrangerList;
   mapping(address => uint)          public arrangerBasketCount;

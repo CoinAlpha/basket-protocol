@@ -22,6 +22,7 @@ contract('TestToken | Basket', (accounts) => {
   Object.keys(accountsObj).forEach(account => console.log(`  - ${account} = '${accountsObj[account]}'`));
 
   // Contract instances
+  let basketRegistry;
   let basketFactory;
   let basketIndex;
 
@@ -43,12 +44,13 @@ contract('TestToken | Basket', (accounts) => {
   before('Before: deploy tokens', async () => {
     console.log(`  ****** START TEST [ ${scriptName} ] *******`);
     try {
+      basketRegistry = await basketRegistry.deployed();
       basketFactory = await BasketFactory.deployed();
-      const index = await basketFactory.basketIndex.call();
-      basketIndex = Number(index);
+      const index = await basketRegistry.basketIndex.call();
 
       tokenWalletFactory = await TokenWalletFactory.deployed();
 
+      basketIndex = Number(index);
       assert.strictEqual(basketIndex, 1, 'basketIndex not initialized to one');
 
       tokenA = await constructors.TestToken(...tokenParamsA);
