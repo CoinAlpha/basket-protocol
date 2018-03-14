@@ -13,8 +13,8 @@ console.log(JSON.stringify(basket.abi));
 /*
 @dev Truffle console commands
 
-basketAbi = 
-basketABAddress = 
+basketAbi =
+basketABAddress =
 basketContract = web3.eth.contract(basketAbi);
 basketAB = basketContract.at(basketABAddress);
 */
@@ -25,8 +25,8 @@ console.log(JSON.stringify(testToken.abi));
 /*
 @dev Truffle console commands
 
-ercAbi = 
-tokenAAddress = 
+ercAbi =
+tokenAAddress =
 tokenBAddress =
 tokenContract = web3.eth.contract(ercAbi);
 tokenA = tokenContract.at(tokenAAddress);
