@@ -20,7 +20,7 @@ import "./BasketFactory.sol";
 
 contract IBasketRegistry {
   // Called by BasketFactory
-  function registerBasket(address, address, string, string, address[], uint[]) public returns (bool) {}
+  function registerBasket(address, address, string, string, address[], uint[]) public returns (uint) {}
   function checkBasketExists (address) public returns (bool) {}
 
   // Called by Basket
@@ -105,7 +105,7 @@ contract BasketRegistry {
   /// @param  _symbol                              Basket symbol
   /// @param  _tokens                              Token address array
   /// @param  _weights                             Weight ratio array
-  /// @return success                              Operation successful
+  /// @return basketIndex                          Index of basket in registry
   function registerBasket(
     address   _basketAddress,
     address   _arranger,
@@ -115,7 +115,7 @@ contract BasketRegistry {
     uint[]    _weights
   )
     public
-    returns (bool success)
+    returns (uint index)
   {
     basketMap[_basketAddress] = BasketStruct(
       _basketAddress, _arranger, _name, _symbol, _tokens, _weights, 0, 0
@@ -132,7 +132,7 @@ contract BasketRegistry {
 
     LogBasketRegistration(_basketAddress, basketIndex);
     basketIndex += 1;
-    return true;
+    return basketIndex - 1;
   }
 
   /// @dev Check if basket exists in registry

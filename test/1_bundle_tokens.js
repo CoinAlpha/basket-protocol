@@ -1,6 +1,7 @@
 const path = require('path');
 const Promise = require('bluebird');
 
+const BasketRegistry = artifacts.require('./BasketRegistry.sol');
 const BasketFactory = artifacts.require('./BasketFactory.sol');
 const TokenWalletFactory = artifacts.require('./TokenWalletFactory.sol');
 const { abi: basketAbi } = require('../build/contracts/Basket.json');
@@ -44,7 +45,7 @@ contract('TestToken | Basket', (accounts) => {
   before('Before: deploy tokens', async () => {
     console.log(`  ****** START TEST [ ${scriptName} ] *******`);
     try {
-      basketRegistry = await basketRegistry.deployed();
+      basketRegistry = await BasketRegistry.deployed();
       basketFactory = await BasketFactory.deployed();
       const index = await basketRegistry.basketIndex.call();
 
@@ -100,7 +101,7 @@ contract('TestToken | Basket', (accounts) => {
 
         console.log(`\n  - basketABAddress = '${basketABAddress}'\n`);
 
-        const index = await basketFactory.basketIndex.call();
+        const index = await basketRegistry.basketIndex.call();
         assert.isAbove(Number(index), basketIndex, 'basketIndex was not incremented');
       } catch (err) { assert.throw(`Error deploying basketAB: ${err.toString()}`); }
     });

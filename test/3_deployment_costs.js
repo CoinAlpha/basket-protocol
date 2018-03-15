@@ -30,6 +30,7 @@ contract('Deployment costs', (accounts) => {
   const TOKEN_A = accounts[1];
   const TOKEN_B = accounts[2];
   const USER = accounts[3];
+  const REGISTRY = accounts[4];
 
   before('before: should get starting creator balance', async () => {
     const _bal = await web3.eth.getBalancePromise(CREATOR);
@@ -70,12 +71,16 @@ contract('Deployment costs', (accounts) => {
   });
 
   describe('Calculate cost', () => {
+    it('BasketRegistry cost', async () => {
+      basketFactory = await constructors.BasketRegistry(CREATOR);
+    });
+
     it('BasketFactory cost', async () => {
-      basketFactory = await constructors.BasketFactory(CREATOR);
+      basketFactory = await constructors.BasketFactory(CREATOR, REGISTRY);
     });
 
     it('Basket cost', async () => {
-      basket = await constructors.Basket(CREATOR, 'Basket contract', 'BASK', [TOKEN_A, TOKEN_B], [1, 2]);
+      basket = await constructors.Basket(CREATOR, 'Basket contract', 'BASK', [TOKEN_A, TOKEN_B], [1, 2], REGISTRY);
     });
 
     it('TokenWallet cost', async () => {
