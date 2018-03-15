@@ -22,17 +22,11 @@ contract('TestToken | Basket', (accounts) => {
   Object.keys(accountsObj).forEach(account => console.log(`  - ${account} = '${accountsObj[account]}'`));
 
   // Contract instances
-  let basketFactory;
-  let basketIndex;
-
-  let tokenWalletFactory;
-
-  let basketAB;
+  let basketFactory, tokenWalletFactory, basketAB;
   let basketABAddress;
 
   // Token instances
-  let tokenA;
-  let tokenB;
+  let tokenA, tokenB;
   const decimals = 18;
   const initialSupply = 100e18;
   const faucetAmount = 1e18;
@@ -41,22 +35,15 @@ contract('TestToken | Basket', (accounts) => {
   const tokenParamsB = [HOLDER_A, 'Token B', 'TOKB', decimals, initialSupply, faucetAmount];
 
   before('Before: deploy tokens', async () => {
-    console.log(`  ****** START TEST [ ${scriptName} ] *******`);
+    console.log(`================= START TEST [ ${scriptName} ] =================`);
     try {
       basketFactory = await BasketFactory.deployed();
-      const index = await basketFactory.basketIndex.call();
-      basketIndex = Number(index);
-
-      tokenWalletFactory = await TokenWalletFactory.deployed();
-
-      assert.strictEqual(basketIndex, 1, 'basketIndex not initialized to one');
-
       tokenA = await constructors.TestToken(...tokenParamsA);
       tokenB = await constructors.TestToken(...tokenParamsB);
 
-      console.log('\n  Token Contracts:');
-      console.log(`  - tokenAAddress = '${tokenA.address}'`);
-      console.log(`  - tokenBAddress = '${tokenB.address}'\n`);
+      // console.log('\n  Token Contracts:');
+      // console.log(`  - tokenAAddress = '${tokenA.address}'`);
+      // console.log(`  - tokenBAddress = '${tokenB.address}'\n`);
     } catch (err) {
       assert.throw(`Failed to create Tokens: ${err.toString()}`);
     }
@@ -82,24 +69,19 @@ contract('TestToken | Basket', (accounts) => {
         const txObj = await basketFactory.createBasket('A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], { from: ARRANGER });
         const txLogs = txObj.logs;
         // Check logs to ensure contract was created
-        assert.strictEqual(txLogs.length, 1, 'incorrect number of logs');
         const txLog = txLogs[0];
+        assert.strictEqual(txLogs.length, 1, 'incorrect number of logs');
         assert.strictEqual(txLog.event, 'LogBasketCreated', 'incorrect event label');
-        const { basketIndex: _basketIndex, basketAddress, arranger: _arranger } = txLog.args;
+
+        const { basketAddress, arranger: _arranger } = txLog.args;
         basketABAddress = basketAddress;
-        assert.strictEqual(Number(_basketIndex), 1, 'incorrect basketIndex');
-        assert.strictEqual(_arranger, ARRANGER, 'incorrect arranger address');
 
         // Get basketAB instance
         const newContract = web3.eth.contract(basketAbi);
         basketAB = newContract.at(basketABAddress);
-
         Promise.promisifyAll(basketAB, { suffix: 'Promise' });
 
-        console.log(`\n  - basketABAddress = '${basketABAddress}'\n`);
-
-        const index = await basketFactory.basketIndex.call();
-        assert.isAbove(Number(index), basketIndex, 'basketIndex was not incremented');
+        // console.log(`\n  - basketABAddress = '${basketABAddress}'\n`);
       } catch (err) { assert.throw(`Error deploying basketAB: ${err.toString()}`); }
     });
   });
@@ -130,7 +112,7 @@ contract('TestToken | Basket', (accounts) => {
         await tokenA.approve(basketABAddress, amount, { from: HOLDER_A });
         await tokenB.approve(basketABAddress, amount, { from: HOLDER_A });
         const data = await Promise.all(['name', 'symbol', 'decimals'].map(field => basketAB[field].call()));
-        console.log(`      Contract data: ${data}`);
+        // console.log(`      Contract data: ${data}`);
       } catch (err) { assert.throw(`Error retrieving basketAB contract data: ${err.toString()}`); }
     });
 
@@ -216,7 +198,6 @@ contract('TestToken | Basket', (accounts) => {
     it('should allow HOLDER_A to extract basketAB tokens', async () => {
       try {
         const data = await basketAB.extractPromise(basketABBalance, { from: HOLDER_A, gas: 1e7 });
-        console.log(data);
         tokenWalletAddress = await basketFactory.tokenWallets.call(0);
       } catch (err) { assert.throw(`Error extracting: ${err.toString()}`); }
     });
@@ -227,7 +208,7 @@ contract('TestToken | Basket', (accounts) => {
         const newContract = web3.eth.contract(tokenWalletAbi);
         const tokenWallet = newContract.at(tokenWalletAddress);
         Promise.promisifyAll(tokenWallet, { suffix: 'Promise' });
-        console.log(`\n  - tokenWalletAddress = '${tokenWallet.address}'\n`);
+        // console.log(`\n  - tokenWalletAddress = '${tokenWallet.address}'\n`);
 
         const _balTokenA = await tokenWallet.balanceOfTokenPromise(tokenA.address);
         const _balTokenB = await tokenWallet.balanceOfTokenPromise(tokenB.address);

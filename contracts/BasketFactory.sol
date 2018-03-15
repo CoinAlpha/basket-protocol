@@ -17,6 +17,7 @@
 
 pragma solidity ^0.4.18;
 import "./Basket.sol";
+import "./BasketRegistry.sol";
 import "./TokenWalletFactory.sol";
 
 contract IBasketFactory {
@@ -32,31 +33,11 @@ contract IBasketFactory {
 contract BasketFactory {
 
   address                       public creator;
+  address                       public basketRegistryAddress;
 
   // Modules
   ITokenWalletFactory           public tokenWalletFactory;
-
-  // Basket register
-  struct BasketStruct {
-    address   basketAddress;
-    string    name;
-    string    symbol;
-    address   arranger;
-    address[] tokens;
-    uint[]    weights;
-  }
-
-  // Baskets index starting from index = 1
-  uint                          public basketIndex;
-  mapping(uint => BasketStruct) public baskets;
-  address[]                     public basketList;
-  mapping(address => uint)      public basketIndexFromAddress;
-
-  // Arrangers register starting from index = 1
-  uint                          public arrangerIndex;
-  mapping(address => uint)      public arrangerBasketCount;
-  address[]                     public arrangerList;
-  mapping(address => uint)      public arrangerIndexFromAddress;
+  IBasketRegistry               public basketRegistry;
 
   // TokenWallet register
   uint                          public tokenWalletIndex;
@@ -66,25 +47,29 @@ contract BasketFactory {
 
   // Modifiers
   modifier onlyBasket {
-    require(basketIndexFromAddress[msg.sender] > 0);
+    require(basketRegistry.checkBasketExists(msg.sender));
     _;
   }
 
   // Events
   event LogBasketCreated(uint basketIndex, address basketAddress, address arranger);
-  event LogBasketCloned(uint basketIndexOld, uint basketIndexClone, address newBasketAddress, address creator);
   event LogTokenWalletCreated(address tokenWallet, address owner);
-
   event LogSetTokenWalletFactory(address newTokenWalletFactory);
 
-  // Constructor
-  function BasketFactory () public {
-    basketIndex = 1;
-    arrangerIndex = 1;
+  /// @dev BasketFactory constructor
+  /// @param  _basketRegistryAddress               Address of basket registry
+  function BasketFactory (address _basketRegistryAddress) public {
+    basketRegistryAddress = _basketRegistryAddress;
+    basketRegistry = IBasketRegistry(_basketRegistryAddress);
     creator = msg.sender;
   }
 
-  // deploy a new basket
+  /// @dev Deploy a new basket
+  /// @param  _name                                Name of new basket
+  /// @param  _symbol                              Symbol of new basket
+  /// @param  _tokens                              Token addresses of new basket
+  /// @param  _weights                             Weight ratio addresses of new basket
+  /// @return deployed basket
   function createBasket(
     string    _name,
     string    _symbol,
@@ -94,50 +79,16 @@ contract BasketFactory {
     public
     returns (address newBasket)
   {
-    Basket b = new Basket(_name, _symbol, _tokens, _weights);
-    baskets[basketIndex] = BasketStruct(b, _name, _symbol, msg.sender, _tokens, _weights);
-    basketList.push(b);
-    basketIndexFromAddress[b] = basketIndex;
-
-    if (arrangerBasketCount[msg.sender] == 0) {
-      arrangerList.push(msg.sender);
-      arrangerIndexFromAddress[msg.sender] = arrangerIndex;
-      arrangerIndex += 1;
-    }
-    arrangerBasketCount[msg.sender] += 1;
+    Basket b = new Basket(_name, _symbol, _tokens, _weights, basketRegistryAddress);
+    uint basketIndex = basketRegistry.registerBasket(b, msg.sender, _name, _symbol, _tokens, _weights);
 
     LogBasketCreated(basketIndex, b, msg.sender);
-    basketIndex += 1;
     return b;
   }
 
-  // Copy an existing basket
-  function copyBasket(uint _sourceBasketIndex)
-    public
-    returns (address newBasket)
-  {
-    BasketStruct memory source = baskets[_sourceBasketIndex];
-    Basket b = new Basket(source.name, source.symbol, source.tokens, source.weights);
-    baskets[basketIndex] = BasketStruct(b, source.name, source.symbol, source.arranger, source.tokens, source.weights);
-    basketList.push(b);
-    basketIndexFromAddress[b] = basketIndex;
-    arrangerBasketCount[source.arranger] += 1;
-    LogBasketCloned(_sourceBasketIndex, basketIndex, b, msg.sender);
-    basketIndex += 1;
-    return b;
-  }
-
-  // Clone an existing basket called from source basket contract
-  function cloneBasket()
-    public
-    onlyBasket
-    returns (address newBasket)
-  {
-    uint sourceBasketIndex = basketIndexFromAddress[msg.sender];
-    return copyBasket(sourceBasketIndex);
-  }
-
-  // Create TokenWallet: for segregatint assets
+  /// @dev Create TokenWallet: for segregatint assets
+  /// @param  _owner                               Address of new token wallet owner
+  /// @return newTokenWallet                       New token wallet address
   function createTokenWallet(address _owner)
     public
     onlyBasket
@@ -153,7 +104,9 @@ contract BasketFactory {
     return tw;
   }
 
-  // Link to TokenWalletFactory
+  /// @dev Link to TokenWalletFactory
+  /// @param  _tokenWalletFactory                  Address of token wallet factory
+  /// @return success                              Operation successful
   function setTokenWalletFactory(address _tokenWalletFactory) public returns (bool success) {
     require(msg.sender == creator);
     tokenWalletFactory = ITokenWalletFactory(_tokenWalletFactory);

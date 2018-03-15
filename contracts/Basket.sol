@@ -22,6 +22,7 @@ import "../node_modules/zeppelin-solidity/contracts/token/ERC20/StandardToken.so
 import "../node_modules/zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 import "./BasketFactory.sol";
+import "./BasketRegistry.sol";
 
 /// @title Basket -- Basket contract for bundling and debundling tokens
 /// @author CoinAlpha, Inc. <contact@coinalpha.com>
@@ -38,6 +39,7 @@ contract Basket is StandardToken {
 
   // Modules
   IBasketFactory          public basketFactory;
+  IBasketRegistry         public basketRegistry;
 
   // Events
   event LogDepositAndBundle(address indexed holder, uint quantity);
@@ -53,7 +55,8 @@ contract Basket is StandardToken {
     string _name,
     string _symbol,
     address[] _tokens,
-    uint[] _weights
+    uint[] _weights,
+    address _basketRegistry
   ) public {
     require(_tokens.length > 0 && _tokens.length == _weights.length);
 
@@ -65,6 +68,7 @@ contract Basket is StandardToken {
     totalSupply_ = 0;                              // Baskets can only be created by depositing and forging underlying tokens
     basketFactoryAddress = msg.sender;             // This contract is created only by the Factory
     basketFactory = IBasketFactory(msg.sender);
+    basketRegistry = IBasketRegistry(_basketRegistry);
   }
 
   /// @dev Combined deposit of all component tokens (not yet deposited) and bundle
@@ -80,6 +84,7 @@ contract Basket is StandardToken {
     balances[msg.sender] = balances[msg.sender].add(_quantity);
     totalSupply_ = totalSupply_.add(_quantity);
 
+    basketRegistry.incrementBasketsMinted(_quantity);
     LogDepositAndBundle(msg.sender, _quantity);
     return true;
   }
@@ -101,6 +106,7 @@ contract Basket is StandardToken {
       assert(ERC20(t).transfer(msg.sender, w.mul(_quantity)));
     }
 
+    basketRegistry.incrementBasketsBurned(_quantity);
     LogDebundleAndWithdraw(msg.sender, _quantity);
     return true;
   }
@@ -123,6 +129,7 @@ contract Basket is StandardToken {
       assert(ERC20(t).transfer(tokenWalletAddress, w.mul(_quantity)));
     }
 
+    basketRegistry.incrementBasketsBurned(_quantity);
     LogExtract(msg.sender, _quantity, tokenWalletAddress);
     return true;
   }

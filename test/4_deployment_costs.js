@@ -1,28 +1,21 @@
 const path = require('path');
 const Promise = require('bluebird');
 const numeral = require('numeral');
-
 const { constructors } = require('../migrations/constructors');
 
 const BasketFactory = artifacts.require('./BasketFactory.sol');
 const Basket = artifacts.require('./Basket.sol');
 const TokenWalletFactory = artifacts.require('./TokenWalletFactory.sol');
 const TokenWallet = artifacts.require('./TokenWallet.sol');
-
 const scriptName = path.basename(__filename);
 
 if (typeof web3.eth.getAccountsPromise === 'undefined') {
   Promise.promisifyAll(web3.eth, { suffix: 'Promise' });
 }
 
-let creatorBalanceStart;
-let creatorBalance;
-
-// Contract Instances
-let basketFactory;
-let basket;
-let tokenWalletFactory;
-let tokenWallet;
+/* global vars */
+let creatorBalanceStart, creatorBalance;
+let basketFactory, basket, tokenWalletFactory, tokenWallet;  // Contract Instances
 let gasPriceGwei;
 
 contract('Deployment costs', (accounts) => {
@@ -30,8 +23,11 @@ contract('Deployment costs', (accounts) => {
   const TOKEN_A = accounts[1];
   const TOKEN_B = accounts[2];
   const USER = accounts[3];
+  const REGISTRY = accounts[4];
 
   before('before: should get starting creator balance', async () => {
+    console.log(`================= START TEST [ ${scriptName} ] =================`);
+
     const _bal = await web3.eth.getBalancePromise(CREATOR);
     creatorBalanceStart = web3.fromWei(_bal, 'ether');
     const _gasPrice = await web3.eth.getGasPricePromise();
@@ -70,12 +66,16 @@ contract('Deployment costs', (accounts) => {
   });
 
   describe('Calculate cost', () => {
+    it('BasketRegistry cost', async () => {
+      basketFactory = await constructors.BasketRegistry(CREATOR);
+    });
+
     it('BasketFactory cost', async () => {
-      basketFactory = await constructors.BasketFactory(CREATOR);
+      basketFactory = await constructors.BasketFactory(CREATOR, REGISTRY);
     });
 
     it('Basket cost', async () => {
-      basket = await constructors.Basket(CREATOR, 'Basket contract', 'BASK', [TOKEN_A, TOKEN_B], [1, 2]);
+      basket = await constructors.Basket(CREATOR, 'Basket contract', 'BASK', [TOKEN_A, TOKEN_B], [1, 2], REGISTRY);
     });
 
     it('TokenWallet cost', async () => {
