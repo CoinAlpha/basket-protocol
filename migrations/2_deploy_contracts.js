@@ -32,6 +32,7 @@ module.exports = (deployer, network, accounts) => {
 
     // @dev Logs
     .then(() => console.log('  Contract addresses:'))
-    .then(() => console.log(`  - BasketFactory        : ${basketFactory.address}\n`))
+    .then(() => console.log(`  - BasketRegistry        : ${basketRegistry.address}`))
+    .then(() => console.log(`  - BasketFactory        : ${basketFactory.address}`))
     .then(() => console.log(`  - TokenWalletFactory   : ${tokenWalletFactory.address}\n`));
 };

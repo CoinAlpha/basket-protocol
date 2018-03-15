@@ -145,8 +145,22 @@ contract BasketRegistry {
   /// @dev Retrieve basket info from the registry
   /// @param  _basketAddress                       Address of basket to check
   /// @return basketDetails
-  function getBasketDetails(address _basketAddress) public view returns (BasketStruct basketDetails) {
-    return basketMap[_basketAddress];
+  function getBasketDetails(address _basketAddress)
+    public
+    view
+    returns (
+      address   basketAddress,
+      address   arranger,
+      string    name,
+      string    symbol,
+      address[] tokens,
+      uint[]    weights,
+      uint      totalMinted,
+      uint      totalBurned
+    )
+  {
+    BasketStruct memory b = basketMap[_basketAddress];
+    return (b.basketAddress, b.arranger, b.name, b.symbol, b.tokens, b.weights, b.totalMinted, b.totalBurned);
   }
 
   /// @dev Increment totalMinted from BasketStruct
