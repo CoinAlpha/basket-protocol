@@ -34,6 +34,7 @@ contract BasketFactory {
 
   address                       public creator;
   address                       public basketRegistryAddress;
+  address                       public basketEscrowAddress;
 
   // Modules
   ITokenWalletFactory           public tokenWalletFactory;
@@ -58,9 +59,11 @@ contract BasketFactory {
 
   /// @dev BasketFactory constructor
   /// @param  _basketRegistryAddress               Address of basket registry
-  function BasketFactory (address _basketRegistryAddress) public {
+  /// @param  _basketEscrowAddress                 Address of basket escrow
+  function BasketFactory (address _basketRegistryAddress, address _basketEscrowAddress) public {
     basketRegistryAddress = _basketRegistryAddress;
     basketRegistry = IBasketRegistry(_basketRegistryAddress);
+    basketEscrowAddress = _basketEscrowAddress;
     creator = msg.sender;
   }
 
@@ -79,7 +82,7 @@ contract BasketFactory {
     public
     returns (address newBasket)
   {
-    Basket b = new Basket(_name, _symbol, _tokens, _weights, basketRegistryAddress);
+    Basket b = new Basket(_name, _symbol, _tokens, _weights, basketRegistryAddress, basketEscrowAddress);
     uint basketIndex = basketRegistry.registerBasket(b, msg.sender, _name, _symbol, _tokens, _weights);
 
     LogBasketCreated(basketIndex, b, msg.sender);

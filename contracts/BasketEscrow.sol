@@ -28,7 +28,6 @@ contract BasketEscrow {
 
   // Constants set at contract inception
   uint                    public orderIndex;
-  address                 public basketFactoryAddress;
   address                 public basketRegistryAddress;
   address                 public ETH_ADDRESS;
 
@@ -72,7 +71,6 @@ contract BasketEscrow {
   /// @dev BasketEscrow constructor
   /// @param  _basketRegistryAddress                     Address of basket registry
   function BasketEscrow(address _basketRegistryAddress) public {
-    basketFactoryAddress = msg.sender;                   // This contract is created only by the Factory
     basketRegistryAddress = _basketRegistryAddress;
     basketRegistry = IBasketRegistry(_basketRegistryAddress);
     ETH_ADDRESS = 0;                                     // Use address 0 to indicate Eth

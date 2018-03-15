@@ -36,6 +36,8 @@ contract Basket is StandardToken {
   address[]               public tokens;
   uint[]                  public weights;
   address                 public basketFactoryAddress;
+  address                 public basketRegistryAddress;
+  address                 public basketEscrowAddress;
 
   // Modules
   IBasketFactory          public basketFactory;
@@ -51,12 +53,15 @@ contract Basket is StandardToken {
   /// @param  _symbol                              Token symbol
   /// @param  _tokens                              Array of ERC20 token addresses
   /// @param  _weights                             Array of ERC20 token quantities
+  /// @param  _basketRegistryAddress               Address of basket registry
+  /// @param  _basketRegistryAddress               Address of basket escrow
   function Basket(
     string _name,
     string _symbol,
     address[] _tokens,
     uint[] _weights,
-    address _basketRegistry
+    address _basketRegistryAddress,
+    address _basketEscrowAddress
   ) public {
     require(_tokens.length > 0 && _tokens.length == _weights.length);
 
@@ -67,8 +72,10 @@ contract Basket is StandardToken {
     decimals = 18;                                 // Default to 18 decimals to allow accomodate all types of ERC20 token
     totalSupply_ = 0;                              // Baskets can only be created by depositing and forging underlying tokens
     basketFactoryAddress = msg.sender;             // This contract is created only by the Factory
+    basketRegistryAddress = _basketRegistryAddress;
+    basketEscrowAddress = _basketEscrowAddress;
     basketFactory = IBasketFactory(msg.sender);
-    basketRegistry = IBasketRegistry(_basketRegistry);
+    basketRegistry = IBasketRegistry(_basketRegistryAddress);
   }
 
   /// @dev Combined deposit of all component tokens (not yet deposited) and bundle
