@@ -88,7 +88,7 @@ contract BasketRegistry {
   }
 
   /// @dev Set basket factory address after deployment
-  /// @param  _basketFactory                       Quantity of basket tokens to mint
+  /// @param  _basketFactory                       Basket factory address
   /// @return success                              Operation successful
   function setBasketFactory(address _basketFactory) public returns (bool success) {
     require(msg.sender == creator);
