@@ -24,6 +24,7 @@ contract('Deployment costs', (accounts) => {
   const TOKEN_B = accounts[2];
   const USER = accounts[3];
   const REGISTRY = accounts[4];
+  const ESCROW = accounts[5];
 
   before('before: should get starting creator balance', async () => {
     console.log(`================= START TEST [ ${scriptName} ] =================`);
@@ -70,12 +71,16 @@ contract('Deployment costs', (accounts) => {
       basketFactory = await constructors.BasketRegistry(CREATOR);
     });
 
+    it('BasketEscrow cost', async () => {
+      basketFactory = await constructors.BasketEscrow(CREATOR, REGISTRY);
+    });
+
     it('BasketFactory cost', async () => {
-      basketFactory = await constructors.BasketFactory(CREATOR, REGISTRY);
+      basketFactory = await constructors.BasketFactory(CREATOR, REGISTRY, ESCROW);
     });
 
     it('Basket cost', async () => {
-      basket = await constructors.Basket(CREATOR, 'Basket contract', 'BASK', [TOKEN_A, TOKEN_B], [1, 2], REGISTRY);
+      basket = await constructors.Basket(CREATOR, 'Basket contract', 'BASK', [TOKEN_A, TOKEN_B], [1, 2], REGISTRY, ESCROW);
     });
 
     it('TokenWallet cost', async () => {
