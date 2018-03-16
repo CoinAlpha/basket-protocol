@@ -59,10 +59,17 @@ contract BasketFactory {
     _;
   }
 
+  modifier onlyAdmin {
+    require(msg.sender == admin);
+    _;
+  }
+
   // Events
   event LogBasketCreated(uint basketIndex, address basketAddress, address arranger);
   event LogTokenWalletCreated(address tokenWallet, address owner);
   event LogSetTokenWalletFactory(address newTokenWalletFactory);
+  event LogProductionFeeRecipientChange(address oldRecepient, address newRecipient);
+  event LogProductionFeeChange(uint oldFee, uint newFee);
 
   /// @dev BasketFactory constructor
   /// @param  _basketRegistryAddress               Address of basket registry
@@ -148,10 +155,31 @@ contract BasketFactory {
   /// @dev Link to TokenWalletFactory
   /// @param  _tokenWalletFactory                  Address of token wallet factory
   /// @return success                              Operation successful
-  function setTokenWalletFactory(address _tokenWalletFactory) public returns (bool success) {
-    require(msg.sender == admin);
+  function setTokenWalletFactory(address _tokenWalletFactory) public onlyAdmin returns (bool success) {
     tokenWalletFactory = ITokenWalletFactory(_tokenWalletFactory);
     LogSetTokenWalletFactory(_tokenWalletFactory);
+    return true;
+  }
+
+  /// @dev Change recipient of production fees
+  /// @param  _newRecepient                        New fee recipient
+  /// @return success                              Operation successful
+  function changeProductionFeeRecipient(address _newRecepient) public onlyAdmin returns (bool success) {
+    address oldRecepient = productionFeeRecipient;
+    productionFeeRecipient = _newRecepient;
+
+    LogProductionFeeRecipientChange(oldRecepient, productionFeeRecipient);
+    return true;
+  }
+
+  /// @dev Change amount of fee charged for every basket created
+  /// @param  _newFee                              New fee amount
+  /// @return success                              Operation successful
+  function changeProductionFee(uint _newFee) public onlyAdmin returns (bool success) {
+    uint oldFee = productionFee;
+    productionFee = _newFee;
+
+    LogProductionFeeChange(oldFee, productionFee);
     return true;
   }
 

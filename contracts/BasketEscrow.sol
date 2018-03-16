@@ -65,6 +65,12 @@ contract BasketEscrow {
     uint      nonce;
   }
 
+  // Modifiers
+  modifier onlyAdmin {
+    require(msg.sender == admin);
+    _;
+  }
+
   // Events
   event LogBuyOrderCreated(uint newOrderIndex, address indexed buyer, address basket, uint amountEth, uint amountBasket, uint expiration, uint nonce);
   event LogSellOrderCreated(uint newOrderIndex, address indexed seller, address basket, uint amountEth, uint amountBasket, uint expiration, uint nonce);
@@ -72,6 +78,8 @@ contract BasketEscrow {
   event LogSellOrderCancelled(address indexed seller, address basket, uint amountEth, uint amountBasket);
   event LogBuyOrderFilled(address indexed buyOrderFiller, address indexed orderCreator, address basket, uint amountEth, uint amountBasket);
   event LogSellOrderFilled(address indexed sellOrderFiller, address indexed orderCreator, address basket, uint amountEth, uint amountBasket);
+  event LogTransactionFeeRecipientChange(address oldRecepient, address newRecipient);
+  event LogTransactionFeeChange(uint oldFee, uint newFee);
 
   /// @dev BasketEscrow constructor
   /// @param  _basketRegistryAddress                     Address of basket registry
@@ -358,6 +366,27 @@ contract BasketEscrow {
     return (o.orderCreator, o.tokenGet, o.amountGet, o.tokenGive, o.amountGive, o.expiration, o.nonce, orderExists, isFilled);
   }
 
+  /// @dev Change recipient of transaction fees
+  /// @param  _newRecepient                        New fee recipient
+  /// @return success                              Operation successful
+  function changeTransactionFeeRecipient(address _newRecepient) public onlyAdmin returns (bool success) {
+    address oldRecepient = transactionFeeRecipient;
+    transactionFeeRecipient = _newRecepient;
+
+    LogTransactionFeeRecipientChange(oldRecepient, transactionFeeRecipient);
+    return true;
+  }
+
+  /// @dev Change percentage of fee charged for ETH transactions
+  /// @param  _newFee                              New fee amount
+  /// @return success                              Operation successful
+  function changeTransactionFee(uint _newFee) public onlyAdmin returns (bool success) {
+    uint oldFee = transactionFee;
+    transactionFee = _newFee;
+
+    LogTransactionFeeChange(oldFee, transactionFee);
+    return true;
+  }
 
   /// @dev Fallback to reject any ether sent directly to contract
   function () public { revert(); }

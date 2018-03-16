@@ -59,7 +59,7 @@ contract Basket is StandardToken {
   event LogDebundleAndWithdraw(address indexed holder, uint quantity);
   event LogExtract(address indexed holder, uint quantity, address tokenWalletAddress);
   event LogArrangerFeeRecipientChange(address oldRecepient, address newRecipient);
-  event LogArrangerFeeChange(uint oldFee, uint arrangerFee);
+  event LogArrangerFeeChange(uint oldFee, uint newFee);
 
   /// @dev Basket constructor
   /// @param  _name                                Token name
