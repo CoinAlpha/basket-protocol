@@ -66,7 +66,10 @@ contract('TestToken | Basket', (accounts) => {
   describe('deploy basket A:B @ 1:1', () => {
     it('deploy the basket', async () => {
       try {
-        const txObj = await basketFactory.createBasket('A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], { from: ARRANGER });
+        const txObj = await basketFactory.createBasket(
+          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], ARRANGER, 0.01,
+          { from: ARRANGER },
+        );
         const txLogs = txObj.logs;
         // Check logs to ensure contract was created
         const txLog = txLogs[0];

@@ -67,7 +67,7 @@ contract('Basket Factory | Basket Registry', (accounts) => {
 
     it('deploys the basket', async () => {
       try {
-        const txObj = await basketFactory.createBasket('A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], { from: ARRANGER });
+        const txObj = await basketFactory.createBasket('A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], ARRANGER, 0.01, { from: ARRANGER });
         const txLogs = txObj.logs;
         // Check logs to ensure contract was created
         assert.strictEqual(txLogs.length, 1, 'incorrect number of logs');

@@ -61,7 +61,7 @@ contract('Basket Escrow', (accounts) => {
   describe('deploys test basket', () => {
     it('deploys the basket with defined escrow address', async () => {
       try {
-        const txObj = await basketFactory.createBasket('A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], { from: ARRANGER });
+        const txObj = await basketFactory.createBasket('A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], ARRANGER, 0.01, { from: ARRANGER });
         const txLog = txObj.logs[0];
         basketABAddress = txLog.args.basketAddress;
         basketAB = web3.eth.contract(basketAbi).at(basketABAddress);
