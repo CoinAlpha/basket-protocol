@@ -65,8 +65,8 @@ contract BasketEscrow {
   event LogSellOrderCreated(uint newOrderIndex, address indexed seller, address basket, uint amountEth, uint amountBasket);
   event LogBuyOrderCancelled(address indexed buyer, address basket, uint amountEth, uint amountBasket);
   event LogSellOrderCancelled(address indexed seller, address basket, uint amountEth, uint amountBasket);
-  event LogBuyOrderFilled(address indexed sellFiller, address indexed orderCreator, address basket, uint amountEth, uint amountBasket);
-  event LogSellOrderFilled(address indexed buyFiller, address indexed orderCreator, address basket, uint amountEth, uint amountBasket);
+  event LogBuyOrderFilled(address indexed buyOrderFiller, address indexed orderCreator, address basket, uint amountEth, uint amountBasket);
+  event LogSellOrderFilled(address indexed sellOrderFiller, address indexed orderCreator, address basket, uint amountEth, uint amountBasket);
 
   /// @dev BasketEscrow constructor
   /// @param  _basketRegistryAddress                     Address of basket registry
@@ -229,7 +229,7 @@ contract BasketEscrow {
     return true;
   }
 
-  /// @dev Fill an existing buy order
+  /// @dev Fill an existing buy order                    NOTE: REQUIRES TOKEN APPROVAL
   /// @param  _orderCreator                              Address of order's creator
   /// @param  _basketAddress                             Address of basket to purchase in original order
   /// @param  _amountBasket                              Amount of baskets to purchase in original order
@@ -246,7 +246,7 @@ contract BasketEscrow {
     uint _nonce
   ) public returns (bool success) {
     assert(_fillOrder(_orderCreator, _basketAddress, _amountBasket, ETH_ADDRESS, _amountEth, _expiration, _nonce));
-    assert(ERC20(_basketAddress).transfer(_orderCreator, _amountBasket));
+    assert(ERC20(_basketAddress).transferFrom(msg.sender, _orderCreator, _amountBasket));
     msg.sender.transfer(_amountEth);
 
     LogBuyOrderFilled(msg.sender, _orderCreator, _basketAddress, _amountEth, _amountBasket);
@@ -271,7 +271,7 @@ contract BasketEscrow {
     assert(ERC20(_basketAddress).transfer(msg.sender, _amountBasket));
     _orderCreator.transfer(msg.value);
 
-    LogBuyOrderFilled(msg.sender, _orderCreator, _basketAddress, msg.value, _amountBasket);
+    LogSellOrderFilled(msg.sender, _orderCreator, _basketAddress, msg.value, _amountBasket);
     return true;
   }
 
