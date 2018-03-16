@@ -6,6 +6,8 @@ const TokenWalletFactory = artifacts.require('./TokenWalletFactory.sol');
 module.exports = (deployer, network, accounts) => {
   // Accounts
   const ADMINISTRATOR = accounts[0];    // Protocol administrator, BasketFactory deployer
+  const TRANSACTION_FEE = 0.01;         // Charge 1% transaction fee
+  const PRODUCTION_FEE = 0.01;          // Charge 1% transaction fee
 
   // Contract instances
   let basketRegistry, basketEscrow, basketFactory, tokenWalletFactory;
@@ -16,12 +18,20 @@ module.exports = (deployer, network, accounts) => {
     .then(_instance => basketRegistry = _instance)
 
     // 2. Deploy BasketEscrow contract with basketRegistry address
-    .then(() => deployer.deploy(BasketEscrow, basketRegistry.address, { from: ADMINISTRATOR }))
+    // BasketEscrow(_basketRegistryAddress, _transactionFeeRecipient, _transactionFee)
+    .then(() => deployer.deploy(
+      BasketEscrow, basketRegistry.address, ADMINISTRATOR, TRANSACTION_FEE,
+      { from: ADMINISTRATOR },
+    ))
     .then(() => BasketEscrow.deployed())
     .then(_instance => basketEscrow = _instance)
 
     // 3. Deploy BasketFactory contract with basketRegistry address and basketEscrow address
-    .then(() => deployer.deploy(BasketFactory, basketRegistry.address, basketEscrow.address, { from: ADMINISTRATOR }))
+    // BasketFactory(_basketRegistryAddress, _basketEscrowAddress, _productionFeeRecipient, _productionFee)
+    .then(() => deployer.deploy(
+      BasketFactory, basketRegistry.address, basketEscrow.address, ADMINISTRATOR, PRODUCTION_FEE,
+      { from: ADMINISTRATOR },
+    ))
     .then(() => BasketFactory.deployed())
     .then(_instance => basketFactory = _instance)
 
