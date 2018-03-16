@@ -65,8 +65,8 @@ contract BasketEscrow {
   }
 
   // Events
-  event LogBuyOrderCreated(uint newOrderIndex, address indexed buyer, address basket, uint amountEth, uint amountBasket);
-  event LogSellOrderCreated(uint newOrderIndex, address indexed seller, address basket, uint amountEth, uint amountBasket);
+  event LogBuyOrderCreated(uint newOrderIndex, address indexed buyer, address basket, uint amountEth, uint amountBasket, uint expiration, uint nonce);
+  event LogSellOrderCreated(uint newOrderIndex, address indexed seller, address basket, uint amountEth, uint amountBasket, uint expiration, uint nonce);
   event LogBuyOrderCancelled(address indexed buyer, address basket, uint amountEth, uint amountBasket);
   event LogSellOrderCancelled(address indexed seller, address basket, uint amountEth, uint amountBasket);
   event LogBuyOrderFilled(address indexed buyOrderFiller, address indexed orderCreator, address basket, uint amountEth, uint amountBasket);
@@ -106,7 +106,7 @@ contract BasketEscrow {
     uint index = _createOrder(msg.sender, _basketAddress, _amountBasket, ETH_ADDRESS, msg.value, _expiration, _nonce);
     assert(index > 0);
 
-    LogBuyOrderCreated(index, msg.sender, _basketAddress, msg.value, _amountBasket);
+    LogBuyOrderCreated(index, msg.sender, _basketAddress, msg.value, _amountBasket, _expiration, _nonce);
     return true;
   }
 
@@ -131,7 +131,7 @@ contract BasketEscrow {
     uint index = _createOrder(msg.sender, ETH_ADDRESS, _amountEth, _basketAddress, _amountBasket, _expiration, _nonce);
     assert(index > 0);
 
-    LogSellOrderCreated(index, msg.sender, _basketAddress, _amountEth, _amountBasket);
+    LogSellOrderCreated(index, msg.sender, _basketAddress, _amountEth, _amountBasket, _expiration, _nonce);
     return true;
   }
 

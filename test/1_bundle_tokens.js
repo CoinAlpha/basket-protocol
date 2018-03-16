@@ -21,6 +21,10 @@ contract('TestToken | Basket', (accounts) => {
   console.log('  Accounts:');
   Object.keys(accountsObj).forEach(account => console.log(`  - ${account} = '${accountsObj[account]}'`));
 
+  const ARRANGER_FEE = 0.01;            // Charge 0.01 ETH of arranger fee per basket minted
+  const PRODUCTION_FEE = 0.3;           // Charge 0.3 ETH of transaction per basket creation
+  const FEE_DECIMALS = 4;
+
   // Contract instances
   let basketFactory, tokenWalletFactory, basketAB;
   let basketABAddress;
@@ -64,11 +68,15 @@ contract('TestToken | Basket', (accounts) => {
   });
 
   describe('deploy basket A:B @ 1:1', () => {
+    let initialBalance;
+
     it('deploy the basket', async () => {
       try {
+        const fee = await basketFactory.productionFee.call();
+        initialBalance = await web3.eth.getBalancePromise(ARRANGER);
         const txObj = await basketFactory.createBasket(
-          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], ARRANGER, 0.01,
-          { from: ARRANGER },
+          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], ARRANGER, (ARRANGER_FEE * (10 ** FEE_DECIMALS)),
+          { from: ARRANGER, value: (Number(fee) * 1e18) / (10 ** FEE_DECIMALS) },
         );
         const txLogs = txObj.logs;
         // Check logs to ensure contract was created
@@ -76,9 +84,8 @@ contract('TestToken | Basket', (accounts) => {
         assert.strictEqual(txLogs.length, 1, 'incorrect number of logs');
         assert.strictEqual(txLog.event, 'LogBasketCreated', 'incorrect event label');
 
-        const { basketAddress, arranger: _arranger } = txLog.args;
+        const { basketAddress, arranger: _arranger, fee: feeFromEvent } = txLog.args;
         basketABAddress = basketAddress;
-
         // Get basketAB instance
         const newContract = web3.eth.contract(basketAbi);
         basketAB = newContract.at(basketABAddress);
@@ -87,11 +94,23 @@ contract('TestToken | Basket', (accounts) => {
         // console.log(`\n  - basketABAddress = '${basketABAddress}'\n`);
       } catch (err) { assert.throw(`Error deploying basketAB: ${err.toString()}`); }
     });
+
+    it('calculates the production fee correctly', async () => {
+      const balance = await web3.eth.getBalancePromise(ARRANGER);
+      assert.isAbove((initialBalance - balance) / 1e18, PRODUCTION_FEE, 'incorrect production fee amount charged');
+    });
+
+    it('remembers the basketFactory', async () => {
+      const _factoryAddress = await basketAB.basketFactoryAddress.call();
+      assert.strictEqual(_factoryAddress, basketFactory.address, 'incorrect basket factory');
+    });
   });
 
   const amount = 25e18;
 
   describe(`HOLDER_A: create ${amount / 1e18} basketAB tokens`, () => {
+    let initialBalance;
+
     before('HOLDER_A\'s amount of basketAB tokens should be zero', async () => {
       try {
         const balTokenA = await tokenA.balanceOf(HOLDER_A);
@@ -120,8 +139,21 @@ contract('TestToken | Basket', (accounts) => {
     });
 
     it('should allow HOLDER_A to deposit and bundle tokens', async () => {
-      await basketAB.depositAndBundlePromise(amount, { from: HOLDER_A, gas: 1e6 })
+      const fee = await basketAB.arrangerFee.call();
+      initialBalance = await web3.eth.getBalancePromise(HOLDER_A);
+      await basketAB.depositAndBundlePromise(amount, { from: HOLDER_A, value: amount * (Number(fee) / (10 ** FEE_DECIMALS)), gas: 1e6 })
         .catch(err => assert.throw(`Error depositing and bundling ${err.toString()}`));
+    });
+
+    it('charges correct amount of transaction fee', async () => {
+      let balance = await web3.eth.getBalancePromise(HOLDER_A);
+      initialBalance = Number(initialBalance) / 1e18;
+      balance = Number(balance) / 1e18;
+      assert.strictEqual(
+        Math.floor(100 * (initialBalance - balance)),
+        Math.floor(100 * (ARRANGER_FEE * (amount / 1e18))),
+        'incorrect amount of arranger fee charged',
+      );
     });
   });
 
@@ -145,7 +177,8 @@ contract('TestToken | Basket', (accounts) => {
     });
 
     it('should allow HOLDER_A to depositAndBundle', async () => {
-      await basketAB.depositAndBundlePromise(amount, { from: HOLDER_A, gas: 1e6 });
+      const fee = await basketAB.arrangerFee.call();
+      await basketAB.depositAndBundlePromise(amount, { from: HOLDER_A, value: amount * (Number(fee) / (10 ** FEE_DECIMALS)), gas: 1e6 });
     });
   });
 
@@ -190,7 +223,8 @@ contract('TestToken | Basket', (accounts) => {
 
         await tokenA.approve(basketABAddress, amount, { from: HOLDER_A });
         await tokenB.approve(basketABAddress, amount, { from: HOLDER_A });
-        await basketAB.depositAndBundlePromise(amount, { from: HOLDER_A, gas: 1e6 });
+        const fee = await basketAB.arrangerFee.call();
+        await basketAB.depositAndBundlePromise(amount, { from: HOLDER_A, value: amount * (Number(fee) / (10 ** FEE_DECIMALS)), gas: 1e6 });
         const _balBasketABAfter = await basketAB.balanceOfPromise(HOLDER_A);
         basketABBalance = Number(_balBasketABAfter);
 

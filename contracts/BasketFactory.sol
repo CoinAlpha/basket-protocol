@@ -16,6 +16,8 @@
 */
 
 pragma solidity ^0.4.18;
+
+import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Basket.sol";
 import "./BasketRegistry.sol";
 import "./TokenWalletFactory.sol";
@@ -31,6 +33,7 @@ contract IBasketFactory {
   * @author CoinAlpha, Inc. <contact@coinalpha.com>
   */
 contract BasketFactory {
+  using SafeMath for uint;
 
   address                       public admin;
   address                       public basketRegistryAddress;
@@ -38,6 +41,7 @@ contract BasketFactory {
 
   address                       public productionFeeRecipient;
   uint                          public productionFee;
+  uint                          public FEE_DECIMALS;
 
   // Modules
   ITokenWalletFactory           public tokenWalletFactory;
@@ -56,7 +60,7 @@ contract BasketFactory {
   }
 
   // Events
-  event LogBasketCreated(uint basketIndex, address basketAddress, address arranger);
+  event LogBasketCreated(uint basketIndex, address basketAddress, address arranger, uint fee);
   event LogTokenWalletCreated(address tokenWallet, address owner);
   event LogSetTokenWalletFactory(address newTokenWalletFactory);
 
@@ -77,6 +81,7 @@ contract BasketFactory {
 
     productionFeeRecipient = _productionFeeRecipient;
     productionFee = _productionFee;
+    FEE_DECIMALS = 4;                              // Default transaction fee to 4 decimal places
   }
 
   /// @dev Deploy a new basket
@@ -101,9 +106,11 @@ contract BasketFactory {
   {
     // charging arrangers a fee to deploy new basket
     if (productionFee > 0) {
-      require(msg.value >= productionFee);
+      require(msg.value >= productionFee.mul(10 ** (18 - FEE_DECIMALS)));
       productionFeeRecipient.transfer(msg.value);
     }
+
+    uint fee = productionFee.mul(10 ** (18 - FEE_DECIMALS));
 
     Basket b = new Basket(
       _name,
@@ -118,7 +125,7 @@ contract BasketFactory {
     );
     uint basketIndex = basketRegistry.registerBasket(b, msg.sender, _name, _symbol, _tokens, _weights);
 
-    LogBasketCreated(basketIndex, b, msg.sender);
+    LogBasketCreated(basketIndex, b, msg.sender, fee);
     return b;
   }
 

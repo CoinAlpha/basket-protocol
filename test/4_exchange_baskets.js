@@ -19,6 +19,11 @@ contract('Basket Escrow', (accounts) => {
   const [ADMINISTRATOR, ARRANGER, MARKET_MAKER, HOLDER_A, HOLDER_B] = accounts.slice(5);
   const zeroAddress = '0x0000000000000000000000000000000000000000';
 
+  const ARRANGER_FEE = 0.01;            // Charge 0.01 ETH of arranger fee per basket minted
+  const PRODUCTION_FEE = 0.3;           // Charge 0.3 ETH of transaction per basket creation
+  const TRANSACTION_FEE = 0.005;        // Charge 0.5% transaction fee
+  const FEE_DECIMALS = 4;
+
   // Contract instances
   let basketRegistry, basketFactory, basketEscrow;
 
@@ -61,7 +66,10 @@ contract('Basket Escrow', (accounts) => {
   describe('deploys test basket', () => {
     it('deploys the basket with defined escrow address', async () => {
       try {
-        const txObj = await basketFactory.createBasket('A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], ARRANGER, 0.01, { from: ARRANGER });
+        const txObj = await basketFactory.createBasket(
+          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], ARRANGER, (ARRANGER_FEE * (10 ** FEE_DECIMALS)),
+          { from: ARRANGER, value: PRODUCTION_FEE * 1e18 },
+        );
         const txLog = txObj.logs[0];
         basketABAddress = txLog.args.basketAddress;
         basketAB = web3.eth.contract(basketAbi).at(basketABAddress);
@@ -79,7 +87,7 @@ contract('Basket Escrow', (accounts) => {
         const balBasketABBefore = await basketAB.balanceOfPromise(MARKET_MAKER);
         await tokenA.approve(basketABAddress, amount, { from: MARKET_MAKER });
         await tokenB.approve(basketABAddress, amount, { from: MARKET_MAKER });
-        await basketAB.depositAndBundlePromise(amount, { from: MARKET_MAKER, gas: 1e7 });
+        await basketAB.depositAndBundlePromise(amount, { from: MARKET_MAKER, value: amount * ARRANGER_FEE, gas: 1e7 });
 
         await basketAB.approve(basketEscrow.address, amount, { from: MARKET_MAKER, gas: 1e6 });
 

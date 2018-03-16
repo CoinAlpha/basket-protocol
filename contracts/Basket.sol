@@ -42,6 +42,7 @@ contract Basket is StandardToken {
   address                 public arranger;
   address                 public arrangerFeeRecipient;
   uint                    public arrangerFee;
+  uint                    public FEE_DECIMALS;
 
   // Modules
   IBasketFactory          public basketFactory;
@@ -101,22 +102,23 @@ contract Basket is StandardToken {
     arranger = _arranger;
     arrangerFeeRecipient = _arrangerFeeRecipient;
     arrangerFee = _arrangerFee;
+    FEE_DECIMALS = 4;                              // Default transaction fee to 4 decimal places
   }
 
   /// @dev Combined deposit of all component tokens (not yet deposited) and bundle
   /// @param  _quantity                            Quantity of basket tokens to mint
   /// @return success                              Operation successful
   function depositAndBundle(uint _quantity) public payable returns (bool success) {
-    // charging market makers a fee for every new basket minted
-    if (arrangerFee > 0) {
-      require(msg.value >= arrangerFee.mul(_quantity));
-      arrangerFeeRecipient.transfer(msg.value);
-    }
-
     for (uint i = 0; i < tokens.length; i++) {
       address t = tokens[i];
       uint w = weights[i];
       assert(ERC20(t).transferFrom(msg.sender, this, w.mul(_quantity)));
+    }
+
+    // charging market makers a fee for every new basket minted
+    if (arrangerFee > 0) {
+      require(msg.value >= arrangerFee.mul(_quantity).div(10 ** FEE_DECIMALS));
+      arrangerFeeRecipient.transfer(msg.value);
     }
 
     balances[msg.sender] = balances[msg.sender].add(_quantity);

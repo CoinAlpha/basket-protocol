@@ -19,6 +19,10 @@ contract('Basket Factory | Basket Registry', (accounts) => {
   const [ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B] = accounts.slice(5);
   const accountsObj = { ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B };
 
+  const ARRANGER_FEE = 0.01;            // Charge 0.01 ETH of arranger fee per basket minted
+  const PRODUCTION_FEE = 0.3;           // Charge 0.3 ETH of transaction per basket creation
+  const FEE_DECIMALS = 4;
+
   // Contract instances
   let basketRegistry, basketFactory;
 
@@ -67,7 +71,10 @@ contract('Basket Factory | Basket Registry', (accounts) => {
 
     it('deploys the basket', async () => {
       try {
-        const txObj = await basketFactory.createBasket('A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], ARRANGER, 0.01, { from: ARRANGER });
+        const txObj = await basketFactory.createBasket(
+          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], ARRANGER, (ARRANGER_FEE * (10 ** FEE_DECIMALS)),
+          { from: ARRANGER, value: PRODUCTION_FEE * 1e18 },
+        );
         const txLogs = txObj.logs;
         // Check logs to ensure contract was created
         assert.strictEqual(txLogs.length, 1, 'incorrect number of logs');
@@ -132,7 +139,7 @@ contract('Basket Factory | Basket Registry', (accounts) => {
       try {
         await tokenA.approve(basketABAddress, amount, { from: HOLDER_A });
         await tokenB.approve(basketABAddress, amount, { from: HOLDER_A });
-        await basketAB.depositAndBundlePromise(amount, { from: HOLDER_A, gas: 1e6 });
+        await basketAB.depositAndBundlePromise(amount, { from: HOLDER_A, value: amount * ARRANGER_FEE, gas: 1e6 });
       } catch (err) { assert.throw(`Error in minting basket tokens: ${err.toString()}`); }
     });
 

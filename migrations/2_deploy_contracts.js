@@ -6,8 +6,8 @@ const TokenWalletFactory = artifacts.require('./TokenWalletFactory.sol');
 module.exports = (deployer, network, accounts) => {
   // Accounts
   const ADMINISTRATOR = accounts[0];    // Protocol administrator, BasketFactory deployer
-  const TRANSACTION_FEE = 0.01;         // Charge 1% transaction fee
-  const PRODUCTION_FEE = 0.01;          // Charge 1% transaction fee
+  const TRANSACTION_FEE = 0.005;        // Charge 0.5% transaction fee
+  const PRODUCTION_FEE = 0.3;           // Charge 0.3 ETH of transaction per basket creation
 
   // Contract instances
   let basketRegistry, basketEscrow, basketFactory, tokenWalletFactory;
@@ -29,7 +29,7 @@ module.exports = (deployer, network, accounts) => {
     // 3. Deploy BasketFactory contract with basketRegistry address and basketEscrow address
     // BasketFactory(_basketRegistryAddress, _basketEscrowAddress, _productionFeeRecipient, _productionFee)
     .then(() => deployer.deploy(
-      BasketFactory, basketRegistry.address, basketEscrow.address, ADMINISTRATOR, PRODUCTION_FEE,
+      BasketFactory, basketRegistry.address, basketEscrow.address, ADMINISTRATOR, (PRODUCTION_FEE * 1e4),
       { from: ADMINISTRATOR },
     ))
     .then(() => BasketFactory.deployed())
