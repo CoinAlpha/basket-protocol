@@ -60,7 +60,7 @@ contract BasketFactory {
   }
 
   // Events
-  event LogBasketCreated(uint basketIndex, address basketAddress, address arranger, uint fee);
+  event LogBasketCreated(uint basketIndex, address basketAddress, address arranger);
   event LogTokenWalletCreated(address tokenWallet, address owner);
   event LogSetTokenWalletFactory(address newTokenWalletFactory);
 
@@ -110,8 +110,6 @@ contract BasketFactory {
       productionFeeRecipient.transfer(msg.value);
     }
 
-    uint fee = productionFee.mul(10 ** (18 - FEE_DECIMALS));
-
     Basket b = new Basket(
       _name,
       _symbol,
@@ -125,7 +123,7 @@ contract BasketFactory {
     );
     uint basketIndex = basketRegistry.registerBasket(b, msg.sender, _name, _symbol, _tokens, _weights);
 
-    LogBasketCreated(basketIndex, b, msg.sender, fee);
+    LogBasketCreated(basketIndex, b, msg.sender);
     return b;
   }
 

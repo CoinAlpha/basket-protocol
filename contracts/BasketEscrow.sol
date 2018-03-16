@@ -30,6 +30,7 @@ contract BasketEscrow {
   address                 public admin;
   address                 public transactionFeeRecipient;
   uint                    public transactionFee;
+  uint                    public FEE_DECIMALS;
 
   uint                    public orderIndex;
   address                 public basketRegistryAddress;
@@ -89,6 +90,7 @@ contract BasketEscrow {
     admin = msg.sender;                                  // record admin
     transactionFeeRecipient = _transactionFeeRecipient;
     transactionFee = _transactionFee;
+    FEE_DECIMALS = 4;
   }
 
   /// @dev Create an order to buy baskets with ETH
@@ -189,7 +191,7 @@ contract BasketEscrow {
     if (now >= _expiration) {
       msg.sender.transfer(_amountEth);                   // if order has expired, no transaction fee is charged
     } else {
-      uint fee = _amountEth.mul(transactionFee);
+      uint fee = _amountEth.mul(transactionFee).div(10 ** FEE_DECIMALS);
       msg.sender.transfer(_amountEth.sub(fee));
       transactionFeeRecipient.transfer(fee);
     }
@@ -269,7 +271,7 @@ contract BasketEscrow {
     assert(_fillOrder(_orderCreator, _basketAddress, _amountBasket, ETH_ADDRESS, _amountEth, _expiration, _nonce));
     assert(ERC20(_basketAddress).transferFrom(msg.sender, _orderCreator, _amountBasket));
 
-    uint fee = _amountEth.mul(transactionFee);
+    uint fee = _amountEth.mul(transactionFee).div(10 ** FEE_DECIMALS);
     msg.sender.transfer(_amountEth.sub(fee));
     transactionFeeRecipient.transfer(fee);
 
@@ -294,7 +296,7 @@ contract BasketEscrow {
     assert(_fillOrder(_orderCreator, ETH_ADDRESS, msg.value, _basketAddress, _amountBasket, _expiration, _nonce));
     assert(ERC20(_basketAddress).transfer(msg.sender, _amountBasket));
 
-    uint fee = msg.value.mul(transactionFee);
+    uint fee = msg.value.mul(transactionFee).div(10 ** FEE_DECIMALS);
     _orderCreator.transfer(msg.value.sub(fee));
     transactionFeeRecipient.transfer(fee);
 

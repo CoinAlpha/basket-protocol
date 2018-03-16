@@ -193,7 +193,7 @@ contract('Basket Escrow', (accounts) => {
         assert.strictEqual(Number(amountBasket), amountBasketsToBuy, 'incorrect basket amount');
         assert.strictEqual(buyer, HOLDER_A, 'incorrect buyer');
         assert.strictEqual(basket, basketABAddress, 'incorrect basket address');
-      } catch (err) { assert.throw(`Error creating buy order: ${err.toString()}`); }
+      } catch (err) { assert.throw(`Error cancelling buy order: ${err.toString()}`); }
     });
 
     it('sends ETH back to holder', async () => {
@@ -202,7 +202,7 @@ contract('Basket Escrow', (accounts) => {
         const holderBalance = await web3.eth.getBalancePromise(HOLDER_A);
         assert.strictEqual(Number(escrowBalance), (initialEscrowBalance - amountEthToSend), 'escrow balance did not decrease');
         assert.isAbove(Number(holderBalance), (initialHolderBalance - amountEthToSend), 'holder balance did not increase');
-      } catch (err) { assert.throw(`Error sending ETH to escrow contract: ${err.toString()}`); }
+      } catch (err) { assert.throw(`Error sending ETH back to holder: ${err.toString()}`); }
     });
 
     it('marks order as no longer exists', async () => {
@@ -441,7 +441,7 @@ contract('Basket Escrow', (accounts) => {
         const _escrowBasketBal = await basketAB.balanceOf(basketEscrow.address);
 
         assert.strictEqual(Number(_fillerBasketBal), (initialFillerBasketBal + amountBasketsToSell), 'filler basket balance did not increase');
-        assert.strictEqual(Number(_sellerEthBal), (initialSellerEthBal + amountEthToGet), 'seller eth balance did not increase');
+        assert.isBelow(Number(_sellerEthBal), (initialSellerEthBal + amountEthToGet), 'seller eth balance did not increase');
         assert.isBelow(Number(_fillerEthBal), (initialFillerEthBal - amountEthToGet), 'filler eth balance did not decrease');
         assert.strictEqual(Number(_escrowBasketBal), (initialEscrowBasketBal - amountBasketsToSell), 'escrow basket balance did not decrease');
       } catch (err) { assert.throw(`Error sending ETH to escrow contract: ${err.toString()}`); }
