@@ -32,9 +32,12 @@ contract IBasketFactory {
   */
 contract BasketFactory {
 
-  address                       public creator;
+  address                       public admin;
   address                       public basketRegistryAddress;
   address                       public basketEscrowAddress;
+
+  address                       public productionFeeRecipient;
+  uint                          public productionFee;
 
   // Modules
   ITokenWalletFactory           public tokenWalletFactory;
@@ -60,11 +63,20 @@ contract BasketFactory {
   /// @dev BasketFactory constructor
   /// @param  _basketRegistryAddress               Address of basket registry
   /// @param  _basketEscrowAddress                 Address of basket escrow
-  function BasketFactory (address _basketRegistryAddress, address _basketEscrowAddress) public {
+  function BasketFactory (
+    address _basketRegistryAddress,
+    address _basketEscrowAddress,
+    address _productionFeeRecipient,
+    uint _productionFee
+  ) public {
+    admin = msg.sender;
+
     basketRegistryAddress = _basketRegistryAddress;
     basketRegistry = IBasketRegistry(_basketRegistryAddress);
     basketEscrowAddress = _basketEscrowAddress;
-    creator = msg.sender;
+
+    productionFeeRecipient = _productionFeeRecipient;
+    productionFee = _productionFee;
   }
 
   /// @dev Deploy a new basket
@@ -72,17 +84,38 @@ contract BasketFactory {
   /// @param  _symbol                              Symbol of new basket
   /// @param  _tokens                              Token addresses of new basket
   /// @param  _weights                             Weight ratio addresses of new basket
+  /// @param  _arrangerFeeRecipient                Address to send arranger fees
+  /// @param  _arrangerFee                         Amount of arranger fee to charge per basket minted
   /// @return deployed basket
   function createBasket(
     string    _name,
     string    _symbol,
     address[] _tokens,
-    uint[]    _weights
+    uint[]    _weights,
+    address   _arrangerFeeRecipient,
+    uint      _arrangerFee
   )
     public
+    payable
     returns (address newBasket)
   {
-    Basket b = new Basket(_name, _symbol, _tokens, _weights, basketRegistryAddress, basketEscrowAddress);
+    // charging arrangers a fee to deploy new basket
+    if (productionFee > 0) {
+      require(msg.value >= productionFee);
+      productionFeeRecipient.transfer(msg.value);
+    }
+
+    Basket b = new Basket(
+      _name,
+      _symbol,
+      _tokens,
+      _weights,
+      basketRegistryAddress,
+      basketEscrowAddress,
+      msg.sender,                                  // arranger address
+      _arrangerFeeRecipient,
+      _arrangerFee
+    );
     uint basketIndex = basketRegistry.registerBasket(b, msg.sender, _name, _symbol, _tokens, _weights);
 
     LogBasketCreated(basketIndex, b, msg.sender);
@@ -111,7 +144,7 @@ contract BasketFactory {
   /// @param  _tokenWalletFactory                  Address of token wallet factory
   /// @return success                              Operation successful
   function setTokenWalletFactory(address _tokenWalletFactory) public returns (bool success) {
-    require(msg.sender == creator);
+    require(msg.sender == admin);
     tokenWalletFactory = ITokenWalletFactory(_tokenWalletFactory);
     LogSetTokenWalletFactory(_tokenWalletFactory);
     return true;

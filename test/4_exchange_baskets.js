@@ -97,6 +97,9 @@ contract('Basket Escrow', (accounts) => {
   const expirationInSeconds = (new Date().getTime() + 86400000) / 1000;
   let nonce = Math.random() * 1e7;
 
+  // Change expiration below to ensure that expired contracts cannot be filled
+  // expirationInSeconds = (new Date().getTime()) / 1000;
+
   describe('Holder_A creates buy order', () => {
     before('check initial balance', async () => {
       try {
@@ -185,7 +188,7 @@ contract('Basket Escrow', (accounts) => {
       } catch (err) { assert.throw(`Error creating buy order: ${err.toString()}`); }
     });
 
-    it('sends ETH to back to holder', async () => {
+    it('sends ETH back to holder', async () => {
       try {
         const escrowBalance = await web3.eth.getBalancePromise(basketEscrow.address);
         const holderBalance = await web3.eth.getBalancePromise(HOLDER_A);
@@ -360,7 +363,7 @@ contract('Basket Escrow', (accounts) => {
       } catch (err) { assert.throw(`Error creating buy order: ${err.toString()}`); }
     });
 
-    it('sends Baskets to back to market maker', async () => {
+    it('sends Baskets back to market maker', async () => {
       try {
         const escrowBalance = await basketAB.balanceOf(basketEscrow.address);
         const sellerBalance = await basketAB.balanceOf(MARKET_MAKER);

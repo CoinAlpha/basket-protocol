@@ -27,6 +27,10 @@ contract BasketEscrow {
   using SafeMath for uint;
 
   // Constants set at contract inception
+  address                 public admin;
+  address                 public transactionFeeRecipient;
+  uint                    public transactionFee;
+
   uint                    public orderIndex;
   address                 public basketRegistryAddress;
   address                 public ETH_ADDRESS;
@@ -70,11 +74,21 @@ contract BasketEscrow {
 
   /// @dev BasketEscrow constructor
   /// @param  _basketRegistryAddress                     Address of basket registry
-  function BasketEscrow(address _basketRegistryAddress) public {
+  /// @param  _transactionFeeRecipient                   Address to send transactionFee
+  /// @param  _transactionFee                            Transaction fee in ETH percentage
+  function BasketEscrow(
+    address _basketRegistryAddress,
+    address _transactionFeeRecipient,
+    uint    _transactionFee
+  ) public {
     basketRegistryAddress = _basketRegistryAddress;
     basketRegistry = IBasketRegistry(_basketRegistryAddress);
     ETH_ADDRESS = 0;                                     // Use address 0 to indicate Eth
     orderIndex = 1;                                      // Initialize order index at 1
+
+    admin = msg.sender;                                  // record admin
+    transactionFeeRecipient = _transactionFeeRecipient;
+    transactionFee = _transactionFee;
   }
 
   /// @dev Create an order to buy baskets with ETH
@@ -171,7 +185,14 @@ contract BasketEscrow {
     uint _nonce
   ) public returns (bool success) {
     assert(_cancelOrder(msg.sender, _basketAddress, _amountBasket, ETH_ADDRESS, _amountEth, _expiration, _nonce));
-    msg.sender.transfer(_amountEth);
+
+    if (now >= _expiration) {
+      msg.sender.transfer(_amountEth);                   // if order has expired, no transaction fee is charged
+    } else {
+      uint fee = _amountEth.mul(transactionFee);
+      msg.sender.transfer(_amountEth.sub(fee));
+      transactionFeeRecipient.transfer(fee);
+    }
 
     LogBuyOrderCancelled(msg.sender, _basketAddress, _amountEth, _amountBasket);
     return true;
@@ -247,7 +268,10 @@ contract BasketEscrow {
   ) public returns (bool success) {
     assert(_fillOrder(_orderCreator, _basketAddress, _amountBasket, ETH_ADDRESS, _amountEth, _expiration, _nonce));
     assert(ERC20(_basketAddress).transferFrom(msg.sender, _orderCreator, _amountBasket));
-    msg.sender.transfer(_amountEth);
+
+    uint fee = _amountEth.mul(transactionFee);
+    msg.sender.transfer(_amountEth.sub(fee));
+    transactionFeeRecipient.transfer(fee);
 
     LogBuyOrderFilled(msg.sender, _orderCreator, _basketAddress, _amountEth, _amountBasket);
     return true;
@@ -269,7 +293,10 @@ contract BasketEscrow {
   ) public payable returns (bool success) {
     assert(_fillOrder(_orderCreator, ETH_ADDRESS, msg.value, _basketAddress, _amountBasket, _expiration, _nonce));
     assert(ERC20(_basketAddress).transfer(msg.sender, _amountBasket));
-    _orderCreator.transfer(msg.value);
+
+    uint fee = msg.value.mul(transactionFee);
+    _orderCreator.transfer(msg.value.sub(fee));
+    transactionFeeRecipient.transfer(fee);
 
     LogSellOrderFilled(msg.sender, _orderCreator, _basketAddress, msg.value, _amountBasket);
     return true;
