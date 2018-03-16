@@ -5,7 +5,7 @@ module.exports = {
       port: 8545,
       network_id: '*',       // Match any network id
       gas: 7000000,          // Set to Ropsten limit
-      gasPrice: 20e9,        // 20 gwei
+      gasPrice: 20000000000, // 20 gwei
     },
     test: {
       host: 'localhost',

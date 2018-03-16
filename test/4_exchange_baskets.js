@@ -270,6 +270,12 @@ contract('Basket Escrow', (accounts) => {
         assert.strictEqual(Number(_buyerBasketBal), (initialBuyerBasketBal + amountBasketsToBuy), 'buyer basket balance did not increase');
         assert.isBelow(Number(_fillerEthBal), (initialFillerEthBal + amountEthToSend), 'filler eth balance did not increase');
         assert.strictEqual(Number(_escrowEthBal), (initialEscrowEthBal - amountEthToSend), 'escrow eth balance did not decrease');
+        // RUN WHEN GAS PRICE = 0
+        // assert.strictEqual(
+        //   (initialFillerEthBal + amountEthToSend) - Number(_fillerEthBal),
+        //   TRANSACTION_FEE * amountEthToSend,
+        //   'Incorrect amount of transaction fee charged',
+        // );
       } catch (err) { assert.throw(`Error sending ETH to escrow contract: ${err.toString()}`); }
     });
 
@@ -444,6 +450,13 @@ contract('Basket Escrow', (accounts) => {
         assert.isBelow(Number(_sellerEthBal), (initialSellerEthBal + amountEthToGet), 'seller eth balance did not increase');
         assert.isBelow(Number(_fillerEthBal), (initialFillerEthBal - amountEthToGet), 'filler eth balance did not decrease');
         assert.strictEqual(Number(_escrowBasketBal), (initialEscrowBasketBal - amountBasketsToSell), 'escrow basket balance did not decrease');
+
+        // RUN WHEN GAS PRICE = 0
+        // assert.strictEqual(
+        //   (initialSellerEthBal + amountEthToGet) - Number(_sellerEthBal),
+        //   TRANSACTION_FEE * amountEthToGet,
+        //   'Incorrect amount of transaction fee charged',
+        // );
       } catch (err) { assert.throw(`Error sending ETH to escrow contract: ${err.toString()}`); }
     });
 
