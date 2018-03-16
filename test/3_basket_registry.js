@@ -14,7 +14,7 @@ if (typeof web3.eth.getAccountsPromise === 'undefined') {
   Promise.promisifyAll(web3.eth, { suffix: 'Promise' });
 }
 
-contract('Basket Factory | Basket Registry', (accounts) => {
+contract('Basket Escrow', (accounts) => {
   // Accounts
   const [ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B] = accounts.slice(5);
   const accountsObj = { ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B };
