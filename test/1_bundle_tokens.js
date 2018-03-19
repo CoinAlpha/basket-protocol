@@ -16,13 +16,13 @@ if (typeof web3.eth.getAccountsPromise === 'undefined') {
 
 contract('TestToken | Basket', (accounts) => {
   // Accounts
-  const [ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B] = accounts.slice(5);
+  const [ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B] = accounts.slice(0, 5);
   const accountsObj = { ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B };
   console.log('  Accounts:');
   Object.keys(accountsObj).forEach(account => console.log(`  - ${account} = '${accountsObj[account]}'`));
 
   const ARRANGER_FEE = 0.01;            // Charge 0.01 ETH of arranger fee per basket minted
-  const PRODUCTION_FEE = 0.3;           // Charge 0.3 ETH of transaction per basket creation
+  const PRODUCTION_FEE = 0.3;           // Charge 0.3 ETH of production per basket creation
   const FEE_DECIMALS = 4;
 
   // Contract instances
@@ -145,7 +145,7 @@ contract('TestToken | Basket', (accounts) => {
         .catch(err => assert.throw(`Error depositing and bundling ${err.toString()}`));
     });
 
-    it('charges correct amount of transaction fee', async () => {
+    it('charges correct amount of arranger fee', async () => {
       let balance = await web3.eth.getBalancePromise(HOLDER_A);
       initialBalance = Number(initialBalance) / 1e18;
       balance = Number(balance) / 1e18;
@@ -252,6 +252,54 @@ contract('TestToken | Basket', (accounts) => {
         assert.strictEqual(Number(_balTokenA), basketABBalance, 'incorrect token balance in wallet');
         assert.strictEqual(Number(_balTokenB), basketABBalance, 'incorrect token balance in wallet');
       } catch (err) { assert.throw(`Error extracting: ${err.toString()}`); }
+    });
+  });
+
+  describe('Allows factory creator to change key variables', () => {
+    before('initialization', async () => {
+      const admin = await basketFactory.admin.call();
+      const productionFeeRecipient = await basketFactory.productionFeeRecipient.call();
+      const productionFee = await basketFactory.productionFee.call();
+      assert.strictEqual(admin, ADMINISTRATOR, 'wrong admin saved');
+      assert.strictEqual(productionFeeRecipient, ADMINISTRATOR, 'wrong productionFeeRecipient saved');
+      assert.strictEqual(Number(productionFee), PRODUCTION_FEE * (10 ** FEE_DECIMALS), 'wrong productionFee saved');
+    });
+
+    it('allows admin to change production fee recipient', async () => {
+      await basketFactory.changeProductionFeeRecipient(HOLDER_B, { from: ADMINISTRATOR });
+      const productionFeeRecipient = await basketFactory.productionFeeRecipient.call();
+      assert.strictEqual(productionFeeRecipient, HOLDER_B, 'production fee recipient did not change accordingly');
+    });
+
+    it('allows admin to change production fee', async () => {
+      const NEW_FEE = 0.002;
+      await basketFactory.changeProductionFee(NEW_FEE * (10 ** FEE_DECIMALS), { from: ADMINISTRATOR });
+      const productionFee = await basketFactory.productionFee.call();
+      assert.strictEqual(Number(productionFee), Number(NEW_FEE) * (10 ** FEE_DECIMALS), 'production fee did not change accordingly');
+    });
+  });
+
+  describe('Allows basket creator to change key variables', () => {
+    before('initialization', async () => {
+      const arranger = await basketAB.arranger.call();
+      const arrangerFeeRecipient = await basketAB.arrangerFeeRecipient.call();
+      const arrangerFee = await basketAB.arrangerFee.call();
+      assert.strictEqual(arranger, ARRANGER, 'wrong arranger saved');
+      assert.strictEqual(arrangerFeeRecipient, ARRANGER, 'wrong arrangerFeeRecipient saved');
+      assert.strictEqual(Number(arrangerFee), ARRANGER_FEE * (10 ** FEE_DECIMALS), 'wrong arrangerFee saved');
+    });
+
+    it('allows arranger to change arranger fee recipient', async () => {
+      await basketAB.changeArrangerFeeRecipient(HOLDER_B, { from: ARRANGER });
+      const arrangerFeeRecipient = await basketAB.arrangerFeeRecipient.call();
+      assert.strictEqual(arrangerFeeRecipient, HOLDER_B, 'arranger fee recipient did not change accordingly');
+    });
+
+    it('allows arranger to change arranger fee', async () => {
+      const NEW_FEE = 0.007;
+      await basketAB.changeArrangerFee(NEW_FEE * (10 ** FEE_DECIMALS), { from: ARRANGER });
+      const arrangerFee = await basketAB.arrangerFee.call();
+      assert.strictEqual(Number(arrangerFee), Number(NEW_FEE) * (10 ** FEE_DECIMALS), 'arranger fee did not change accordingly');
     });
   });
 });

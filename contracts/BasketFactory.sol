@@ -17,7 +17,6 @@
 
 pragma solidity ^0.4.18;
 
-import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Basket.sol";
 import "./BasketRegistry.sol";
 import "./TokenWalletFactory.sol";
@@ -33,15 +32,11 @@ contract IBasketFactory {
   * @author CoinAlpha, Inc. <contact@coinalpha.com>
   */
 contract BasketFactory {
-  using SafeMath for uint;
-
   address                       public admin;
   address                       public basketRegistryAddress;
-  address                       public basketEscrowAddress;
 
   address                       public productionFeeRecipient;
   uint                          public productionFee;
-  uint                          public FEE_DECIMALS;
 
   // Modules
   ITokenWalletFactory           public tokenWalletFactory;
@@ -54,11 +49,6 @@ contract BasketFactory {
   mapping(address => uint)      public tokenWalletIndexFromAddress;
 
   // Modifiers
-  modifier onlyBasket {
-    require(basketRegistry.checkBasketExists(msg.sender));
-    _;
-  }
-
   modifier onlyAdmin {
     require(msg.sender == admin);
     _;
@@ -68,15 +58,13 @@ contract BasketFactory {
   event LogBasketCreated(uint basketIndex, address basketAddress, address arranger);
   event LogTokenWalletCreated(address tokenWallet, address owner);
   event LogSetTokenWalletFactory(address newTokenWalletFactory);
-  event LogProductionFeeRecipientChange(address oldRecepient, address newRecipient);
+  event LogProductionFeeRecipientChange(address oldRecipient, address newRecipient);
   event LogProductionFeeChange(uint oldFee, uint newFee);
 
   /// @dev BasketFactory constructor
   /// @param  _basketRegistryAddress               Address of basket registry
-  /// @param  _basketEscrowAddress                 Address of basket escrow
   function BasketFactory (
     address _basketRegistryAddress,
-    address _basketEscrowAddress,
     address _productionFeeRecipient,
     uint _productionFee
   ) public {
@@ -84,11 +72,9 @@ contract BasketFactory {
 
     basketRegistryAddress = _basketRegistryAddress;
     basketRegistry = IBasketRegistry(_basketRegistryAddress);
-    basketEscrowAddress = _basketEscrowAddress;
 
     productionFeeRecipient = _productionFeeRecipient;
     productionFee = _productionFee;
-    FEE_DECIMALS = 4;                              // Default transaction fee to 4 decimal places
   }
 
   /// @dev Deploy a new basket
@@ -112,10 +98,8 @@ contract BasketFactory {
     returns (address newBasket)
   {
     // charging arrangers a fee to deploy new basket
-    if (productionFee > 0) {
-      require(msg.value >= productionFee.mul(10 ** (18 - FEE_DECIMALS)));
-      productionFeeRecipient.transfer(msg.value);
-    }
+    require(msg.value >= productionFee * (10 ** 14));
+    productionFeeRecipient.transfer(msg.value);
 
     Basket b = new Basket(
       _name,
@@ -123,25 +107,24 @@ contract BasketFactory {
       _tokens,
       _weights,
       basketRegistryAddress,
-      basketEscrowAddress,
       msg.sender,                                  // arranger address
       _arrangerFeeRecipient,
       _arrangerFee
     );
-    uint basketIndex = basketRegistry.registerBasket(b, msg.sender, _name, _symbol, _tokens, _weights);
 
-    LogBasketCreated(basketIndex, b, msg.sender);
+    LogBasketCreated(
+      basketRegistry.registerBasket(b, msg.sender, _name, _symbol, _tokens, _weights),
+      b,
+      msg.sender
+    );
     return b;
   }
 
   /// @dev Create TokenWallet: for segregatint assets
   /// @param  _owner                               Address of new token wallet owner
   /// @return newTokenWallet                       New token wallet address
-  function createTokenWallet(address _owner)
-    public
-    onlyBasket
-    returns (address newTokenWallet)
-  {
+  function createTokenWallet(address _owner) public returns (address newTokenWallet) {
+    require(basketRegistry.checkBasketExists(msg.sender));
     address tw = tokenWalletFactory.createTokenWallet(_owner);
     tokenWalletList.push(tw);
     tokenWallets[tokenWalletIndex] = tw;
@@ -162,13 +145,13 @@ contract BasketFactory {
   }
 
   /// @dev Change recipient of production fees
-  /// @param  _newRecepient                        New fee recipient
+  /// @param  _newRecipient                        New fee recipient
   /// @return success                              Operation successful
-  function changeProductionFeeRecipient(address _newRecepient) public onlyAdmin returns (bool success) {
-    address oldRecepient = productionFeeRecipient;
-    productionFeeRecipient = _newRecepient;
+  function changeProductionFeeRecipient(address _newRecipient) public onlyAdmin returns (bool success) {
+    address oldRecipient = productionFeeRecipient;
+    productionFeeRecipient = _newRecipient;
 
-    LogProductionFeeRecipientChange(oldRecepient, productionFeeRecipient);
+    LogProductionFeeRecipientChange(oldRecipient, productionFeeRecipient);
     return true;
   }
 

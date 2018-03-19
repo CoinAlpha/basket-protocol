@@ -16,7 +16,7 @@ if (typeof web3.eth.getAccountsPromise === 'undefined') {
 
 contract('Basket Escrow', (accounts) => {
   // Accounts
-  const [ADMINISTRATOR, ARRANGER, MARKET_MAKER, HOLDER_A, HOLDER_B] = accounts.slice(5);
+  const [ADMINISTRATOR, ARRANGER, MARKET_MAKER, HOLDER_A, HOLDER_B] = accounts.slice(0, 5);
   const zeroAddress = '0x0000000000000000000000000000000000000000';
 
   const ARRANGER_FEE = 0.01;            // Charge 0.01 ETH of arranger fee per basket minted
@@ -51,10 +51,6 @@ contract('Basket Escrow', (accounts) => {
   describe('initialization', () => {
     it('initializes basketFactory and basketRegistry correctly', async () => {
       try {
-        // check addresses in basketFactory been set correctly
-        const _basketEscrowAddress = await basketFactory.basketEscrowAddress.call();
-        assert.strictEqual(_basketEscrowAddress, basketEscrow.address, 'basket escrow address not set correctly');
-
         // check initialization of indices in basketEscrow
         const _orderIndex = await basketEscrow.orderIndex.call();
         const orderIndex = Number(_orderIndex);
@@ -64,7 +60,7 @@ contract('Basket Escrow', (accounts) => {
   });
 
   describe('deploys test basket', () => {
-    it('deploys the basket with defined escrow address', async () => {
+    it('deploys the basket correctly', async () => {
       try {
         const txObj = await basketFactory.createBasket(
           'A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], ARRANGER, (ARRANGER_FEE * (10 ** FEE_DECIMALS)),
@@ -74,9 +70,6 @@ contract('Basket Escrow', (accounts) => {
         basketABAddress = txLog.args.basketAddress;
         basketAB = web3.eth.contract(basketAbi).at(basketABAddress);
         Promise.promisifyAll(basketAB, { suffix: 'Promise' });
-
-        const _escrowAddress = basketAB.basketEscrowAddress.call();
-        assert.strictEqual(_escrowAddress, basketEscrow.address, 'Basket does not inherit escrow address from factory');
       } catch (err) { assert.throw(`Error deploying basket with escrow address: ${err.toString()}`); }
     });
 
@@ -466,6 +459,30 @@ contract('Basket Escrow', (accounts) => {
         const _isFilled = _orderDetails[8];
         assert.strictEqual(_isFilled, true, 'incorrect _isFilled');
       } catch (err) { assert.throw(`Error in marking order filled: ${err.toString()}`); }
+    });
+  });
+
+  describe('Allows escrow creator to change key variables', () => {
+    before('initialization', async () => {
+      const admin = await basketEscrow.admin.call();
+      const transactionFeeRecipient = await basketEscrow.transactionFeeRecipient.call();
+      const transactionFee = await basketEscrow.transactionFee.call();
+      assert.strictEqual(admin, ADMINISTRATOR, 'wrong admin saved');
+      assert.strictEqual(transactionFeeRecipient, ADMINISTRATOR, 'wrong transactionFeeRecipient saved');
+      assert.strictEqual(Number(transactionFee), TRANSACTION_FEE * (10 ** FEE_DECIMALS), 'wrong transactionFee saved');
+    });
+
+    it('allows admin to change transaction fee recipient', async () => {
+      await basketEscrow.changeTransactionFeeRecipient(zeroAddress);
+      const transactionFeeRecipient = await basketEscrow.transactionFeeRecipient.call();
+      assert.strictEqual(transactionFeeRecipient, zeroAddress, 'transaction fee recipient did not change accordingly');
+    });
+
+    it('allows admin to change transaction fee', async () => {
+      const NEW_FEE = 0.002;
+      await basketEscrow.changeTransactionFee(NEW_FEE * (10 ** FEE_DECIMALS));
+      const transactionFee = await basketEscrow.transactionFee.call();
+      assert.strictEqual(Number(transactionFee), Number(NEW_FEE) * (10 ** FEE_DECIMALS), 'transaction fee did not change accordingly');
     });
   });
 });

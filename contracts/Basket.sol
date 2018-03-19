@@ -37,12 +37,10 @@ contract Basket is StandardToken {
   uint[]                  public weights;
   address                 public basketFactoryAddress;
   address                 public basketRegistryAddress;
-  address                 public basketEscrowAddress;
 
   address                 public arranger;
   address                 public arrangerFeeRecipient;
   uint                    public arrangerFee;
-  uint                    public FEE_DECIMALS;
 
   // Modules
   IBasketFactory          public basketFactory;
@@ -58,7 +56,7 @@ contract Basket is StandardToken {
   event LogDepositAndBundle(address indexed holder, uint quantity);
   event LogDebundleAndWithdraw(address indexed holder, uint quantity);
   event LogExtract(address indexed holder, uint quantity, address tokenWalletAddress);
-  event LogArrangerFeeRecipientChange(address oldRecepient, address newRecipient);
+  event LogArrangerFeeRecipientChange(address oldRecipient, address newRecipient);
   event LogArrangerFeeChange(uint oldFee, uint newFee);
 
   /// @dev Basket constructor
@@ -67,7 +65,6 @@ contract Basket is StandardToken {
   /// @param  _tokens                              Array of ERC20 token addresses
   /// @param  _weights                             Array of ERC20 token quantities
   /// @param  _basketRegistryAddress               Address of basket registry
-  /// @param  _basketRegistryAddress               Address of basket escrow
   /// @param  _arranger                            Address of arranger
   /// @param  _arrangerFeeRecipient                Address to send arranger fees
   /// @param  _arrangerFee                         Amount of fee in ETH for every basket minted
@@ -77,7 +74,6 @@ contract Basket is StandardToken {
     address[] _tokens,
     uint[] _weights,
     address _basketRegistryAddress,
-    address _basketEscrowAddress,
     address _arranger,
     address _arrangerFeeRecipient,
     uint _arrangerFee                              // Amount of ETH charged per basket minted
@@ -88,8 +84,6 @@ contract Basket is StandardToken {
     symbol = _symbol;
     tokens = _tokens;
     weights = _weights;
-    decimals = 18;                                 // Default to 18 decimals to allow accomodate all types of ERC20 token
-    totalSupply_ = 0;                              // Baskets can only be created by depositing and forging underlying tokens
 
     basketFactoryAddress = msg.sender;             // This contract is created only by the Factory
     basketFactory = IBasketFactory(msg.sender);
@@ -97,12 +91,9 @@ contract Basket is StandardToken {
     basketRegistryAddress = _basketRegistryAddress;
     basketRegistry = IBasketRegistry(_basketRegistryAddress);
 
-    basketEscrowAddress = _basketEscrowAddress;
-
     arranger = _arranger;
     arrangerFeeRecipient = _arrangerFeeRecipient;
     arrangerFee = _arrangerFee;
-    FEE_DECIMALS = 4;                              // Default transaction fee to 4 decimal places
   }
 
   /// @dev Combined deposit of all component tokens (not yet deposited) and bundle
@@ -117,7 +108,7 @@ contract Basket is StandardToken {
 
     // charging market makers a fee for every new basket minted
     if (arrangerFee > 0) {
-      require(msg.value >= arrangerFee.mul(_quantity).div(10 ** FEE_DECIMALS));
+      require(msg.value >= arrangerFee.mul(_quantity).div(10 ** 4));
       arrangerFeeRecipient.transfer(msg.value);
     }
 
@@ -175,13 +166,13 @@ contract Basket is StandardToken {
   }
 
   /// @dev Change recipient of arranger fees
-  /// @param  _newRecepient                        New fee recipient
+  /// @param  _newRecipient                        New fee recipient
   /// @return success                              Operation successful
-  function changeArrangerFeeRecipient(address _newRecepient) public onlyArranger returns (bool success) {
-    address oldRecepient = arrangerFeeRecipient;
-    arrangerFeeRecipient = _newRecepient;
+  function changeArrangerFeeRecipient(address _newRecipient) public onlyArranger returns (bool success) {
+    address oldRecipient = arrangerFeeRecipient;
+    arrangerFeeRecipient = _newRecipient;
 
-    LogArrangerFeeRecipientChange(oldRecepient, arrangerFeeRecipient);
+    LogArrangerFeeRecipientChange(oldRecipient, arrangerFeeRecipient);
     return true;
   }
 

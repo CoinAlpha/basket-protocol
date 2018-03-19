@@ -78,7 +78,7 @@ contract BasketEscrow {
   event LogSellOrderCancelled(address indexed seller, address basket, uint amountEth, uint amountBasket);
   event LogBuyOrderFilled(address indexed buyOrderFiller, address indexed orderCreator, address basket, uint amountEth, uint amountBasket);
   event LogSellOrderFilled(address indexed sellOrderFiller, address indexed orderCreator, address basket, uint amountEth, uint amountBasket);
-  event LogTransactionFeeRecipientChange(address oldRecepient, address newRecipient);
+  event LogTransactionFeeRecipientChange(address oldRecipient, address newRecipient);
   event LogTransactionFeeChange(uint oldFee, uint newFee);
 
   /// @dev BasketEscrow constructor
@@ -367,13 +367,13 @@ contract BasketEscrow {
   }
 
   /// @dev Change recipient of transaction fees
-  /// @param  _newRecepient                        New fee recipient
+  /// @param  _newRecipient                        New fee recipient
   /// @return success                              Operation successful
-  function changeTransactionFeeRecipient(address _newRecepient) public onlyAdmin returns (bool success) {
-    address oldRecepient = transactionFeeRecipient;
-    transactionFeeRecipient = _newRecepient;
+  function changeTransactionFeeRecipient(address _newRecipient) public onlyAdmin returns (bool success) {
+    address oldRecipient = transactionFeeRecipient;
+    transactionFeeRecipient = _newRecipient;
 
-    LogTransactionFeeRecipientChange(oldRecepient, transactionFeeRecipient);
+    LogTransactionFeeRecipientChange(oldRecipient, transactionFeeRecipient);
     return true;
   }
 

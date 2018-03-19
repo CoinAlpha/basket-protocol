@@ -79,13 +79,13 @@ contract('Deployment costs', (accounts) => {
     });
 
     it('BasketFactory cost', async () => {
-      basketFactory = await constructors.BasketFactory(CREATOR, REGISTRY, ESCROW, CREATOR, PRODUCTION_FEE);
+      basketFactory = await constructors.BasketFactory(CREATOR, REGISTRY, CREATOR, PRODUCTION_FEE);
     });
 
     it('Basket cost', async () => {
       basket = await constructors.Basket(
         CREATOR,
-        'Basket contract', 'BASK', [TOKEN_A, TOKEN_B], [1, 2], REGISTRY, ESCROW, CREATOR, CREATOR, ARRANGER_FEE,
+        'Basket contract', 'BASK', [TOKEN_A, TOKEN_B], [1, 2], REGISTRY, CREATOR, CREATOR, ARRANGER_FEE,
       );
     });
 
