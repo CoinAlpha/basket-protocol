@@ -86,9 +86,10 @@ contract BasketEscrow {
   /// @param  _transactionFeeRecipient                   Address to send transactionFee
   /// @param  _transactionFee                            Transaction fee in ETH percentage
   function BasketEscrow(
-    address _basketRegistryAddress,
-    address _transactionFeeRecipient,
-    uint    _transactionFee
+    address   _basketRegistryAddress,
+    address   _transactionFeeRecipient,
+    uint      _transactionFee
+
   ) public {
     basketRegistryAddress = _basketRegistryAddress;
     basketRegistry = IBasketRegistry(_basketRegistryAddress);
@@ -108,10 +109,10 @@ contract BasketEscrow {
   /// @param  _nonce                                     Random number to generate unique order hash
   /// @return success                                    Operation successful
   function createBuyOrder(
-    address _basketAddress,
-    uint _amountBasket,
-    uint _expiration,
-    uint _nonce
+    address   _basketAddress,
+    uint      _amountBasket,
+    uint      _expiration,
+    uint      _nonce
   ) public payable returns (bool success) {
     uint index = _createOrder(msg.sender, _basketAddress, _amountBasket, ETH_ADDRESS, msg.value, _expiration, _nonce);
     assert(index > 0);
@@ -128,11 +129,11 @@ contract BasketEscrow {
   /// @param  _nonce                                     Random number to generate unique order hash
   /// @return success                                    Operation successful
   function createSellOrder(
-    address _basketAddress,
-    uint _amountBasket,
-    uint _amountEth,
-    uint _expiration,
-    uint _nonce
+    address   _basketAddress,
+    uint      _amountBasket,
+    uint      _amountEth,
+    uint      _expiration,
+    uint      _nonce
   )
     public
     returns (bool success)
@@ -155,13 +156,13 @@ contract BasketEscrow {
   /// @param  _nonce                                     Random number to generate unique order hash
   /// @return newOrderIndex
   function _createOrder(
-    address _orderCreator,
-    address _tokenGet,
-    uint _amountGet,
-    address _tokenGive,
-    uint _amountGive,
-    uint _expiration,
-    uint _nonce
+    address   _orderCreator,
+    address   _tokenGet,
+    uint      _amountGet,
+    address   _tokenGive,
+    uint      _amountGive,
+    uint      _expiration,
+    uint      _nonce
   )
     internal
     returns (uint newOrderIndex)
@@ -188,11 +189,11 @@ contract BasketEscrow {
   /// @param  _nonce                                     Random number in original order
   /// @return success                                    Operation successful
   function cancelBuyOrder(
-    address _basketAddress,
-    uint _amountBasket,
-    uint _amountEth,
-    uint _expiration,
-    uint _nonce
+    address   _basketAddress,
+    uint      _amountBasket,
+    uint      _amountEth,
+    uint      _expiration,
+    uint      _nonce
   ) public returns (bool success) {
     assert(_cancelOrder(msg.sender, _basketAddress, _amountBasket, ETH_ADDRESS, _amountEth, _expiration, _nonce));
 
@@ -216,11 +217,11 @@ contract BasketEscrow {
   /// @param  _nonce                                     Random number in original order
   /// @return success                                    Operation successful
   function cancelSellOrder(
-    address _basketAddress,
-    uint _amountBasket,
-    uint _amountEth,
-    uint _expiration,
-    uint _nonce
+    address   _basketAddress,
+    uint      _amountBasket,
+    uint      _amountEth,
+    uint      _expiration,
+    uint      _nonce
   ) public returns (bool success) {
     assert(_cancelOrder(msg.sender, ETH_ADDRESS, _amountEth, _basketAddress, _amountBasket, _expiration, _nonce));
     assert(ERC20(_basketAddress).transfer(msg.sender, _amountBasket));
@@ -239,13 +240,13 @@ contract BasketEscrow {
   /// @param  _nonce                                     Random number in original order
   /// @return success                                    Operation successful
   function _cancelOrder(
-    address _orderCreator,
-    address _tokenGet,
-    uint _amountGet,
-    address _tokenGive,
-    uint _amountGive,
-    uint _expiration,
-    uint _nonce
+    address   _orderCreator,
+    address   _tokenGet,
+    uint      _amountGet,
+    address   _tokenGive,
+    uint      _amountGive,
+    uint      _expiration,
+    uint      _nonce
   )
     internal
     returns (bool success)
@@ -269,12 +270,12 @@ contract BasketEscrow {
   /// @param  _nonce                                     Random number in original order
   /// @return success                                    Operation successful
   function fillBuyOrder(
-    address _orderCreator,
-    address _basketAddress,
-    uint _amountBasket,
-    uint _amountEth,
-    uint _expiration,
-    uint _nonce
+    address   _orderCreator,
+    address   _basketAddress,
+    uint      _amountBasket,
+    uint      _amountEth,
+    uint      _expiration,
+    uint      _nonce
   ) public returns (bool success) {
     assert(_fillOrder(_orderCreator, _basketAddress, _amountBasket, ETH_ADDRESS, _amountEth, _expiration, _nonce));
     assert(ERC20(_basketAddress).transferFrom(msg.sender, _orderCreator, _amountBasket));
@@ -295,11 +296,11 @@ contract BasketEscrow {
   /// @param  _nonce                                     Random number in original order
   /// @return success                                    Operation successful
   function fillSellOrder(
-    address _orderCreator,
-    address _basketAddress,
-    uint _amountBasket,
-    uint _expiration,
-    uint _nonce
+    address   _orderCreator,
+    address   _basketAddress,
+    uint      _amountBasket,
+    uint      _expiration,
+    uint      _nonce
   ) public payable returns (bool success) {
     assert(_fillOrder(_orderCreator, ETH_ADDRESS, msg.value, _basketAddress, _amountBasket, _expiration, _nonce));
     assert(ERC20(_basketAddress).transfer(msg.sender, _amountBasket));
@@ -322,13 +323,13 @@ contract BasketEscrow {
   /// @param  _nonce                                     Random number in original order
   /// @return success                                    Operation successful
   function _fillOrder(
-    address _orderCreator,
-    address _tokenGet,
-    uint _amountGet,
-    address _tokenGive,
-    uint _amountGive,
-    uint _expiration,
-    uint _nonce
+    address   _orderCreator,
+    address   _tokenGet,
+    uint      _amountGet,
+    address   _tokenGive,
+    uint      _amountGive,
+    uint      _expiration,
+    uint      _nonce
   )
     internal
     returns (bool success)
@@ -348,15 +349,15 @@ contract BasketEscrow {
   /// @param  _orderIndex                                  Order index assigned at order creation
   /// @return Order struct
   function getOrderDetails(uint _orderIndex) public view returns (
-    address orderCreator,
-    address tokenGet,
-    uint amountGet,
-    address tokenGive,
-    uint amountGive,
-    uint expiration,
-    uint nonce,
-    bool _orderExists,
-    bool _isFilled
+    address   orderCreator,
+    address   tokenGet,
+    uint      amountGet,
+    address   tokenGive,
+    uint      amountGive,
+    uint      expiration,
+    uint      nonce,
+    bool      _orderExists,
+    bool      _isFilled
   ) {
     Order memory o = orderMap[_orderIndex];
     bytes32 hash = sha256(this, o.tokenGet, o.amountGet, o.tokenGive, o.amountGive, o.expiration, o.nonce);

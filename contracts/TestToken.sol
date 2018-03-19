@@ -39,11 +39,11 @@ contract TestToken is StandardToken, Ownable {
   /// @param  _initialSupply    Initial total supply of tokens
   /// @param  _faucetAmount     Amount to faucet with each request
   function TestToken(
-    string _name,
-    string _symbol,
-    uint _decimals,
-    uint _initialSupply,
-    uint _faucetAmount
+    string    _name,
+    string    _symbol,
+    uint      _decimals,
+    uint      _initialSupply,
+    uint      _faucetAmount
   )
     public
   {

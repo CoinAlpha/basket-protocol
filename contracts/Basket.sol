@@ -69,14 +69,14 @@ contract Basket is StandardToken {
   /// @param  _arrangerFeeRecipient                Address to send arranger fees
   /// @param  _arrangerFee                         Amount of fee in ETH for every basket minted
   function Basket(
-    string _name,
-    string _symbol,
+    string    _name,
+    string    _symbol,
     address[] _tokens,
-    uint[] _weights,
-    address _basketRegistryAddress,
-    address _arranger,
-    address _arrangerFeeRecipient,
-    uint _arrangerFee                              // Amount of ETH charged per basket minted
+    uint[]    _weights,
+    address   _basketRegistryAddress,
+    address   _arranger,
+    address   _arrangerFeeRecipient,
+    uint      _arrangerFee                         // Amount of ETH charged per basket minted
   ) public {
     require(_tokens.length > 0 && _tokens.length == _weights.length);
 

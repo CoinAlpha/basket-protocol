@@ -64,9 +64,9 @@ contract BasketFactory {
   /// @dev BasketFactory constructor
   /// @param  _basketRegistryAddress               Address of basket registry
   function BasketFactory (
-    address _basketRegistryAddress,
-    address _productionFeeRecipient,
-    uint _productionFee
+    address   _basketRegistryAddress,
+    address   _productionFeeRecipient,
+    uint      _productionFee
   ) public {
     admin = msg.sender;
 
