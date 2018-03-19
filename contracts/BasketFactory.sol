@@ -17,6 +17,7 @@
 
 pragma solidity ^0.4.18;
 
+import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Basket.sol";
 import "./BasketRegistry.sol";
 import "./TokenWalletFactory.sol";
@@ -32,6 +33,8 @@ contract IBasketFactory {
   * @author CoinAlpha, Inc. <contact@coinalpha.com>
   */
 contract BasketFactory {
+  using SafeMath for uint;
+
   address                       public admin;
   address                       public basketRegistryAddress;
 
@@ -98,8 +101,7 @@ contract BasketFactory {
     returns (address newBasket)
   {
     // charging arrangers a fee to deploy new basket
-    // NOTE: CHANGE TO SAFEMATH WHEN DEPLOYING ON MAINNET
-    require(msg.value >= productionFee * (10 ** 14));
+    require(msg.value >= productionFee.mul(10 ** 14));
     productionFeeRecipient.transfer(msg.value);
 
     Basket b = new Basket(
