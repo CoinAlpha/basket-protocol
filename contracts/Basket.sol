@@ -36,27 +36,47 @@ contract Basket is StandardToken {
   address[]               public tokens;
   uint[]                  public weights;
   address                 public basketFactoryAddress;
+  address                 public basketRegistryAddress;
+
+  address                 public arranger;
+  address                 public arrangerFeeRecipient;
+  uint                    public arrangerFee;
 
   // Modules
   IBasketFactory          public basketFactory;
   IBasketRegistry         public basketRegistry;
 
+  // Modifiers
+  modifier onlyArranger {
+    require(msg.sender == arranger);
+    _;
+  }
+
   // Events
   event LogDepositAndBundle(address indexed holder, uint quantity);
   event LogDebundleAndWithdraw(address indexed holder, uint quantity);
   event LogExtract(address indexed holder, uint quantity, address tokenWalletAddress);
+  event LogArrangerFeeRecipientChange(address oldRecipient, address newRecipient);
+  event LogArrangerFeeChange(uint oldFee, uint newFee);
 
   /// @dev Basket constructor
   /// @param  _name                                Token name
   /// @param  _symbol                              Token symbol
   /// @param  _tokens                              Array of ERC20 token addresses
   /// @param  _weights                             Array of ERC20 token quantities
+  /// @param  _basketRegistryAddress               Address of basket registry
+  /// @param  _arranger                            Address of arranger
+  /// @param  _arrangerFeeRecipient                Address to send arranger fees
+  /// @param  _arrangerFee                         Amount of fee in ETH for every basket minted
   function Basket(
-    string _name,
-    string _symbol,
+    string    _name,
+    string    _symbol,
     address[] _tokens,
-    uint[] _weights,
-    address _basketRegistry
+    uint[]    _weights,
+    address   _basketRegistryAddress,
+    address   _arranger,
+    address   _arrangerFeeRecipient,
+    uint      _arrangerFee                         // Amount of ETH charged per basket minted
   ) public {
     require(_tokens.length > 0 && _tokens.length == _weights.length);
 
@@ -64,21 +84,32 @@ contract Basket is StandardToken {
     symbol = _symbol;
     tokens = _tokens;
     weights = _weights;
-    decimals = 18;                                 // Default to 18 decimals to allow accomodate all types of ERC20 token
-    totalSupply_ = 0;                              // Baskets can only be created by depositing and forging underlying tokens
+
     basketFactoryAddress = msg.sender;             // This contract is created only by the Factory
     basketFactory = IBasketFactory(msg.sender);
-    basketRegistry = IBasketRegistry(_basketRegistry);
+
+    basketRegistryAddress = _basketRegistryAddress;
+    basketRegistry = IBasketRegistry(_basketRegistryAddress);
+
+    arranger = _arranger;
+    arrangerFeeRecipient = _arrangerFeeRecipient;
+    arrangerFee = _arrangerFee;
   }
 
   /// @dev Combined deposit of all component tokens (not yet deposited) and bundle
   /// @param  _quantity                            Quantity of basket tokens to mint
   /// @return success                              Operation successful
-  function depositAndBundle(uint _quantity) public returns (bool success) {
+  function depositAndBundle(uint _quantity) public payable returns (bool success) {
     for (uint i = 0; i < tokens.length; i++) {
       address t = tokens[i];
       uint w = weights[i];
       assert(ERC20(t).transferFrom(msg.sender, this, w.mul(_quantity)));
+    }
+
+    // charging market makers a fee for every new basket minted
+    if (arrangerFee > 0) {
+      require(msg.value >= arrangerFee.mul(_quantity).div(10 ** 4));
+      arrangerFeeRecipient.transfer(msg.value);
     }
 
     balances[msg.sender] = balances[msg.sender].add(_quantity);
@@ -131,6 +162,28 @@ contract Basket is StandardToken {
 
     basketRegistry.incrementBasketsBurned(_quantity);
     LogExtract(msg.sender, _quantity, tokenWalletAddress);
+    return true;
+  }
+
+  /// @dev Change recipient of arranger fees
+  /// @param  _newRecipient                        New fee recipient
+  /// @return success                              Operation successful
+  function changeArrangerFeeRecipient(address _newRecipient) public onlyArranger returns (bool success) {
+    address oldRecipient = arrangerFeeRecipient;
+    arrangerFeeRecipient = _newRecipient;
+
+    LogArrangerFeeRecipientChange(oldRecipient, arrangerFeeRecipient);
+    return true;
+  }
+
+  /// @dev Change amount of fee charged for every basket minted
+  /// @param  _newFee                              New fee amount
+  /// @return success                              Operation successful
+  function changeArrangerFee(uint _newFee) public onlyArranger returns (bool success) {
+    uint oldFee = arrangerFee;
+    arrangerFee = _newFee;
+
+    LogArrangerFeeChange(oldFee, arrangerFee);
     return true;
   }
 
