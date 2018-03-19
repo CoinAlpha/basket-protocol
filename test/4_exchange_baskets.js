@@ -462,7 +462,7 @@ contract('Basket Escrow', (accounts) => {
     });
   });
 
-  describe('Allows escrow creator to change key variables', () => {
+  describe('Allows escrow admin to change key variables', () => {
     before('initialization', async () => {
       const admin = await basketEscrow.admin.call();
       const transactionFeeRecipient = await basketEscrow.transactionFeeRecipient.call();

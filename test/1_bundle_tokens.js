@@ -255,7 +255,7 @@ contract('TestToken | Basket', (accounts) => {
     });
   });
 
-  describe('Allows factory creator to change key variables', () => {
+  describe('Allows factory admin to change key variables', () => {
     before('initialization', async () => {
       const admin = await basketFactory.admin.call();
       const productionFeeRecipient = await basketFactory.productionFeeRecipient.call();
@@ -279,7 +279,7 @@ contract('TestToken | Basket', (accounts) => {
     });
   });
 
-  describe('Allows basket creator to change key variables', () => {
+  describe('Allows basket admin to change key variables', () => {
     before('initialization', async () => {
       const arranger = await basketAB.arranger.call();
       const arrangerFeeRecipient = await basketAB.arrangerFeeRecipient.call();

@@ -98,6 +98,7 @@ contract BasketFactory {
     returns (address newBasket)
   {
     // charging arrangers a fee to deploy new basket
+    // NOTE: CHANGE TO SAFEMATH WHEN DEPLOYING ON MAINNET
     require(msg.value >= productionFee * (10 ** 14));
     productionFeeRecipient.transfer(msg.value);
 

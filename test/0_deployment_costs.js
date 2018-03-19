@@ -14,12 +14,12 @@ if (typeof web3.eth.getAccountsPromise === 'undefined') {
 }
 
 /* global vars */
-let creatorBalanceStart, creatorBalance;
+let adminBalanceStart, adminBalance;
 let basketFactory, basket, tokenWalletFactory, tokenWallet;  // Contract Instances
 let gasPriceGwei;
 
 contract('Deployment costs', (accounts) => {
-  const CREATOR = accounts[0];
+  const ADMIN = accounts[0];
   const TOKEN_A = accounts[1];
   const TOKEN_B = accounts[2];
   const USER = accounts[3];
@@ -29,38 +29,38 @@ contract('Deployment costs', (accounts) => {
   const PRODUCTION_FEE = 0.01;
   const ARRANGER_FEE = 0.01;
 
-  before('before: should get starting creator balance', async () => {
+  before('before: should get starting admin balance', async () => {
     console.log(`================= START TEST [ ${scriptName} ] =================`);
 
-    const _bal = await web3.eth.getBalancePromise(CREATOR);
-    creatorBalanceStart = web3.fromWei(_bal, 'ether');
+    const _bal = await web3.eth.getBalancePromise(ADMIN);
+    adminBalanceStart = web3.fromWei(_bal, 'ether');
     const _gasPrice = await web3.eth.getGasPricePromise();
     gasPriceGwei = Number(_gasPrice) / 1e9;
     console.log(`      Gas Price:          ${Number(_gasPrice / 1e9)} gwei\n`);
   });
 
-  beforeEach('before: should get creator balance', async () => {
-    const _bal = await web3.eth.getBalancePromise(CREATOR);
-    creatorBalance = web3.fromWei(_bal, 'ether');
-    console.log(`\n      creator balance before: ${creatorBalance}`);
+  beforeEach('before: should get admin balance', async () => {
+    const _bal = await web3.eth.getBalancePromise(ADMIN);
+    adminBalance = web3.fromWei(_bal, 'ether');
+    console.log(`\n      admin balance before: ${adminBalance}`);
   });
 
-  afterEach('after: should get creator balance', async () => {
-    const _bal = await web3.eth.getBalancePromise(CREATOR);
+  afterEach('after: should get admin balance', async () => {
+    const _bal = await web3.eth.getBalancePromise(ADMIN);
     const newBalance = web3.fromWei(_bal, 'ether');
-    const ethCost = creatorBalance - newBalance;
+    const ethCost = adminBalance - newBalance;
     const gasUsed = (ethCost / gasPriceGwei) * 1e9;
     const marker = (gasUsed > 4700000) ? '**** HIGH GAS ****' : '';
     console.log(`      New balance:        ${newBalance}`);
     console.log(`      Gas Used:           ${numeral(gasUsed).format('0,0')} ${marker}`);
     console.log(`      ETH Cost:           ${ethCost}`);
-    creatorBalance = newBalance;
+    adminBalance = newBalance;
   });
 
-  after('after: get closing creator balance', async () => {
-    const _bal = await web3.eth.getBalancePromise(CREATOR);
+  after('after: get closing admin balance', async () => {
+    const _bal = await web3.eth.getBalancePromise(ADMIN);
     const newBalance = web3.fromWei(_bal, 'ether');
-    const ethCost = creatorBalanceStart - newBalance;
+    const ethCost = adminBalanceStart - newBalance;
     const gasUsed = (ethCost / gasPriceGwei) * 1e9;
 
     console.log(`      Ending balance:     ${newBalance}`);
@@ -71,34 +71,34 @@ contract('Deployment costs', (accounts) => {
 
   describe('Calculate cost', () => {
     it('BasketRegistry cost', async () => {
-      basketFactory = await constructors.BasketRegistry(CREATOR);
+      basketFactory = await constructors.BasketRegistry(ADMIN);
     });
 
     it('BasketEscrow cost', async () => {
-      basketFactory = await constructors.BasketEscrow(CREATOR, REGISTRY, CREATOR, TRANSACTION_FEE);
+      basketFactory = await constructors.BasketEscrow(ADMIN, REGISTRY, ADMIN, TRANSACTION_FEE);
     });
 
     it('BasketFactory cost', async () => {
-      basketFactory = await constructors.BasketFactory(CREATOR, REGISTRY, CREATOR, PRODUCTION_FEE);
+      basketFactory = await constructors.BasketFactory(ADMIN, REGISTRY, ADMIN, PRODUCTION_FEE);
     });
 
     it('Basket cost', async () => {
       basket = await constructors.Basket(
-        CREATOR,
-        'Basket contract', 'BASK', [TOKEN_A, TOKEN_B], [1, 2], REGISTRY, CREATOR, CREATOR, ARRANGER_FEE,
+        ADMIN,
+        'Basket contract', 'BASK', [TOKEN_A, TOKEN_B], [1, 2], REGISTRY, ADMIN, ADMIN, ARRANGER_FEE,
       );
     });
 
     it('TokenWallet cost', async () => {
-      tokenWallet = await constructors.TokenWallet(CREATOR, USER);
+      tokenWallet = await constructors.TokenWallet(ADMIN, USER);
     });
 
     it('TokenWalletFactory cost', async () => {
-      tokenWalletFactory = await constructors.TokenWalletFactory(CREATOR, basketFactory.address);
+      tokenWalletFactory = await constructors.TokenWalletFactory(ADMIN, basketFactory.address);
     });
 
     it('BasketFactory: set TokenWalletFactory', async () => {
-      await basketFactory.setTokenWalletFactory(basketFactory.address, { from: CREATOR })
+      await basketFactory.setTokenWalletFactory(basketFactory.address, { from: ADMIN })
         .catch(err => assert.throw(`Error setting TokenWalletFactory: ${err.toString()}`));
     });
   });

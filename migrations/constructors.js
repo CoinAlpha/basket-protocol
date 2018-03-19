@@ -33,8 +33,8 @@ const constructors = {
   TokenWallet: (_owner, _user) =>
     allArtifacts.TokenWallet.new(_user, { from: _owner }),
 
-  TokenWalletFactory: (_creator, _basketFactory) =>
-    allArtifacts.TokenWalletFactory.new(_basketFactory, { from: _creator }),
+  TokenWalletFactory: (_admin, _basketFactory) =>
+    allArtifacts.TokenWalletFactory.new(_basketFactory, { from: _admin }),
 };
 
 module.exports = {

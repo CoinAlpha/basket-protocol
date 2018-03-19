@@ -35,7 +35,7 @@ contract IBasketRegistry {
   */
 contract BasketRegistry {
   // Constants set at contract inception
-  address                           public creator;
+  address                           public admin;
   address                           public basketFactoryAddress;
 
   uint                              public basketIndex;           // Baskets index starting from index = 1
@@ -84,14 +84,14 @@ contract BasketRegistry {
   function BasketRegistry () public {
     basketIndex = 1;
     arrangerIndex = 1;
-    creator = msg.sender;
+    admin = msg.sender;
   }
 
   /// @dev Set basket factory address after deployment
   /// @param  _basketFactory                       Basket factory address
   /// @return success                              Operation successful
   function setBasketFactory(address _basketFactory) public returns (bool success) {
-    require(msg.sender == creator);
+    require(msg.sender == admin);
     basketFactoryAddress = _basketFactory;
     basketFactory = IBasketFactory(_basketFactory);
     LogSetBasketFactory(_basketFactory);
@@ -100,7 +100,7 @@ contract BasketRegistry {
 
   /// @dev Add new basket to registry after being created in the basketFactory
   /// @param  _basketAddress                       Address of deployed basket
-  /// @param  _arranger                            Address of basket creator
+  /// @param  _arranger                            Address of basket admin
   /// @param  _name                                Basket name
   /// @param  _symbol                              Basket symbol
   /// @param  _tokens                              Token address array
