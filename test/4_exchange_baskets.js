@@ -80,7 +80,7 @@ contract('Basket Escrow', (accounts) => {
         const balBasketABBefore = await basketAB.balanceOfPromise(MARKET_MAKER);
         await tokenA.approve(basketABAddress, amount, { from: MARKET_MAKER });
         await tokenB.approve(basketABAddress, amount, { from: MARKET_MAKER });
-        await basketAB.depositAndBundlePromise(amount, { from: MARKET_MAKER, value: amount * ARRANGER_FEE, gas: 1e7 });
+        await basketAB.depositAndBundlePromise(amount, { from: MARKET_MAKER, value: amount * ARRANGER_FEE, gas: 1e6 });
 
         await basketAB.approve(basketEscrow.address, amount, { from: MARKET_MAKER, gas: 1e6 });
 
@@ -237,7 +237,7 @@ contract('Basket Escrow', (accounts) => {
       try {
         const fillBuyParams = [
           HOLDER_A, basketABAddress, amountBasketsToBuy, amountEthToSend, expirationInSeconds, nonce,
-          { from: MARKET_MAKER, gas: 1e7 },
+          { from: MARKET_MAKER, gas: 1e6 },
         ];
         const _fillBuyResults = await basketEscrow.fillBuyOrder(...fillBuyParams);
         const { event, args } = _fillBuyResults.logs[0];
@@ -416,7 +416,7 @@ contract('Basket Escrow', (accounts) => {
       try {
         const fillSellParams = [
           MARKET_MAKER, basketABAddress, amountBasketsToSell, expirationInSeconds, nonce,
-          { from: HOLDER_B, value: amountEthToGet, gas: 1e7 },
+          { from: HOLDER_B, value: amountEthToGet, gas: 1e6 },
         ];
 
         const _fillSellResults = await basketEscrow.fillSellOrder(...fillSellParams);

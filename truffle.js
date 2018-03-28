@@ -4,8 +4,8 @@ module.exports = {
       host: 'localhost',
       port: 8545,
       network_id: '*',       // Match any network id
-      gas: 7000000,          // Set to Ropsten limit
-      gasPrice: 20000000000, // 20 gwei
+      gas: 4712388,          // Set to Ropsten limit
+      gasPrice: 1000000000,  // 1 gwei
     },
     test: {
       host: 'localhost',
@@ -16,7 +16,7 @@ module.exports = {
     },
     ropsten: {
       host: 'localhost',
-      gas: 4700000,          // Current Ropsten limit is approx 47124331
+      gas: 4700000,          // Current Ropsten limit is approx 4712388
       gasPrice: 20e9,        // 20 GWei
       network_id: '3',
     },

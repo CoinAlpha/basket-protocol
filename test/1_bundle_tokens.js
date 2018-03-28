@@ -234,7 +234,7 @@ contract('TestToken | Basket', (accounts) => {
 
     it('should allow HOLDER_A to extract basketAB tokens', async () => {
       try {
-        const data = await basketAB.extractPromise(basketABBalance, { from: HOLDER_A, gas: 1e7 });
+        const data = await basketAB.extractPromise(basketABBalance, { from: HOLDER_A, gas: 4e6 });
         tokenWalletAddress = await basketFactory.tokenWallets.call(0);
       } catch (err) { assert.throw(`Error extracting: ${err.toString()}`); }
     });
