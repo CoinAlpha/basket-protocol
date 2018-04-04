@@ -72,7 +72,7 @@ contract('Basket Factory | Basket Registry', (accounts) => {
     it('deploys the basket', async () => {
       try {
         const txObj = await basketFactory.createBasket(
-          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], ARRANGER, (ARRANGER_FEE * (10 ** FEE_DECIMALS)),
+          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1e18, 1e18], ARRANGER, (ARRANGER_FEE * (10 ** FEE_DECIMALS)),
           { from: ARRANGER, value: PRODUCTION_FEE * 1e18 },
         );
         const txLogs = txObj.logs;

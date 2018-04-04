@@ -63,7 +63,7 @@ contract('Basket Escrow', (accounts) => {
     it('deploys the basket correctly', async () => {
       try {
         const txObj = await basketFactory.createBasket(
-          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], ARRANGER, (ARRANGER_FEE * (10 ** FEE_DECIMALS)),
+          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1e18, 1e18], ARRANGER, (ARRANGER_FEE * (10 ** FEE_DECIMALS)),
           { from: ARRANGER, value: PRODUCTION_FEE * 1e18 },
         );
         const txLog = txObj.logs[0];

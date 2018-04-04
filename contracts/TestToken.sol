@@ -17,9 +17,9 @@
 
 pragma solidity ^0.4.18;
 
-import "../node_modules/zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
-import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
-import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
+import "./zeppelin/StandardToken.sol";
+import "./zeppelin/Ownable.sol";
+import "./zeppelin/SafeMath.sol";
 
 /**
  * @title TestToken
