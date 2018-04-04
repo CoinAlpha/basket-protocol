@@ -105,7 +105,7 @@ contract Basket is StandardToken {
     for (uint i = 0; i < tokens.length; i++) {
       address t = tokens[i];
       uint w = weights[i];
-      assert(ERC20(t).transferFrom(msg.sender, this, w.mul(_quantity)));
+      assert(ERC20(t).transferFrom(msg.sender, this, w.mul(_quantity).div(10 ** decimals)));
     }
 
     // charging market makers a fee for every new basket minted
@@ -136,7 +136,7 @@ contract Basket is StandardToken {
     for (uint i = 0; i < tokens.length; i++) {
       address t = tokens[i];
       uint w = weights[i];
-      assert(ERC20(t).transfer(msg.sender, w.mul(_quantity)));
+      assert(ERC20(t).transfer(msg.sender, w.mul(_quantity).div(10 ** decimals)));
     }
 
     basketRegistry.incrementBasketsBurned(_quantity);
@@ -159,7 +159,7 @@ contract Basket is StandardToken {
     for (uint i = 0; i < tokens.length; i++) {
       address t = tokens[i];
       uint w = weights[i];
-      assert(ERC20(t).transfer(tokenWalletAddress, w.mul(_quantity)));
+      assert(ERC20(t).transfer(tokenWalletAddress, w.mul(_quantity).div(10 ** decimals)));
     }
 
     basketRegistry.incrementBasketsBurned(_quantity);

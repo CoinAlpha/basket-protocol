@@ -44,10 +44,6 @@ contract('TestToken | Basket', (accounts) => {
       basketFactory = await BasketFactory.deployed();
       tokenA = await constructors.TestToken(...tokenParamsA);
       tokenB = await constructors.TestToken(...tokenParamsB);
-
-      // console.log('\n  Token Contracts:');
-      // console.log(`  - tokenAAddress = '${tokenA.address}'`);
-      // console.log(`  - tokenBAddress = '${tokenB.address}'\n`);
     } catch (err) {
       assert.throw(`Failed to create Tokens: ${err.toString()}`);
     }
@@ -75,7 +71,7 @@ contract('TestToken | Basket', (accounts) => {
         const fee = await basketFactory.productionFee.call();
         initialBalance = await web3.eth.getBalancePromise(ARRANGER);
         const txObj = await basketFactory.createBasket(
-          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1, 1], ARRANGER, (ARRANGER_FEE * (10 ** FEE_DECIMALS)),
+          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1e18, 1e18], ARRANGER, (ARRANGER_FEE * (10 ** FEE_DECIMALS)),
           { from: ARRANGER, value: (Number(fee) * 1e18) / (10 ** FEE_DECIMALS) },
         );
         const txLogs = txObj.logs;
@@ -106,42 +102,45 @@ contract('TestToken | Basket', (accounts) => {
     });
   });
 
-  const amount = 25e18;
+  const amount1 = 25e18;
+  const amount2 = 25e17;
 
-  describe(`HOLDER_A: create ${amount / 1e18} basketAB tokens`, () => {
+  describe(`HOLDER_A: create ${amount1 / 1e18} basketAB tokens`, () => {
     let initialBalance;
+    let balTokenA, balTokenB, balBasketAB;
 
     before('HOLDER_A\'s amount of basketAB tokens should be zero', async () => {
       try {
-        const balTokenA = await tokenA.balanceOf(HOLDER_A);
-        const balTokenB = await tokenB.balanceOf(HOLDER_A);
-        const balBasketAB = await basketAB.balanceOf(HOLDER_A);
+        balTokenA = await tokenA.balanceOf(HOLDER_A);
+        balTokenB = await tokenB.balanceOf(HOLDER_A);
+        balBasketAB = await basketAB.balanceOf(HOLDER_A);
         assert.notEqual(Number(balTokenA), 0, 'tokenA balance is zero');
         assert.notEqual(Number(balTokenB), 0, 'tokenB balance is zero');
         assert.strictEqual(Number(balBasketAB), 0, 'basketAB token balance is not zero');
       } catch (err) { assert.throw(`before error: ${err.toString()}`); }
     });
 
-    after(`HOLDER_A's amount of basketAB tokens should be ${amount}`, async () => {
+    after(`HOLDER_A's amount of basketAB tokens should be ${amount1}`, async () => {
       try {
+        const balA = await tokenA.balanceOf(HOLDER_A);
+        const balB = await tokenB.balanceOf(HOLDER_A);
         const bal = await basketAB.balanceOfPromise(HOLDER_A);
-        assert.strictEqual(Number(bal), amount, 'incorrect amount of basketAB tokens');
+        assert.strictEqual(Number(bal), amount1 + amount2, 'incorrect amount of basketAB tokens');
       } catch (err) { assert.throw(`balanceOf error: ${err.toString()}`); }
     });
 
     it('approve token contracts for basketAB', async () => {
       try {
-        await tokenA.approve(basketABAddress, amount, { from: HOLDER_A });
-        await tokenB.approve(basketABAddress, amount, { from: HOLDER_A });
+        await tokenA.approve(basketABAddress, amount1 + amount2, { from: HOLDER_A });
+        await tokenB.approve(basketABAddress, amount1 + amount2, { from: HOLDER_A });
         const data = await Promise.all(['name', 'symbol', 'decimals'].map(field => basketAB[field].call()));
-        // console.log(`      Contract data: ${data}`);
       } catch (err) { assert.throw(`Error retrieving basketAB contract data: ${err.toString()}`); }
     });
 
     it('should allow HOLDER_A to deposit and bundle tokens', async () => {
       const fee = await basketAB.arrangerFee.call();
       initialBalance = await web3.eth.getBalancePromise(HOLDER_A);
-      await basketAB.depositAndBundlePromise(amount, { from: HOLDER_A, value: amount * (Number(fee) / (10 ** FEE_DECIMALS)), gas: 1e6 })
+      await basketAB.depositAndBundlePromise(amount1, { from: HOLDER_A, value: amount1 * (Number(fee) / (10 ** FEE_DECIMALS)), gas: 1e6 })
         .catch(err => assert.throw(`Error depositing and bundling ${err.toString()}`));
     });
 
@@ -151,9 +150,16 @@ contract('TestToken | Basket', (accounts) => {
       balance = Number(balance) / 1e18;
       assert.strictEqual(
         Math.floor(100 * (initialBalance - balance)),
-        Math.floor(100 * (ARRANGER_FEE * (amount / 1e18))),
+        Math.floor(100 * (ARRANGER_FEE * (amount1 / 1e18))),
         'incorrect amount of arranger fee charged',
       );
+    });
+
+    it('should allow HOLDER_A to deposit and bundle part of a basket', async () => {
+      const fee = await basketAB.arrangerFee.call();
+      initialBalance = await web3.eth.getBalancePromise(HOLDER_A);
+      await basketAB.depositAndBundlePromise(amount2, { from: HOLDER_A, value: amount2 * (Number(fee) / (10 ** FEE_DECIMALS)), gas: 1e6 })
+        .catch(err => assert.throw(`Error depositing and bundling partial ${err.toString()}`));
     });
   });
 
@@ -164,21 +170,21 @@ contract('TestToken | Basket', (accounts) => {
       try {
         const balBasketAB = await basketAB.balanceOfPromise(HOLDER_A);
         basketABBalance = Number(balBasketAB);
-        await tokenA.approve(basketABAddress, amount, { from: HOLDER_A });
-        await tokenB.approve(basketABAddress, amount, { from: HOLDER_A });
+        await tokenA.approve(basketABAddress, amount1, { from: HOLDER_A });
+        await tokenB.approve(basketABAddress, amount1, { from: HOLDER_A });
       } catch (err) { assert.throw(`Error retrieving basketAB contract data: ${err.toString()}`); }
     });
 
-    after(`HOLDER_A's balance should have increased by ${amount} basketAB tokens`, async () => {
+    after(`HOLDER_A's balance should have increased by ${amount1} basketAB tokens`, async () => {
       try {
         const balBasketAB = await basketAB.balanceOfPromise(HOLDER_A);
-        assert.strictEqual(Number(balBasketAB), basketABBalance + amount, 'incorrect increase');
+        assert.strictEqual(Number(balBasketAB), basketABBalance + amount1, 'incorrect increase');
       } catch (err) { assert.throw(`after error: ${err.toString()}`); }
     });
 
     it('should allow HOLDER_A to depositAndBundle', async () => {
       const fee = await basketAB.arrangerFee.call();
-      await basketAB.depositAndBundlePromise(amount, { from: HOLDER_A, value: amount * (Number(fee) / (10 ** FEE_DECIMALS)), gas: 1e6 });
+      await basketAB.depositAndBundlePromise(amount1, { from: HOLDER_A, value: amount1 * (Number(fee) / (10 ** FEE_DECIMALS)), gas: 1e6 });
     });
   });
 
@@ -198,17 +204,22 @@ contract('TestToken | Basket', (accounts) => {
 
     after(`HOLDER_A should have additional ${basketABBalance / 1e18} of tokens A and B, 0 of basketAB`, async () => {
       try {
+        const debundleSum = amount1 + amount2;
         const _balTokenA = await tokenA.balanceOf(HOLDER_A);
         const _balTokenB = await tokenB.balanceOf(HOLDER_A);
         const _balBasketAB = await basketAB.balanceOf(HOLDER_A);
-        assert.strictEqual(Number(_balTokenA), tokenABalance + basketABBalance, `tokenA balance is not ${basketABBalance / 1e18}`);
-        assert.strictEqual(Number(_balTokenB), tokenBBalance + basketABBalance, `tokenB balance is not ${basketABBalance / 1e18}`);
-        assert.strictEqual(Number(_balBasketAB), 0, 'basketAB balance is not 0');
+        assert.strictEqual(Number(_balTokenA), tokenABalance + debundleSum, `tokenA balance is not ${debundleSum / 1e18}`);
+        assert.strictEqual(Number(_balTokenB), tokenBBalance + debundleSum, `tokenB balance is not ${debundleSum / 1e18}`);
+        assert.strictEqual(Number(_balBasketAB), basketABBalance - debundleSum, 'basketAB balance did not decrease correctly');
       } catch (err) { assert.throw(`after error: ${err.toString()}`); }
     });
 
     it('should allow HOLDER_A to debundleAndWithdraw', async () => {
-      await basketAB.debundleAndWithdrawPromise(basketABBalance, { from: HOLDER_A, gas: 1e6 });
+      await basketAB.debundleAndWithdrawPromise(amount1, { from: HOLDER_A, gas: 1e6 });
+    });
+
+    it('should allow HOLDER_A to debundleAndWithdraw part of a basket', async () => {
+      await basketAB.debundleAndWithdrawPromise(amount2, { from: HOLDER_A, gas: 1e6 });
     });
   });
 
@@ -221,10 +232,10 @@ contract('TestToken | Basket', (accounts) => {
         const _balBasketABBefore = await basketAB.balanceOfPromise(HOLDER_A);
         basketABBalance = Number(_balBasketABBefore);
 
-        await tokenA.approve(basketABAddress, amount, { from: HOLDER_A });
-        await tokenB.approve(basketABAddress, amount, { from: HOLDER_A });
+        await tokenA.approve(basketABAddress, amount1, { from: HOLDER_A });
+        await tokenB.approve(basketABAddress, amount1, { from: HOLDER_A });
         const fee = await basketAB.arrangerFee.call();
-        await basketAB.depositAndBundlePromise(amount, { from: HOLDER_A, value: amount * (Number(fee) / (10 ** FEE_DECIMALS)), gas: 1e6 });
+        await basketAB.depositAndBundlePromise(amount1, { from: HOLDER_A, value: amount1 * (Number(fee) / (10 ** FEE_DECIMALS)), gas: 1e6 });
         const _balBasketABAfter = await basketAB.balanceOfPromise(HOLDER_A);
         basketABBalance = Number(_balBasketABAfter);
 
