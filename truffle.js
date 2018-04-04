@@ -1,3 +1,5 @@
+const { GAS_PRICE_DEV } = require('./config/params.js');
+
 module.exports = {
   networks: {
     development: {
@@ -5,7 +7,7 @@ module.exports = {
       port: 7545,
       network_id: '*',       // Match any network id
       gas: 4712388,          // Set to Ropsten limit
-      gasPrice: 1000000000,  // 1 gwei
+      gasPrice: GAS_PRICE_DEV,  // 1 gwei
     },
     test: {
       host: 'localhost',

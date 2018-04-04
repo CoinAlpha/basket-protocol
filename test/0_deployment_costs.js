@@ -2,6 +2,7 @@ const path = require('path');
 const Promise = require('bluebird');
 const numeral = require('numeral');
 const { constructors } = require('../migrations/constructors');
+const { GAS_PRICE_DEV } = require('../config/params.js');
 
 const BasketFactory = artifacts.require('./BasketFactory.sol');
 const Basket = artifacts.require('./Basket.sol');
@@ -16,7 +17,7 @@ if (typeof web3.eth.getAccountsPromise === 'undefined') {
 /* global vars */
 let adminBalanceStart, adminBalance;
 let basketFactory, basket, tokenWalletFactory, tokenWallet;  // Contract Instances
-let gasPriceGwei;
+const gasPriceGwei = GAS_PRICE_DEV;
 
 contract('Deployment costs', (accounts) => {
   const ADMIN = accounts[0];
@@ -34,9 +35,6 @@ contract('Deployment costs', (accounts) => {
 
     const _bal = await web3.eth.getBalancePromise(ADMIN);
     adminBalanceStart = web3.fromWei(_bal, 'ether');
-    const _gasPrice = await web3.eth.getGasPricePromise();
-    gasPriceGwei = Number(_gasPrice) / 1e9;
-    console.log(`      Gas Price:          ${Number(_gasPrice / 1e9)} gwei\n`);
   });
 
   beforeEach('before: should get admin balance', async () => {
@@ -49,7 +47,7 @@ contract('Deployment costs', (accounts) => {
     const _bal = await web3.eth.getBalancePromise(ADMIN);
     const newBalance = web3.fromWei(_bal, 'ether');
     const ethCost = adminBalance - newBalance;
-    const gasUsed = (ethCost / gasPriceGwei) * 1e9;
+    const gasUsed = (ethCost / gasPriceGwei) * 1e18;
     const marker = (gasUsed > 4700000) ? '**** HIGH GAS ****' : '';
     console.log(`      New balance:        ${newBalance}`);
     console.log(`      Gas Used:           ${numeral(gasUsed).format('0,0')} ${marker}`);
@@ -61,7 +59,7 @@ contract('Deployment costs', (accounts) => {
     const _bal = await web3.eth.getBalancePromise(ADMIN);
     const newBalance = web3.fromWei(_bal, 'ether');
     const ethCost = adminBalanceStart - newBalance;
-    const gasUsed = (ethCost / gasPriceGwei) * 1e9;
+    const gasUsed = (ethCost / gasPriceGwei) * 1e18;
 
     console.log(`      Ending balance:     ${newBalance}`);
     console.log('\n      =========================================');
