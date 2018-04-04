@@ -18,10 +18,9 @@
 
 pragma solidity ^0.4.18;
 
-import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
-
-import "../node_modules/zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./zeppelin/SafeMath.sol";
+import "./zeppelin/ERC20.sol";
+import "./zeppelin/Ownable.sol";
 
 /// @title TokenWallet -- Wallet contract for segregated pool of ERC20 tokens and Ether
 /// @author CoinAlpha, Inc. <contact@coinalpha.com>
@@ -197,7 +196,7 @@ contract TokenWallet is Ownable {
       registerToken(_token);
       updated = true;
     }
-    
+
     if (tokenBalance == 0 && containsToken[_token] > 0) {
       removeTokenFromRegister(_token);
       updated = true;
