@@ -22,7 +22,7 @@ contract('Basket Escrow', (accounts) => {
   const ARRANGER_FEE = 0.01;            // Charge 0.01 ETH of arranger fee per basket minted
   const PRODUCTION_FEE = 0.3;           // Charge 0.3 ETH of transaction per basket creation
   const TRANSACTION_FEE = 0.005;        // Charge 0.5% transaction fee
-  const FEE_DECIMALS = 4;
+  const FEE_DECIMALS = 18;
 
   // Contract instances
   let basketRegistry, basketFactory, basketEscrow;

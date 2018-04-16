@@ -99,7 +99,7 @@ contract BasketEscrow {
     admin = msg.sender;                                  // record admin
     transactionFeeRecipient = _transactionFeeRecipient;
     transactionFee = _transactionFee;
-    FEE_DECIMALS = 4;
+    FEE_DECIMALS = 18;
   }
 
   /// @dev Create an order to buy baskets with ETH

@@ -23,7 +23,7 @@ contract('TestToken | Basket', (accounts) => {
 
   const ARRANGER_FEE = 0.01;            // Charge 0.01 ETH of arranger fee per basket minted
   const PRODUCTION_FEE = 0.3;           // Charge 0.3 ETH of production per basket creation
-  const FEE_DECIMALS = 4;
+  const FEE_DECIMALS = 18;
 
   // Contract instances
   let basketFactory, tokenWalletFactory, basketAB;
@@ -72,8 +72,11 @@ contract('TestToken | Basket', (accounts) => {
         initialBalance = await web3.eth.getBalancePromise(ARRANGER);
         const txObj = await basketFactory.createBasket(
           'A1B1', 'BASK', [tokenA.address, tokenB.address], [1e18, 1e18], ARRANGER, (ARRANGER_FEE * (10 ** FEE_DECIMALS)),
-          { from: ARRANGER, value: (Number(fee) * 1e18) / (10 ** FEE_DECIMALS) },
+          { from: ARRANGER, value: Number(fee) },
         );
+        console.log(Number(fee) * 1e18);
+        console.log(ARRANGER_FEE * (10 ** FEE_DECIMALS));
+
         const txLogs = txObj.logs;
         // Check logs to ensure contract was created
         const txLog = txLogs[0];

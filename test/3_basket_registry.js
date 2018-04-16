@@ -21,7 +21,7 @@ contract('Basket Factory | Basket Registry', (accounts) => {
 
   const ARRANGER_FEE = 0.01;            // Charge 0.01 ETH of arranger fee per basket minted
   const PRODUCTION_FEE = 0.3;           // Charge 0.3 ETH of transaction per basket creation
-  const FEE_DECIMALS = 4;
+  const FEE_DECIMALS = 18;
 
   // Contract instances
   let basketRegistry, basketFactory;
