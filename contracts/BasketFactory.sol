@@ -101,7 +101,7 @@ contract BasketFactory {
     returns (address newBasket)
   {
     // charging arrangers a fee to deploy new basket
-    require(msg.value >= productionFee.mul(10 ** 14));
+    require(msg.value >= productionFee);
     productionFeeRecipient.transfer(msg.value);
 
     Basket b = new Basket(

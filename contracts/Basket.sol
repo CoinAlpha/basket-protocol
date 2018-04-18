@@ -110,7 +110,7 @@ contract Basket is StandardToken {
 
     // charging market makers a fee for every new basket minted
     if (arrangerFee > 0) {
-      require(msg.value >= arrangerFee.mul(_quantity).div(10 ** 4));
+      require(msg.value >= arrangerFee.mul(_quantity).div(10 ** decimals));
       arrangerFeeRecipient.transfer(msg.value);
     }
 
