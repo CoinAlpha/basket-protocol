@@ -40,9 +40,9 @@ contract BasketEscrow {
   // ADDRESS USER  || ADDRESS TOKEN || UINT BALANCE
   mapping(address => mapping(address => uint)) public balances;
 
-  // mapping of user accounts to mapping of order hashes to booleans (true = submitted by user, equivalent to offchain signature)
-  // ADDRESS USER  || ORDER HASH    || BOOL
-  mapping(address => mapping(bytes32 => bool)) public orders;
+  // mapping of user accounts to mapping of order hashes to orderIndex (equivalent to offchain signature)
+  // ADDRESS USER  || ORDER HASH    || uint
+  mapping(address => mapping(bytes32 => uint)) public orders;
 
   // mapping of user accounts to mapping of order hashes to booleans (true = order has been filled)
   // ADDRESS USER  || ORDER HASH    || BOOL
@@ -74,10 +74,10 @@ contract BasketEscrow {
   // Events
   event LogBuyOrderCreated(uint newOrderIndex, address indexed buyer, address basket, uint amountEth, uint amountBasket, uint expiration, uint nonce);
   event LogSellOrderCreated(uint newOrderIndex, address indexed seller, address basket, uint amountEth, uint amountBasket, uint expiration, uint nonce);
-  event LogBuyOrderCancelled(address indexed buyer, address basket, uint amountEth, uint amountBasket);
-  event LogSellOrderCancelled(address indexed seller, address basket, uint amountEth, uint amountBasket);
-  event LogBuyOrderFilled(address indexed buyOrderFiller, address indexed orderCreator, address basket, uint amountEth, uint amountBasket);
-  event LogSellOrderFilled(address indexed sellOrderFiller, address indexed orderCreator, address basket, uint amountEth, uint amountBasket);
+  event LogBuyOrderCancelled(uint cancelledOrderIndex, address indexed buyer, address basket, uint amountEth, uint amountBasket);
+  event LogSellOrderCancelled(uint cancelledOrderIndex, address indexed seller, address basket, uint amountEth, uint amountBasket);
+  event LogBuyOrderFilled(uint filledOrderIndex, address indexed buyOrderFiller, address indexed orderCreator, address basket, uint amountEth, uint amountBasket);
+  event LogSellOrderFilled(uint filledOrderIndex, address indexed sellOrderFiller, address indexed orderCreator, address basket, uint amountEth, uint amountBasket);
   event LogTransactionFeeRecipientChange(address oldRecipient, address newRecipient);
   event LogTransactionFeeChange(uint oldFee, uint newFee);
 
@@ -171,14 +171,14 @@ contract BasketEscrow {
     require(_tokenGive == ETH_ADDRESS || basketRegistry.checkBasketExists(_tokenGive));
 
     bytes32 hash = sha256(this, _tokenGet, _amountGet, _tokenGive, _amountGive, _expiration, _nonce);
-    require(orders[_orderCreator][hash] != true);          // avoid duplicate orders
+    require(orders[_orderCreator][hash] == 0);           // avoid duplicate orders
 
-    orders[_orderCreator][hash] = true;
+    orders[_orderCreator][hash] = orderIndex;
     balances[_orderCreator][_tokenGive] = balances[_orderCreator][_tokenGive].add(_amountGive);
     orderMap[orderIndex] = Order(_orderCreator, _tokenGet, _amountGet, _tokenGive, _amountGive, _expiration, _nonce);
-    orderIndex += 1;
+    orderIndex = orderIndex.add(1);
 
-    return orderIndex - 1;
+    return orderIndex = orderIndex.sub(1);
   }
 
   /// @dev Cancel an existing buy order
@@ -195,7 +195,8 @@ contract BasketEscrow {
     uint      _expiration,
     uint      _nonce
   ) public returns (bool success) {
-    assert(_cancelOrder(msg.sender, _basketAddress, _amountBasket, ETH_ADDRESS, _amountEth, _expiration, _nonce));
+    uint cancelledOrderIndex = _cancelOrder(msg.sender, _basketAddress, _amountBasket, ETH_ADDRESS, _amountEth, _expiration, _nonce);
+    assert(cancelledOrderIndex > 0);
 
     if (now >= _expiration) {
       msg.sender.transfer(_amountEth);                   // if order has expired, no transaction fee is charged
@@ -205,7 +206,7 @@ contract BasketEscrow {
       transactionFeeRecipient.transfer(fee);
     }
 
-    LogBuyOrderCancelled(msg.sender, _basketAddress, _amountEth, _amountBasket);
+    LogBuyOrderCancelled(cancelledOrderIndex, msg.sender, _basketAddress, _amountEth, _amountBasket);
     return true;
   }
 
@@ -223,10 +224,12 @@ contract BasketEscrow {
     uint      _expiration,
     uint      _nonce
   ) public returns (bool success) {
-    assert(_cancelOrder(msg.sender, ETH_ADDRESS, _amountEth, _basketAddress, _amountBasket, _expiration, _nonce));
+    uint cancelledOrderIndex =_cancelOrder(msg.sender, ETH_ADDRESS, _amountEth, _basketAddress, _amountBasket, _expiration, _nonce);
+    assert(cancelledOrderIndex > 0);
+
     assert(ERC20(_basketAddress).transfer(msg.sender, _amountBasket));
 
-    LogSellOrderCancelled(msg.sender, _basketAddress, _amountEth, _amountBasket);
+    LogSellOrderCancelled(cancelledOrderIndex, msg.sender, _basketAddress, _amountEth, _amountBasket);
     return true;
   }
 
@@ -238,7 +241,7 @@ contract BasketEscrow {
   /// @param  _amountGive                                Amount of token/ETH to give in original order
   /// @param  _expiration                                Unix timestamp in original order
   /// @param  _nonce                                     Random number in original order
-  /// @return success                                    Operation successful
+  /// @return cancelledOrderIndex                        Index of cancelled order
   function _cancelOrder(
     address   _orderCreator,
     address   _tokenGet,
@@ -249,16 +252,17 @@ contract BasketEscrow {
     uint      _nonce
   )
     internal
-    returns (bool success)
+    returns (uint index)
   {
     bytes32 hash = sha256(this, _tokenGet, _amountGet, _tokenGive, _amountGive, _expiration, _nonce);
-    require(orders[_orderCreator][hash] == true);          // check order exists
-    require(filledOrders[_orderCreator][hash] != true);    // check order has not been filled
+    uint cancelledOrderIndex = orders[_orderCreator][hash];
+    require(cancelledOrderIndex > 0);                    // check order exists
+    require(filledOrders[_orderCreator][hash] != true);  // check order has not been filled
 
-    orders[_orderCreator][hash] = false;
+    orders[_orderCreator][hash] = 0;
     balances[_orderCreator][_tokenGive] = balances[_orderCreator][_tokenGive].sub(_amountGive);
 
-    return true;
+    return cancelledOrderIndex;
   }
 
   /// @dev Fill an existing buy order                    NOTE: REQUIRES TOKEN APPROVAL
@@ -277,14 +281,15 @@ contract BasketEscrow {
     uint      _expiration,
     uint      _nonce
   ) public returns (bool success) {
-    assert(_fillOrder(_orderCreator, _basketAddress, _amountBasket, ETH_ADDRESS, _amountEth, _expiration, _nonce));
+    uint filledOrderIndex = _fillOrder(_orderCreator, _basketAddress, _amountBasket, ETH_ADDRESS, _amountEth, _expiration, _nonce);
+    assert(filledOrderIndex > 0);
     assert(ERC20(_basketAddress).transferFrom(msg.sender, _orderCreator, _amountBasket));
 
     uint fee = _amountEth.mul(transactionFee).div(10 ** FEE_DECIMALS);
     msg.sender.transfer(_amountEth.sub(fee));
     transactionFeeRecipient.transfer(fee);
 
-    LogBuyOrderFilled(msg.sender, _orderCreator, _basketAddress, _amountEth, _amountBasket);
+    LogBuyOrderFilled(filledOrderIndex, msg.sender, _orderCreator, _basketAddress, _amountEth, _amountBasket);
     return true;
   }
 
@@ -302,14 +307,15 @@ contract BasketEscrow {
     uint      _expiration,
     uint      _nonce
   ) public payable returns (bool success) {
-    assert(_fillOrder(_orderCreator, ETH_ADDRESS, msg.value, _basketAddress, _amountBasket, _expiration, _nonce));
+    uint filledOrderIndex = _fillOrder(_orderCreator, ETH_ADDRESS, msg.value, _basketAddress, _amountBasket, _expiration, _nonce);
+    assert(filledOrderIndex > 0);
     assert(ERC20(_basketAddress).transfer(msg.sender, _amountBasket));
 
     uint fee = msg.value.mul(transactionFee).div(10 ** FEE_DECIMALS);
     _orderCreator.transfer(msg.value.sub(fee));
     transactionFeeRecipient.transfer(fee);
 
-    LogSellOrderFilled(msg.sender, _orderCreator, _basketAddress, msg.value, _amountBasket);
+    LogSellOrderFilled(filledOrderIndex, msg.sender, _orderCreator, _basketAddress, msg.value, _amountBasket);
     return true;
   }
 
@@ -321,7 +327,7 @@ contract BasketEscrow {
   /// @param  _amountGive                                Amount of token/ETH to give in original order
   /// @param  _expiration                                Unix timestamp in original order
   /// @param  _nonce                                     Random number in original order
-  /// @return success                                    Operation successful
+  /// @return filledOrderIndex                           Index of filled order
   function _fillOrder(
     address   _orderCreator,
     address   _tokenGet,
@@ -332,17 +338,18 @@ contract BasketEscrow {
     uint      _nonce
   )
     internal
-    returns (bool success)
+    returns (uint index)
   {
     bytes32 hash = sha256(this, _tokenGet, _amountGet, _tokenGive, _amountGive, _expiration, _nonce);
-    require(orders[_orderCreator][hash] == true);          // check order exists
+    uint filledOrderIndex = orders[_orderCreator][hash];
+    require(filledOrderIndex > 0);                         // check order exists
     require(filledOrders[_orderCreator][hash] != true);    // check order has not been filled
     require(now <= _expiration);                           // check order has not expired
 
     filledOrders[_orderCreator][hash] = true;
     balances[_orderCreator][_tokenGive] = balances[_orderCreator][_tokenGive].sub(_amountGive);
 
-    return true;
+    return filledOrderIndex;
   }
 
   /// @dev Get details of an order with its index;
@@ -361,7 +368,7 @@ contract BasketEscrow {
   ) {
     Order memory o = orderMap[_orderIndex];
     bytes32 hash = sha256(this, o.tokenGet, o.amountGet, o.tokenGive, o.amountGive, o.expiration, o.nonce);
-    bool orderExists = orders[o.orderCreator][hash];
+    bool orderExists = orders[o.orderCreator][hash] > 0;
     bool isFilled = filledOrders[o.orderCreator][hash];
 
     return (o.orderCreator, o.tokenGet, o.amountGet, o.tokenGive, o.amountGive, o.expiration, o.nonce, orderExists, isFilled);
