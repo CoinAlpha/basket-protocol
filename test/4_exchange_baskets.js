@@ -293,7 +293,7 @@ contract('Basket Escrow', (accounts) => {
         const _initialMMBasketBal = await basketAB.balanceOf(MARKET_MAKER);
         initialEscrowBasketBal = Number(_initialEscrowBasketBal);
         initialMMBasketBal = Number(_initialMMBasketBal);
-        currentOrderIndex = await basketEscrow.orderIndex.call();
+        currentOrderIndex = 3;
       } catch (err) { assert.throw(`Error reading initial balance: ${err.toString()}`); }
     });
 

@@ -178,7 +178,7 @@ contract BasketEscrow {
     orderMap[orderIndex] = Order(_orderCreator, _tokenGet, _amountGet, _tokenGive, _amountGive, _expiration, _nonce);
     orderIndex = orderIndex.add(1);
 
-    return orderIndex = orderIndex.sub(1);
+    return orderIndex.sub(1);
   }
 
   /// @dev Cancel an existing buy order
