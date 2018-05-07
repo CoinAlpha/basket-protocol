@@ -18,7 +18,7 @@
 pragma solidity ^0.4.18;
 
 import "./zeppelin/StandardToken.sol";
-import "./zeppelin/Ownable.sol";
+import "./zeppelin/Destructible.sol";
 import "./zeppelin/SafeMath.sol";
 
 /**
@@ -26,7 +26,7 @@ import "./zeppelin/SafeMath.sol";
  * @author CoinAlpha, Inc. <contact@coinalpha.com>
  */
 
-contract TestToken is StandardToken, Ownable {
+contract TestToken is StandardToken, Destructible {
   string public name;
   string public symbol;
   uint public decimals;

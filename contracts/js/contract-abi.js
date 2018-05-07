@@ -1,10 +1,14 @@
 // @dev Stringified ABI's for copying and pasting (e.g. truffle console / parity / wallet)
 
+const basketRegistry = require('../../build/contracts/BasketRegistry.json');
 const basketFactory = require('../../build/contracts/BasketFactory.json');
 const basket = require('../../build/contracts/Basket.json');
 const testToken = require('../../build/contracts/TestToken.json');
 
-console.log('BasketFactory ABI');
+console.log('Basket Register');
+console.log(JSON.stringify(basketRegistry.abi));
+
+console.log('\nBasketFactory ABI');
 console.log(JSON.stringify(basketFactory.abi));
 
 console.log('\nBasket ABI');

@@ -1,22 +1,31 @@
+const { GAS_PRICE_DEV } = require('./config/params.js');
+
 module.exports = {
   networks: {
-    development: {
-      host: 'localhost',
-      port: 8545,
-      network_id: '*',       // Match any network id
-      gas: 4712388,          // Set to Ropsten limit
-      gasPrice: 1000000000,  // 1 gwei
-    },
-    test: {
-      host: 'localhost',
-      port: 8545,
-      network_id: '*',       // Match any network id
-      gas: 7000000,
-      gasPrice: 20000000000, // 20 GWei
-    },
+    // development: {
+    //   host: 'localhost',
+    //   port: 7545,
+    //   network_id: '*',       // Match any network id
+    //   gas: 4712388,          // Set to Ropsten limit
+    //   gasPrice: GAS_PRICE_DEV,  // 1 gwei
+    // },
+    // test: {
+    //   // host: 'localhost',
+    //   // port: 8545,
+    //   network_id: '*',       // Match any network id
+    //   gas: 7000000,
+    //   gasPrice: 20000000000, // 20 GWei
+    // },
     ropsten: {
       host: 'localhost',
       gas: 4700000,          // Current Ropsten limit is approx 4712388
+      gasPrice: 20e9,        // 20 GWei
+      network_id: '3',
+    },
+    parrotRp: {
+      host: '10.1.10.171',
+      port: 7545,
+      gas: 4700000,          // Current Ropsten limit is approx 47124331
       gasPrice: 20e9,        // 20 GWei
       network_id: '3',
     },
