@@ -96,7 +96,7 @@ contract('Deployment costs', (accounts) => {
     });
 
     it('BasketFactory: set TokenWalletFactory', async () => {
-      await basketFactory.setTokenWalletFactory(basketFactory.address, { from: ADMIN })
+      await basketFactory.setTokenWalletFactory(basketFactory.address, { from: ADMIN, gasPrice: GAS_PRICE_DEV })
         .catch(err => assert.throw(`Error setting TokenWalletFactory: ${err.toString()}`));
     });
   });
