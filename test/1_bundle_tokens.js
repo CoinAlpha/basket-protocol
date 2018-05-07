@@ -2,9 +2,7 @@ const path = require('path');
 const Promise = require('bluebird');
 
 const BasketFactory = artifacts.require('./BasketFactory.sol');
-const TokenWalletFactory = artifacts.require('./TokenWalletFactory.sol');
 const { abi: basketAbi } = require('../build/contracts/Basket.json');
-const { abi: tokenWalletAbi } = require('../build/contracts/TokenWallet.json');
 
 const { constructors } = require('../migrations/constructors.js');
 
@@ -26,7 +24,7 @@ contract('TestToken | Basket', (accounts) => {
   const FEE_DECIMALS = 18;
 
   // Contract instances
-  let basketFactory, tokenWalletFactory, basketAB;
+  let basketFactory, basketAB;
   let basketABAddress;
 
   // Token instances
@@ -219,48 +217,6 @@ contract('TestToken | Basket', (accounts) => {
 
     it('should allow HOLDER_A to debundleAndWithdraw part of a basket', async () => {
       await basketAB.debundleAndWithdrawPromise(amount2, { from: HOLDER_A, gas: 1e6 });
-    });
-  });
-
-  describe('Extract to private TokenWallet contract', () => {
-    let basketABBalance;
-    let tokenWalletAddress;
-
-    before('get HOLDER_A\'s balance', async () => {
-      try {
-        const _balBasketABBefore = await basketAB.balanceOfPromise(HOLDER_A);
-        basketABBalance = Number(_balBasketABBefore);
-
-        await tokenA.approve(basketABAddress, amount1, { from: HOLDER_A });
-        await tokenB.approve(basketABAddress, amount1, { from: HOLDER_A });
-        const fee = await basketAB.arrangerFee.call();
-        await basketAB.depositAndBundlePromise(amount1, { from: HOLDER_A, value: amount1 * (Number(fee) / (10 ** FEE_DECIMALS)), gas: 1e6 });
-        const _balBasketABAfter = await basketAB.balanceOfPromise(HOLDER_A);
-        basketABBalance = Number(_balBasketABAfter);
-
-        assert.isAbove(basketABBalance, 0, 'HOLDER_A does not own any BasketAB tokens');
-      } catch (err) { assert.throw(`Error retrieving basketAB contract data: ${err.toString()}`); }
-    });
-
-    it('should allow HOLDER_A to extract basketAB tokens', async () => {
-      try {
-        const data = await basketAB.extractPromise(basketABBalance, { from: HOLDER_A, gas: 4e6 });
-        tokenWalletAddress = await basketFactory.tokenWallets.call(0);
-      } catch (err) { assert.throw(`Error extracting: ${err.toString()}`); }
-    });
-
-    it('tokenWallet should contain the tokenBalance', async () => {
-      try {
-        // Get tokenWallet instance
-        const newContract = web3.eth.contract(tokenWalletAbi);
-        const tokenWallet = newContract.at(tokenWalletAddress);
-        Promise.promisifyAll(tokenWallet, { suffix: 'Promise' });
-
-        const _balTokenA = await tokenWallet.balanceOfTokenPromise(tokenA.address);
-        const _balTokenB = await tokenWallet.balanceOfTokenPromise(tokenB.address);
-        assert.strictEqual(Number(_balTokenA), basketABBalance, 'incorrect token balance in wallet');
-        assert.strictEqual(Number(_balTokenB), basketABBalance, 'incorrect token balance in wallet');
-      } catch (err) { assert.throw(`Error extracting: ${err.toString()}`); }
     });
   });
 

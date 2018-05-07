@@ -20,13 +20,6 @@ pragma solidity ^0.4.22;
 import "./zeppelin/SafeMath.sol";
 import "./Basket.sol";
 import "./BasketRegistry.sol";
-import "./TokenWalletFactory.sol";
-
-contract IBasketFactory {
-  // Create TokenWallet: for segregatint assets
-  function createTokenWallet(address) public returns (address) {}
-}
-
 
 /**
   * @title BasketFactory -- Factory contract for creating different baskets
@@ -42,14 +35,7 @@ contract BasketFactory {
   uint                          public productionFee;
 
   // Modules
-  ITokenWalletFactory           public tokenWalletFactory;
   IBasketRegistry               public basketRegistry;
-
-  // TokenWallet register
-  uint                          public tokenWalletIndex;
-  mapping(uint => address)      public tokenWallets;
-  address[]                     public tokenWalletList;
-  mapping(address => uint)      public tokenWalletIndexFromAddress;
 
   // Modifiers
   modifier onlyAdmin {
@@ -59,8 +45,6 @@ contract BasketFactory {
 
   // Events
   event LogBasketCreated(uint basketIndex, address basketAddress, address arranger);
-  event LogTokenWalletCreated(address tokenWallet, address owner);
-  event LogSetTokenWalletFactory(address newTokenWalletFactory);
   event LogProductionFeeRecipientChange(address oldRecipient, address newRecipient);
   event LogProductionFeeChange(uint oldFee, uint newFee);
 
@@ -121,30 +105,6 @@ contract BasketFactory {
       msg.sender
     );
     return b;
-  }
-
-  /// @dev Create TokenWallet: for segregatint assets
-  /// @param  _owner                               Address of new token wallet owner
-  /// @return newTokenWallet                       New token wallet address
-  function createTokenWallet(address _owner) public returns (address newTokenWallet) {
-    require(basketRegistry.checkBasketExists(msg.sender), "Function not called by a basket");
-    address tw = tokenWalletFactory.createTokenWallet(_owner);
-    tokenWalletList.push(tw);
-    tokenWallets[tokenWalletIndex] = tw;
-    tokenWalletIndexFromAddress[tw] = tokenWalletIndex;
-    tokenWalletIndex += 1;
-
-    emit LogTokenWalletCreated(tw, _owner);
-    return tw;
-  }
-
-  /// @dev Link to TokenWalletFactory
-  /// @param  _tokenWalletFactory                  Address of token wallet factory
-  /// @return success                              Operation successful
-  function setTokenWalletFactory(address _tokenWalletFactory) public onlyAdmin returns (bool success) {
-    tokenWalletFactory = ITokenWalletFactory(_tokenWalletFactory);
-    emit LogSetTokenWalletFactory(_tokenWalletFactory);
-    return true;
   }
 
   /// @dev Change recipient of production fees

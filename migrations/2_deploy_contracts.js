@@ -10,7 +10,7 @@ module.exports = (deployer, network, accounts) => {
   const PRODUCTION_FEE = 0.3;           // Charge 0.3 ETH of transaction per basket creation
 
   // Contract instances
-  let basketRegistry, basketEscrow, basketFactory, tokenWalletFactory;
+  let basketRegistry, basketEscrow, basketFactory;
 
   // 1. Deploy BasketRegistry contract
   deployer.deploy(BasketRegistry, { from: ADMINISTRATOR })
@@ -38,18 +38,9 @@ module.exports = (deployer, network, accounts) => {
     // 4. Set basketFactory address to basketRegistry
     .then(() => basketRegistry.setBasketFactory(basketFactory.address, { from: ADMINISTRATOR }))
 
-    // 5. Deploy TokenWalletFactory contract with basketFactory address
-    .then(() => deployer.deploy(TokenWalletFactory, basketFactory.address, { from: ADMINISTRATOR }))
-    .then(() => TokenWalletFactory.deployed())
-    .then(_instance => tokenWalletFactory = _instance)
-
-    // 6. Set tokenWalletFactory address to basketFactory
-    .then(() => basketFactory.setTokenWalletFactory(tokenWalletFactory.address, { from: ADMINISTRATOR }))
-
     // @dev Logs
     .then(() => console.log('  Contract addresses:'))
     .then(() => console.log(`  - BasketRegistry        : ${basketRegistry.address}`))
     .then(() => console.log(`  - BasketEscrow          : ${basketEscrow.address}`))
-    .then(() => console.log(`  - BasketFactory         : ${basketFactory.address}`))
-    .then(() => console.log(`  - TokenWalletFactory    : ${tokenWalletFactory.address}\n`));
+    .then(() => console.log(`  - BasketFactory         : ${basketFactory.address}`));
 };
