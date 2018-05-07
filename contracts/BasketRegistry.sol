@@ -16,7 +16,7 @@
 */
 
 pragma solidity ^0.4.18;
-import "./BasketFactory.sol";
+
 
 contract IBasketRegistry {
   // Called by BasketFactory
@@ -47,9 +47,6 @@ contract BasketRegistry {
   address[]                         public arrangerList;
   mapping(address => uint)          public arrangerBasketCount;
   mapping(address => uint)          public arrangerIndexFromAddress;
-
-  // Modules
-  IBasketFactory                    public basketFactory;
 
   // Structs
   struct BasketStruct {
@@ -93,7 +90,6 @@ contract BasketRegistry {
   function setBasketFactory(address _basketFactory) public returns (bool success) {
     require(msg.sender == admin);
     basketFactoryAddress = _basketFactory;
-    basketFactory = IBasketFactory(_basketFactory);
     LogSetBasketFactory(_basketFactory);
     return true;
   }

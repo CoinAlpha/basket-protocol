@@ -6,7 +6,6 @@ const { GAS_PRICE_DEV } = require('../config/params.js');
 
 const BasketFactory = artifacts.require('./BasketFactory.sol');
 const Basket = artifacts.require('./Basket.sol');
-const TokenWalletFactory = artifacts.require('./TokenWalletFactory.sol');
 const TokenWallet = artifacts.require('./TokenWallet.sol');
 const scriptName = path.basename(__filename);
 
@@ -85,19 +84,6 @@ contract('Deployment costs', (accounts) => {
         ADMIN,
         'Basket contract', 'BASK', [TOKEN_A, TOKEN_B], [1, 2], REGISTRY, ADMIN, ADMIN, ARRANGER_FEE,
       );
-    });
-
-    it('TokenWallet cost', async () => {
-      tokenWallet = await constructors.TokenWallet(ADMIN, USER);
-    });
-
-    it('TokenWalletFactory cost', async () => {
-      tokenWalletFactory = await constructors.TokenWalletFactory(ADMIN, basketFactory.address);
-    });
-
-    it('BasketFactory: set TokenWalletFactory', async () => {
-      await basketFactory.setTokenWalletFactory(basketFactory.address, { from: ADMIN })
-        .catch(err => assert.throw(`Error setting TokenWalletFactory: ${err.toString()}`));
     });
   });
 });

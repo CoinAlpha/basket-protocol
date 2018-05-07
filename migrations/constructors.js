@@ -8,8 +8,6 @@ const allArtifacts = {
   BasketFactory: artifacts.require('./BasketFactory.sol'),
   BasketRegistry: artifacts.require('./BasketRegistry.sol'),
   Basket: artifacts.require('./Basket.sol'),
-  TokenWallet: artifacts.require('./TokenWallet.sol'),
-  TokenWalletFactory: artifacts.require('./TokenWalletFactory.sol'),
 };
 
 const constructors = {
@@ -29,12 +27,6 @@ const constructors = {
       _name, _symbol, _tokens, _weights, _registryAddress, _arranger, _arrangerFeeRecipient, _arrangerFee,
       { from: _owner },
     ),
-
-  TokenWallet: (_owner, _user) =>
-    allArtifacts.TokenWallet.new(_user, { from: _owner }),
-
-  TokenWalletFactory: (_admin, _basketFactory) =>
-    allArtifacts.TokenWalletFactory.new(_basketFactory, { from: _admin }),
 };
 
 module.exports = {

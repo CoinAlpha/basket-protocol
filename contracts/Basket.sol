@@ -43,7 +43,6 @@ contract Basket is StandardToken {
   uint                    public arrangerFee;
 
   // Modules
-  IBasketFactory          public basketFactory;
   IBasketRegistry         public basketRegistry;
 
   // Modifiers
@@ -86,8 +85,6 @@ contract Basket is StandardToken {
     weights = _weights;
 
     basketFactoryAddress = msg.sender;             // This contract is created only by the Factory
-    basketFactory = IBasketFactory(msg.sender);
-
     basketRegistryAddress = _basketRegistryAddress;
     basketRegistry = IBasketRegistry(_basketRegistryAddress);
 
@@ -141,29 +138,6 @@ contract Basket is StandardToken {
 
     basketRegistry.incrementBasketsBurned(_quantity, msg.sender);
     LogDebundleAndWithdraw(msg.sender, _quantity);
-    return true;
-  }
-
-  /// @dev Extracts tokens into a private TokenWallet contract
-  /// @param  _quantity                            Quantity of basket tokens to extract
-  /// @return success                              Operation successful
-  function extract(uint _quantity) public returns (bool success) {
-    require(balances[msg.sender] >= _quantity);
-    // decrease holder balance and total supply by _quantity
-    balances[msg.sender] = balances[msg.sender].sub(_quantity);
-    totalSupply_ = totalSupply_.sub(_quantity);
-
-    address tokenWalletAddress = basketFactory.createTokenWallet(msg.sender);
-
-    // increase balance of each of the tokens by their weights
-    for (uint i = 0; i < tokens.length; i++) {
-      address t = tokens[i];
-      uint w = weights[i];
-      assert(ERC20(t).transfer(tokenWalletAddress, w.mul(_quantity).div(10 ** decimals)));
-    }
-
-    basketRegistry.incrementBasketsBurned(_quantity, msg.sender);
-    LogExtract(msg.sender, _quantity, tokenWalletAddress);
     return true;
   }
 
