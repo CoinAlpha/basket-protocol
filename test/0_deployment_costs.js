@@ -31,7 +31,7 @@ contract('Deployment costs', (accounts) => {
   const ARRANGER_FEE = 0.01;
 
   before('before: should get starting admin balance', async () => {
-    console.log(`================= START TEST [ ${scriptName} ] =================`);
+    console.log(`  ================= START TEST [ ${scriptName} ] =================`);
 
     const _bal = await web3.eth.getBalancePromise(ADMIN);
     adminBalanceStart = web3.fromWei(_bal, 'ether');
@@ -96,7 +96,7 @@ contract('Deployment costs', (accounts) => {
     });
 
     it('BasketFactory: set TokenWalletFactory', async () => {
-      await basketFactory.setTokenWalletFactory(basketFactory.address, { from: ADMIN })
+      await basketFactory.setTokenWalletFactory(basketFactory.address, { from: ADMIN, gasPrice: GAS_PRICE_DEV })
         .catch(err => assert.throw(`Error setting TokenWalletFactory: ${err.toString()}`));
     });
   });

@@ -16,7 +16,7 @@
 
 */
 
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.22;
 
 import "./zeppelin/SafeMath.sol";
 import "./zeppelin/ERC20.sol";
@@ -50,16 +50,16 @@ contract TokenWallet is Ownable {
 
   /// @dev Token Wallet constructor
   /// @param  _owner                                Token owner
-  function TokenWallet(address _owner) public {
+  constructor(address _owner) public {
     owner = _owner;
   }
 
   /// @dev Transfer all Ether held by the contract to the owner.
   /// @return success                              Operation successful
   function withdrawEther() external onlyOwner returns (bool success) {
-    uint amount = this.balance;
-    assert(owner.send(this.balance));
-    LogWithdrawEther(amount);
+    uint amount = address(this).balance;
+    owner.transfer(amount);
+    emit LogWithdrawEther(amount);
     return true;
   }
 
@@ -84,7 +84,7 @@ contract TokenWallet is Ownable {
     if (containsToken[_token] == 0) {
       registerToken(_token);
     }
-    LogDeposit(msg.sender, _token, _quantity);
+    emit LogDeposit(msg.sender, _token, _quantity);
     return true;
   }
 
@@ -99,13 +99,13 @@ contract TokenWallet is Ownable {
     returns (bool success)
   {
     uint tokenBalance = ERC20(_token).balanceOf(this);
-    require(tokenBalance >= _quantity);
+    require(tokenBalance >= _quantity, "Insufficient token balance");
     assert(ERC20(_token).transfer(_to, _quantity));
 
     if (tokenBalance == _quantity) {
       removeTokenFromRegister(_token);
     }
-    LogTransfer(_token, _to, _quantity);
+    emit LogTransfer(_token, _to, _quantity);
     return true;
   }
 
@@ -119,7 +119,7 @@ contract TokenWallet is Ownable {
     returns (bool success)
   {
     uint tokenBalance = ERC20(_token).balanceOf(this);
-    require(tokenBalance >= _quantity);
+    require(tokenBalance >= _quantity, "Insufficient token balance");
     assert(transferToken(_token, owner, _quantity));
 
     if (tokenBalance == _quantity) {
@@ -163,7 +163,7 @@ contract TokenWallet is Ownable {
     public
     returns (bool success)
   {
-    require(containsToken[_token] > 0 && ERC20(_token).balanceOf(this) == 0);
+    require(containsToken[_token] > 0 && ERC20(_token).balanceOf(this) == 0, "Token is not registered or no balance");
 
     bool tokenRemoved;
     for (uint i = 0; i < tokenList.length; i++) {

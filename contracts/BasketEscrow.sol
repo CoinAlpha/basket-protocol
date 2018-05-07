@@ -15,7 +15,7 @@
 
 */
 
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.22;
 
 import "./zeppelin/SafeMath.sol";
 import "./zeppelin/ERC20.sol";
@@ -67,7 +67,7 @@ contract BasketEscrow {
 
   // Modifiers
   modifier onlyAdmin {
-    require(msg.sender == admin);
+    require(msg.sender == admin, "Only the admin can call this function");
     _;
   }
 
@@ -85,11 +85,10 @@ contract BasketEscrow {
   /// @param  _basketRegistryAddress                     Address of basket registry
   /// @param  _transactionFeeRecipient                   Address to send transactionFee
   /// @param  _transactionFee                            Transaction fee in ETH percentage
-  function BasketEscrow(
+  constructor(
     address   _basketRegistryAddress,
     address   _transactionFeeRecipient,
     uint      _transactionFee
-
   ) public {
     basketRegistryAddress = _basketRegistryAddress;
     basketRegistry = IBasketRegistry(_basketRegistryAddress);
@@ -117,7 +116,7 @@ contract BasketEscrow {
     uint index = _createOrder(msg.sender, _basketAddress, _amountBasket, ETH_ADDRESS, msg.value, _expiration, _nonce);
     assert(index > 0);
 
-    LogBuyOrderCreated(index, msg.sender, _basketAddress, msg.value, _amountBasket, _expiration, _nonce);
+    emit LogBuyOrderCreated(index, msg.sender, _basketAddress, msg.value, _amountBasket, _expiration, _nonce);
     return true;
   }
 
@@ -142,7 +141,7 @@ contract BasketEscrow {
     uint index = _createOrder(msg.sender, ETH_ADDRESS, _amountEth, _basketAddress, _amountBasket, _expiration, _nonce);
     assert(index > 0);
 
-    LogSellOrderCreated(index, msg.sender, _basketAddress, _amountEth, _amountBasket, _expiration, _nonce);
+    emit LogSellOrderCreated(index, msg.sender, _basketAddress, _amountEth, _amountBasket, _expiration, _nonce);
     return true;
   }
 
@@ -167,11 +166,11 @@ contract BasketEscrow {
     internal
     returns (uint newOrderIndex)
   {
-    require(_tokenGet == ETH_ADDRESS || basketRegistry.checkBasketExists(_tokenGet));
-    require(_tokenGive == ETH_ADDRESS || basketRegistry.checkBasketExists(_tokenGive));
+    require(_tokenGet == ETH_ADDRESS || basketRegistry.checkBasketExists(_tokenGet), "Order not for ETH or invalid basket");
+    require(_tokenGive == ETH_ADDRESS || basketRegistry.checkBasketExists(_tokenGive), "Order not for ETH or invalid basket");
 
     bytes32 hash = sha256(this, _tokenGet, _amountGet, _tokenGive, _amountGive, _expiration, _nonce);
-    require(orders[_orderCreator][hash] == 0);           // avoid duplicate orders
+    require(orders[_orderCreator][hash] == 0, "Duplicate order");
 
     orders[_orderCreator][hash] = orderIndex;
     balances[_orderCreator][_tokenGive] = balances[_orderCreator][_tokenGive].add(_amountGive);
@@ -206,7 +205,7 @@ contract BasketEscrow {
       transactionFeeRecipient.transfer(fee);
     }
 
-    LogBuyOrderCancelled(cancelledOrderIndex, msg.sender, _basketAddress, _amountEth, _amountBasket);
+    emit LogBuyOrderCancelled(cancelledOrderIndex, msg.sender, _basketAddress, _amountEth, _amountBasket);
     return true;
   }
 
@@ -224,12 +223,12 @@ contract BasketEscrow {
     uint      _expiration,
     uint      _nonce
   ) public returns (bool success) {
-    uint cancelledOrderIndex =_cancelOrder(msg.sender, ETH_ADDRESS, _amountEth, _basketAddress, _amountBasket, _expiration, _nonce);
+    uint cancelledOrderIndex = _cancelOrder(msg.sender, ETH_ADDRESS, _amountEth, _basketAddress, _amountBasket, _expiration, _nonce);
     assert(cancelledOrderIndex > 0);
 
     assert(ERC20(_basketAddress).transfer(msg.sender, _amountBasket));
 
-    LogSellOrderCancelled(cancelledOrderIndex, msg.sender, _basketAddress, _amountEth, _amountBasket);
+    emit LogSellOrderCancelled(cancelledOrderIndex, msg.sender, _basketAddress, _amountEth, _amountBasket);
     return true;
   }
 
@@ -256,8 +255,8 @@ contract BasketEscrow {
   {
     bytes32 hash = sha256(this, _tokenGet, _amountGet, _tokenGive, _amountGive, _expiration, _nonce);
     uint cancelledOrderIndex = orders[_orderCreator][hash];
-    require(cancelledOrderIndex > 0);                    // check order exists
-    require(filledOrders[_orderCreator][hash] != true);  // check order has not been filled
+    require(cancelledOrderIndex > 0, "Order does not exist");
+    require(filledOrders[_orderCreator][hash] != true, "Order has been filled");
 
     orders[_orderCreator][hash] = 0;
     balances[_orderCreator][_tokenGive] = balances[_orderCreator][_tokenGive].sub(_amountGive);
@@ -289,7 +288,7 @@ contract BasketEscrow {
     msg.sender.transfer(_amountEth.sub(fee));
     transactionFeeRecipient.transfer(fee);
 
-    LogBuyOrderFilled(filledOrderIndex, msg.sender, _orderCreator, _basketAddress, _amountEth, _amountBasket);
+    emit LogBuyOrderFilled(filledOrderIndex, msg.sender, _orderCreator, _basketAddress, _amountEth, _amountBasket);
     return true;
   }
 
@@ -315,7 +314,7 @@ contract BasketEscrow {
     _orderCreator.transfer(msg.value.sub(fee));
     transactionFeeRecipient.transfer(fee);
 
-    LogSellOrderFilled(filledOrderIndex, msg.sender, _orderCreator, _basketAddress, msg.value, _amountBasket);
+    emit LogSellOrderFilled(filledOrderIndex, msg.sender, _orderCreator, _basketAddress, msg.value, _amountBasket);
     return true;
   }
 
@@ -342,9 +341,9 @@ contract BasketEscrow {
   {
     bytes32 hash = sha256(this, _tokenGet, _amountGet, _tokenGive, _amountGive, _expiration, _nonce);
     uint filledOrderIndex = orders[_orderCreator][hash];
-    require(filledOrderIndex > 0);                         // check order exists
-    require(filledOrders[_orderCreator][hash] != true);    // check order has not been filled
-    require(now <= _expiration);                           // check order has not expired
+    require(filledOrderIndex > 0, "Order does not exist");
+    require(filledOrders[_orderCreator][hash] != true, "Order has been filled");
+    require(now <= _expiration, "Order has expired");
 
     filledOrders[_orderCreator][hash] = true;
     balances[_orderCreator][_tokenGive] = balances[_orderCreator][_tokenGive].sub(_amountGive);
@@ -381,7 +380,7 @@ contract BasketEscrow {
     address oldRecipient = transactionFeeRecipient;
     transactionFeeRecipient = _newRecipient;
 
-    LogTransactionFeeRecipientChange(oldRecipient, transactionFeeRecipient);
+    emit LogTransactionFeeRecipientChange(oldRecipient, transactionFeeRecipient);
     return true;
   }
 
@@ -392,10 +391,10 @@ contract BasketEscrow {
     uint oldFee = transactionFee;
     transactionFee = _newFee;
 
-    LogTransactionFeeChange(oldFee, transactionFee);
+    emit LogTransactionFeeChange(oldFee, transactionFee);
     return true;
   }
 
   /// @dev Fallback to reject any ether sent directly to contract
-  function () public { revert(); }
+  function () public { revert("BasketEscrow does not accept ETH transfers"); }
 }

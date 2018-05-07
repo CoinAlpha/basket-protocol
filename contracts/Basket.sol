@@ -15,7 +15,7 @@
 
 */
 
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.22;
 
 import "./zeppelin/SafeMath.sol";
 import "./zeppelin/StandardToken.sol";
@@ -48,7 +48,7 @@ contract Basket is StandardToken {
 
   // Modifiers
   modifier onlyArranger {
-    require(msg.sender == arranger);
+    require(msg.sender == arranger, "Only the Arranger can call this function");
     _;
   }
 
@@ -68,7 +68,7 @@ contract Basket is StandardToken {
   /// @param  _arranger                            Address of arranger
   /// @param  _arrangerFeeRecipient                Address to send arranger fees
   /// @param  _arrangerFee                         Amount of fee in ETH for every basket minted
-  function Basket(
+  constructor(
     string    _name,
     string    _symbol,
     address[] _tokens,
@@ -78,7 +78,7 @@ contract Basket is StandardToken {
     address   _arrangerFeeRecipient,
     uint      _arrangerFee                         // Amount of ETH charged per basket minted
   ) public {
-    require(_tokens.length > 0 && _tokens.length == _weights.length);
+    require(_tokens.length > 0 && _tokens.length == _weights.length, "Constructor: invalid number of tokens and weights");
 
     name = _name;
     symbol = _symbol;
@@ -110,7 +110,7 @@ contract Basket is StandardToken {
 
     // charging market makers a fee for every new basket minted
     if (arrangerFee > 0) {
-      require(msg.value >= arrangerFee.mul(_quantity).div(10 ** decimals));
+      require(msg.value >= arrangerFee.mul(_quantity).div(10 ** decimals), "Insufficient ETH for arranger fee to bundle");
       arrangerFeeRecipient.transfer(msg.value);
     }
 
@@ -118,7 +118,7 @@ contract Basket is StandardToken {
     totalSupply_ = totalSupply_.add(_quantity);
 
     basketRegistry.incrementBasketsMinted(_quantity, msg.sender);
-    LogDepositAndBundle(msg.sender, _quantity);
+    emit LogDepositAndBundle(msg.sender, _quantity);
     return true;
   }
 
@@ -127,7 +127,7 @@ contract Basket is StandardToken {
   /// @param  _quantity                            Quantity of basket tokens to convert back to original tokens
   /// @return success                              Operation successful
   function debundleAndWithdraw(uint _quantity) public returns (bool success) {
-    require(balances[msg.sender] >= _quantity);
+    require(balances[msg.sender] >= _quantity, "Insufficient basket balance to debundle");
     // decrease holder balance and total supply by _quantity
     balances[msg.sender] = balances[msg.sender].sub(_quantity);
     totalSupply_ = totalSupply_.sub(_quantity);
@@ -140,7 +140,7 @@ contract Basket is StandardToken {
     }
 
     basketRegistry.incrementBasketsBurned(_quantity, msg.sender);
-    LogDebundleAndWithdraw(msg.sender, _quantity);
+    emit LogDebundleAndWithdraw(msg.sender, _quantity);
     return true;
   }
 
@@ -148,7 +148,7 @@ contract Basket is StandardToken {
   /// @param  _quantity                            Quantity of basket tokens to extract
   /// @return success                              Operation successful
   function extract(uint _quantity) public returns (bool success) {
-    require(balances[msg.sender] >= _quantity);
+    require(balances[msg.sender] >= _quantity, "Insufficient balance to extract");
     // decrease holder balance and total supply by _quantity
     balances[msg.sender] = balances[msg.sender].sub(_quantity);
     totalSupply_ = totalSupply_.sub(_quantity);
@@ -163,7 +163,7 @@ contract Basket is StandardToken {
     }
 
     basketRegistry.incrementBasketsBurned(_quantity, msg.sender);
-    LogExtract(msg.sender, _quantity, tokenWalletAddress);
+    emit LogExtract(msg.sender, _quantity, tokenWalletAddress);
     return true;
   }
 
@@ -174,7 +174,7 @@ contract Basket is StandardToken {
     address oldRecipient = arrangerFeeRecipient;
     arrangerFeeRecipient = _newRecipient;
 
-    LogArrangerFeeRecipientChange(oldRecipient, arrangerFeeRecipient);
+    emit LogArrangerFeeRecipientChange(oldRecipient, arrangerFeeRecipient);
     return true;
   }
 
@@ -185,11 +185,11 @@ contract Basket is StandardToken {
     uint oldFee = arrangerFee;
     arrangerFee = _newFee;
 
-    LogArrangerFeeChange(oldFee, arrangerFee);
+    emit LogArrangerFeeChange(oldFee, arrangerFee);
     return true;
   }
 
   /// @dev Fallback to reject any ether sent to contract
-  function () public { revert(); }
+  function () public { revert("Baskets do not accept ETH transfers"); }
 
 }
