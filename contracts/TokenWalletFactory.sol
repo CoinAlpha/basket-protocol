@@ -15,7 +15,7 @@
 
 */
 
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.22;
 import "./TokenWallet.sol";
 
 /**
@@ -40,12 +40,12 @@ contract TokenWalletFactory {
 
   // Modifiers
   modifier onlyBasketFactory {
-    require(msg.sender == basketFactory);
+    require(msg.sender == basketFactory, "Only the basket factory can call this function");
     _;
   }
 
   // Constructor
-  function TokenWalletFactory (address _basketFactory) public {
+  constructor(address _basketFactory) public {
     basketFactory = _basketFactory;
   }
 

@@ -15,7 +15,7 @@
 
 */
 
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.22;
 
 import "./zeppelin/StandardToken.sol";
 import "./zeppelin/Destructible.sol";
@@ -32,13 +32,16 @@ contract TestToken is StandardToken, Destructible {
   uint public decimals;
   uint public faucetAmount;
 
+  event LogFaucet(address recipient, uint amount);
+  event LogMint(uint amount);
+
   /// @dev Token constructor
   /// @param  _name             Token name
   /// @param  _symbol           Token symbol
   /// @param  _decimals         Decimal precision
   /// @param  _initialSupply    Initial total supply of tokens
   /// @param  _faucetAmount     Amount to faucet with each request
-  function TestToken(
+  constructor(
     string    _name,
     string    _symbol,
     uint      _decimals,
@@ -57,13 +60,14 @@ contract TestToken is StandardToken, Destructible {
   }
 
   /// @dev Fallback to reject any ether sent to contract
-  function () public { revert(); }
+  function () payable public { revert("Token contract does not accept ETH transfers"); }
 
   /// @dev Withdraw a set amount of token to any address
   /// @return success           Operation successful
   function faucet() public returns (bool) {
     balances[owner] = balances[owner].sub(faucetAmount);
     balances[msg.sender] = balances[msg.sender].add(faucetAmount);
+    emit LogFaucet(msg.sender, faucetAmount);
     return true;
   }
 
@@ -72,6 +76,7 @@ contract TestToken is StandardToken, Destructible {
   function mint(uint _value) public onlyOwner returns (bool) {
     totalSupply_ = totalSupply_.add(_value);
     balances[owner] = balances[owner].add(_value);
+    emit LogMint(_value);
     return true;
   }
 }

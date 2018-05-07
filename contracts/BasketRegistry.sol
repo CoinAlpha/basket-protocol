@@ -15,7 +15,7 @@
 
 */
 
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.22;
 import "./BasketFactory.sol";
 
 contract IBasketRegistry {
@@ -65,12 +65,12 @@ contract BasketRegistry {
 
   // Modifiers
   modifier onlyBasket {
-    require(basketIndexFromAddress[msg.sender] > 0);
+    require(basketIndexFromAddress[msg.sender] > 0, "Only a basket can call this function");
     _;
   }
 
   modifier onlyBasketFactory {
-    require(msg.sender == basketFactoryAddress);
+    require(msg.sender == basketFactoryAddress, "Only the basket factory can call this function");
     _;
   }
 
@@ -81,7 +81,7 @@ contract BasketRegistry {
   event LogIncrementBasketsBurned(address basketAddress, uint quantity, address sender);
 
   /// @dev BasketRegistry constructor
-  function BasketRegistry () public {
+  constructor() public {
     basketIndex = 1;
     arrangerIndex = 1;
     admin = msg.sender;
@@ -91,10 +91,10 @@ contract BasketRegistry {
   /// @param  _basketFactory                       Basket factory address
   /// @return success                              Operation successful
   function setBasketFactory(address _basketFactory) public returns (bool success) {
-    require(msg.sender == admin);
+    require(msg.sender == admin, "Only an admin can call this function");
     basketFactoryAddress = _basketFactory;
     basketFactory = IBasketFactory(_basketFactory);
-    LogSetBasketFactory(_basketFactory);
+    emit LogSetBasketFactory(_basketFactory);
     return true;
   }
 
@@ -130,7 +130,7 @@ contract BasketRegistry {
     }
     arrangerBasketCount[_arranger] += 1;
 
-    LogBasketRegistration(_basketAddress, basketIndex);
+    emit LogBasketRegistration(_basketAddress, basketIndex);
     basketIndex += 1;
     return basketIndex - 1;
   }
@@ -169,7 +169,7 @@ contract BasketRegistry {
   /// @return success                              Operation successful
   function incrementBasketsMinted(uint _quantity, address _sender) public onlyBasket returns (bool) {
     basketMap[msg.sender].totalMinted += _quantity;
-    LogIncrementBasketsMinted(msg.sender, _quantity, _sender);
+    emit LogIncrementBasketsMinted(msg.sender, _quantity, _sender);
     return true;
   }
 
@@ -179,7 +179,7 @@ contract BasketRegistry {
   /// @return success                              Operation successful
   function incrementBasketsBurned(uint _quantity, address _sender) public onlyBasket returns (bool) {
     basketMap[msg.sender].totalBurned += _quantity;
-    LogIncrementBasketsBurned(msg.sender, _quantity, _sender);
+    emit LogIncrementBasketsBurned(msg.sender, _quantity, _sender);
     return true;
   }
 }

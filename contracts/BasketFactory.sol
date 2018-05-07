@@ -15,7 +15,7 @@
 
 */
 
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.22;
 
 import "./zeppelin/SafeMath.sol";
 import "./Basket.sol";
@@ -53,7 +53,7 @@ contract BasketFactory {
 
   // Modifiers
   modifier onlyAdmin {
-    require(msg.sender == admin);
+    require(msg.sender == admin, "Only the admin can call this function");
     _;
   }
 
@@ -66,7 +66,7 @@ contract BasketFactory {
 
   /// @dev BasketFactory constructor
   /// @param  _basketRegistryAddress               Address of basket registry
-  function BasketFactory (
+  constructor(
     address   _basketRegistryAddress,
     address   _productionFeeRecipient,
     uint      _productionFee
@@ -101,7 +101,7 @@ contract BasketFactory {
     returns (address newBasket)
   {
     // charging arrangers a fee to deploy new basket
-    require(msg.value >= productionFee);
+    require(msg.value >= productionFee, "Insufficient ETH for basket creation fee");
     productionFeeRecipient.transfer(msg.value);
 
     Basket b = new Basket(
@@ -115,7 +115,7 @@ contract BasketFactory {
       _arrangerFee
     );
 
-    LogBasketCreated(
+    emit LogBasketCreated(
       basketRegistry.registerBasket(b, msg.sender, _name, _symbol, _tokens, _weights),
       b,
       msg.sender
@@ -127,14 +127,14 @@ contract BasketFactory {
   /// @param  _owner                               Address of new token wallet owner
   /// @return newTokenWallet                       New token wallet address
   function createTokenWallet(address _owner) public returns (address newTokenWallet) {
-    require(basketRegistry.checkBasketExists(msg.sender));
+    require(basketRegistry.checkBasketExists(msg.sender), "Function not called by a basket");
     address tw = tokenWalletFactory.createTokenWallet(_owner);
     tokenWalletList.push(tw);
     tokenWallets[tokenWalletIndex] = tw;
     tokenWalletIndexFromAddress[tw] = tokenWalletIndex;
     tokenWalletIndex += 1;
 
-    LogTokenWalletCreated(tw, _owner);
+    emit LogTokenWalletCreated(tw, _owner);
     return tw;
   }
 
@@ -143,7 +143,7 @@ contract BasketFactory {
   /// @return success                              Operation successful
   function setTokenWalletFactory(address _tokenWalletFactory) public onlyAdmin returns (bool success) {
     tokenWalletFactory = ITokenWalletFactory(_tokenWalletFactory);
-    LogSetTokenWalletFactory(_tokenWalletFactory);
+    emit LogSetTokenWalletFactory(_tokenWalletFactory);
     return true;
   }
 
@@ -154,7 +154,7 @@ contract BasketFactory {
     address oldRecipient = productionFeeRecipient;
     productionFeeRecipient = _newRecipient;
 
-    LogProductionFeeRecipientChange(oldRecipient, productionFeeRecipient);
+    emit LogProductionFeeRecipientChange(oldRecipient, productionFeeRecipient);
     return true;
   }
 
@@ -165,7 +165,7 @@ contract BasketFactory {
     uint oldFee = productionFee;
     productionFee = _newFee;
 
-    LogProductionFeeChange(oldFee, productionFee);
+    emit LogProductionFeeChange(oldFee, productionFee);
     return true;
   }
 
