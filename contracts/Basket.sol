@@ -190,6 +190,6 @@ contract Basket is StandardToken {
   }
 
   /// @dev Fallback to reject any ether sent to contract
-  function () payable public { revert("Baskets do not accept ETH transfers"); }
+  function () public { revert("Baskets do not accept ETH transfers"); }
 
 }

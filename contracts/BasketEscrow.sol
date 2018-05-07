@@ -396,5 +396,5 @@ contract BasketEscrow {
   }
 
   /// @dev Fallback to reject any ether sent directly to contract
-  function () payable public { revert("BasketEscrow does not accept ETH transfers"); }
+  function () public { revert("BasketEscrow does not accept ETH transfers"); }
 }

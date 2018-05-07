@@ -60,7 +60,7 @@ contract TestToken is StandardToken, Destructible {
   }
 
   /// @dev Fallback to reject any ether sent to contract
-  function () payable public { revert("Token contract does not accept ETH transfers"); }
+  function () public { revert("Token contract does not accept ETH transfers"); }
 
   /// @dev Withdraw a set amount of token to any address
   /// @return success           Operation successful
