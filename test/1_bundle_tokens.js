@@ -74,8 +74,6 @@ contract('TestToken | Basket', (accounts) => {
           'A1B1', 'BASK', [tokenA.address, tokenB.address], [1e18, 1e18], ARRANGER, (ARRANGER_FEE * (10 ** FEE_DECIMALS)),
           { from: ARRANGER, value: Number(fee) },
         );
-        console.log(Number(fee) * 1e18);
-        console.log(ARRANGER_FEE * (10 ** FEE_DECIMALS));
 
         const txLogs = txObj.logs;
         // Check logs to ensure contract was created
@@ -89,8 +87,6 @@ contract('TestToken | Basket', (accounts) => {
         const newContract = web3.eth.contract(basketAbi);
         basketAB = newContract.at(basketABAddress);
         Promise.promisifyAll(basketAB, { suffix: 'Promise' });
-
-        // console.log(`\n  - basketABAddress = '${basketABAddress}'\n`);
       } catch (err) { assert.throw(`Error deploying basketAB: ${err.toString()}`); }
     });
 
@@ -259,7 +255,6 @@ contract('TestToken | Basket', (accounts) => {
         const newContract = web3.eth.contract(tokenWalletAbi);
         const tokenWallet = newContract.at(tokenWalletAddress);
         Promise.promisifyAll(tokenWallet, { suffix: 'Promise' });
-        // console.log(`\n  - tokenWalletAddress = '${tokenWallet.address}'\n`);
 
         const _balTokenA = await tokenWallet.balanceOfTokenPromise(tokenA.address);
         const _balTokenB = await tokenWallet.balanceOfTokenPromise(tokenB.address);

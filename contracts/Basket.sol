@@ -117,7 +117,7 @@ contract Basket is StandardToken {
     balances[msg.sender] = balances[msg.sender].add(_quantity);
     totalSupply_ = totalSupply_.add(_quantity);
 
-    basketRegistry.incrementBasketsMinted(_quantity);
+    basketRegistry.incrementBasketsMinted(_quantity, msg.sender);
     LogDepositAndBundle(msg.sender, _quantity);
     return true;
   }
@@ -139,7 +139,7 @@ contract Basket is StandardToken {
       assert(ERC20(t).transfer(msg.sender, w.mul(_quantity).div(10 ** decimals)));
     }
 
-    basketRegistry.incrementBasketsBurned(_quantity);
+    basketRegistry.incrementBasketsBurned(_quantity, msg.sender);
     LogDebundleAndWithdraw(msg.sender, _quantity);
     return true;
   }
@@ -162,7 +162,7 @@ contract Basket is StandardToken {
       assert(ERC20(t).transfer(tokenWalletAddress, w.mul(_quantity).div(10 ** decimals)));
     }
 
-    basketRegistry.incrementBasketsBurned(_quantity);
+    basketRegistry.incrementBasketsBurned(_quantity, msg.sender);
     LogExtract(msg.sender, _quantity, tokenWalletAddress);
     return true;
   }

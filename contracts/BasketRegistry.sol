@@ -24,8 +24,8 @@ contract IBasketRegistry {
   function checkBasketExists (address) public returns (bool) {}
 
   // Called by Basket
-  function incrementBasketsMinted (uint) public returns (bool) {}
-  function incrementBasketsBurned (uint) public returns (bool) {}
+  function incrementBasketsMinted (uint, address) public returns (bool) {}
+  function incrementBasketsBurned (uint, address) public returns (bool) {}
 }
 
 
@@ -77,8 +77,8 @@ contract BasketRegistry {
   // Events
   event LogSetBasketFactory(address basketFactory);
   event LogBasketRegistration(address basketAddress, uint basketIndex);
-  event LogIncrementBasketsMinted(address basketAddress, uint quantity);
-  event LogIncrementBasketsBurned(address basketAddress, uint quantity);
+  event LogIncrementBasketsMinted(address basketAddress, uint quantity, address sender);
+  event LogIncrementBasketsBurned(address basketAddress, uint quantity, address sender);
 
   /// @dev BasketRegistry constructor
   function BasketRegistry () public {
@@ -165,19 +165,21 @@ contract BasketRegistry {
 
   /// @dev Increment totalMinted from BasketStruct
   /// @param  _quantity                            Quantity to increment
+  /// @param  _sender                              Address that bundled tokens
   /// @return success                              Operation successful
-  function incrementBasketsMinted(uint _quantity) public onlyBasket returns (bool) {
+  function incrementBasketsMinted(uint _quantity, address _sender) public onlyBasket returns (bool) {
     basketMap[msg.sender].totalMinted += _quantity;
-    LogIncrementBasketsMinted(msg.sender, _quantity);
+    LogIncrementBasketsMinted(msg.sender, _quantity, _sender);
     return true;
   }
 
   /// @dev Increment totalBurned from BasketStruct
   /// @param  _quantity                            Quantity to increment
+  /// @param  _sender                              Address that debundled tokens
   /// @return success                              Operation successful
-  function incrementBasketsBurned(uint _quantity) public onlyBasket returns (bool) {
+  function incrementBasketsBurned(uint _quantity, address _sender) public onlyBasket returns (bool) {
     basketMap[msg.sender].totalBurned += _quantity;
-    LogIncrementBasketsBurned(msg.sender, _quantity);
+    LogIncrementBasketsBurned(msg.sender, _quantity, _sender);
     return true;
   }
 }
