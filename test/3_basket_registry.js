@@ -37,7 +37,7 @@ contract('Basket Factory | Basket Registry', (accounts) => {
   const tokenParamsB = [HOLDER_A, 'Token B', 'TOKB', decimals, initialSupply, faucetAmount];
 
   before('Before: deploy contracts', async () => {
-    console.log(`================= START TEST [ ${scriptName} ] =================`);
+    console.log(`  ================= START TEST [ ${scriptName} ] =================`);
     try {
       basketRegistry = await BasketRegistry.deployed();
       basketFactory = await BasketFactory.deployed();

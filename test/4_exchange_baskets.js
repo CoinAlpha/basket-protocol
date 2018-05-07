@@ -38,7 +38,7 @@ contract('Basket Escrow', (accounts) => {
   const tokenParamsB = [MARKET_MAKER, 'Token B', 'TOKB', decimals, initialSupply, faucetAmount];
 
   before('Before: deploy contracts', async () => {
-    console.log(`================= START TEST [ ${scriptName} ] =================`);
+    console.log(`  ================= START TEST [ ${scriptName} ] =================`);
     try {
       basketRegistry = await BasketRegistry.deployed();
       basketEscrow = await BasketEscrow.deployed();

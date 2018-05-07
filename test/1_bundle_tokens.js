@@ -19,7 +19,7 @@ contract('TestToken | Basket', (accounts) => {
   const [ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B] = accounts.slice(0, 5);
   const accountsObj = { ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B };
   console.log('  Accounts:');
-  Object.keys(accountsObj).forEach(account => console.log(`  - ${account} = '${accountsObj[account]}'`));
+  Object.keys(accountsObj).forEach(account => console.log(`  - ${account.padEnd(21)} : ${accountsObj[account]}`));
 
   const ARRANGER_FEE = 0.01;            // Charge 0.01 ETH of arranger fee per basket minted
   const PRODUCTION_FEE = 0.3;           // Charge 0.3 ETH of production per basket creation
@@ -39,7 +39,7 @@ contract('TestToken | Basket', (accounts) => {
   const tokenParamsB = [HOLDER_A, 'Token B', 'TOKB', decimals, initialSupply, faucetAmount];
 
   before('Before: deploy tokens', async () => {
-    console.log(`================= START TEST [ ${scriptName} ] =================`);
+    console.log(`  ================= START TEST [ ${scriptName} ] =================`);
     try {
       basketFactory = await BasketFactory.deployed();
       tokenA = await constructors.TestToken(...tokenParamsA);

@@ -31,7 +31,7 @@ contract('Deployment costs', (accounts) => {
   const ARRANGER_FEE = 0.01;
 
   before('before: should get starting admin balance', async () => {
-    console.log(`================= START TEST [ ${scriptName} ] =================`);
+    console.log(`  ================= START TEST [ ${scriptName} ] =================`);
 
     const _bal = await web3.eth.getBalancePromise(ADMIN);
     adminBalanceStart = web3.fromWei(_bal, 'ether');
