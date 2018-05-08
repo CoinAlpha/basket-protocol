@@ -5,7 +5,8 @@
   "description": "MVP smart contract for use with the demo app",
   "main": "truffle.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "rm -rf build && truffle compile && truffle test",
+    "coverage": "touch allFiredEvents && ./node_modules/.bin/solidity-coverage"
   },
   "repository": {
     "type": "git",
