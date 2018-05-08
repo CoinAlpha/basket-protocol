@@ -5,7 +5,6 @@ const BasketRegistry = artifacts.require('./BasketRegistry.sol');
 const BasketEscrow = artifacts.require('./BasketEscrow.sol');
 const BasketFactory = artifacts.require('./BasketFactory.sol');
 const { abi: basketAbi } = require('../build/contracts/Basket.json');
-const { abi: tokenWalletAbi } = require('../build/contracts/TokenWallet.json');
 const { constructors } = require('../migrations/constructors.js');
 
 const scriptName = path.basename(__filename);
