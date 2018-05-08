@@ -2,34 +2,31 @@ const path = require('path');
 const Promise = require('bluebird');
 const numeral = require('numeral');
 const { constructors } = require('../migrations/constructors');
-const { GAS_PRICE_DEV } = require('../config/params.js');
+const { web3 } = require('../utils/web3');
+const {
+  GAS_PRICE_DEV,
+  TRANSACTION_FEE,
+  PRODUCTION_FEE,
+  ARRANGER_FEE,
+} = require('../config');
 
 const BasketFactory = artifacts.require('./BasketFactory.sol');
 const Basket = artifacts.require('./Basket.sol');
-const scriptName = path.basename(__filename);
 
-if (typeof web3.eth.getAccountsPromise === 'undefined') {
-  Promise.promisifyAll(web3.eth, { suffix: 'Promise' });
-}
+// Contract Instances
+let basketFactory;
+let basket;
 
-/* global vars */
-let adminBalanceStart, adminBalance;
-let basketFactory, basket;  // Contract Instances
-const gasPriceGwei = GAS_PRICE_DEV;
+// Global variables
+let adminBalanceStart;
+let adminBalance;
+
 
 contract('Deployment costs', (accounts) => {
-  const ADMIN = accounts[0];
-  const TOKEN_A = accounts[1];
-  const TOKEN_B = accounts[2];
-  const USER = accounts[3];
-  const REGISTRY = accounts[4];
-  const ESCROW = accounts[5];
-  const TRANSACTION_FEE = 0.01;
-  const PRODUCTION_FEE = 0.01;
-  const ARRANGER_FEE = 0.01;
+  const [ADMIN, TOKEN_A, TOKEN_B, USER, REGISTRY, ESCROW] = accounts.slice(6);
 
   before('before: should get starting admin balance', async () => {
-    console.log(`  ================= START TEST [ ${scriptName} ] =================`);
+    console.log(`  ================= START TEST [ ${path.basename(__filename)} ] =================`);
 
     const _bal = await web3.eth.getBalancePromise(ADMIN);
     adminBalanceStart = web3.fromWei(_bal, 'ether');
@@ -45,7 +42,7 @@ contract('Deployment costs', (accounts) => {
     const _bal = await web3.eth.getBalancePromise(ADMIN);
     const newBalance = web3.fromWei(_bal, 'ether');
     const ethCost = adminBalance - newBalance;
-    const gasUsed = (ethCost / gasPriceGwei) * 1e18;
+    const gasUsed = (ethCost / GAS_PRICE_DEV) * 1e18;
     const marker = (gasUsed > 4700000) ? '**** HIGH GAS ****' : '';
     console.log(`      New balance:        ${newBalance}`);
     console.log(`      Gas Used:           ${numeral(gasUsed).format('0,0')} ${marker}`);
@@ -57,7 +54,7 @@ contract('Deployment costs', (accounts) => {
     const _bal = await web3.eth.getBalancePromise(ADMIN);
     const newBalance = web3.fromWei(_bal, 'ether');
     const ethCost = adminBalanceStart - newBalance;
-    const gasUsed = (ethCost / gasPriceGwei) * 1e18;
+    const gasUsed = (ethCost / GAS_PRICE_DEV) * 1e18;
 
     console.log(`      Ending balance:     ${newBalance}`);
     console.log('\n      =========================================');

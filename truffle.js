@@ -1,7 +1,4 @@
-const {
-  GAS_PRICE_DEV,
-  GAS_LIMIT,
-} = require('./config/params.js');
+const { GAS_PRICE_DEV, GAS_LIMIT_DEV } = './config';
 
 module.exports = {
   networks: {
@@ -26,14 +23,14 @@ module.exports = {
     mainnet: {
       host: 'localhost',
       gas: 8e6,
-      gasPrice: 5e9,            // 5 GWei
+      gasPrice: 20e9,           // 20 GWei
       network_id: '1',
     },
     coverage: {
       host: 'localhost',
       port: 8555,
-      gas: GAS_LIMIT,
-      gasPrice: GAS_PRICE_DEV,
+      gas: GAS_LIMIT_DEV,
+      gasPrice: GAS_PRICE_DEV,  // 20 GWei
       network_id: '*',
     },
   },
