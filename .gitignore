@@ -5,6 +5,7 @@ yarn.lock
 package-lock.json
 .env
 local/*
+archive/*
 coverage/*
 coverage.json
 coverageEnv/*

@@ -3,41 +3,35 @@ const Promise = require('bluebird');
 
 const BasketFactory = artifacts.require('./BasketFactory.sol');
 const { abi: basketAbi } = require('../build/contracts/Basket.json');
-
 const { constructors } = require('../migrations/constructors.js');
+const { web3 } = require('../utils/web3');
+const {
+  ARRANGER_FEE,
+  PRODUCTION_FEE,
+  FEE_DECIMALS,
+  DECIMALS,
+  INITIAL_SUPPLY,
+  FAUCET_AMOUNT,
+} = require('../config');
 
-const scriptName = path.basename(__filename);
-
-if (typeof web3.eth.getAccountsPromise === 'undefined') {
-  Promise.promisifyAll(web3.eth, { suffix: 'Promise' });
-}
 
 contract('TestToken | Basket', (accounts) => {
   // Accounts
   const [ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B] = accounts.slice(0, 5);
-  const accountsObj = { ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B };
-  console.log('  Accounts:');
-  Object.keys(accountsObj).forEach(account => console.log(`  - ${account.padEnd(21)} : ${accountsObj[account]}`));
-
-  const ARRANGER_FEE = 0.01;            // Charge 0.01 ETH of arranger fee per basket minted
-  const PRODUCTION_FEE = 0.3;           // Charge 0.3 ETH of production per basket creation
-  const FEE_DECIMALS = 18;
 
   // Contract instances
-  let basketFactory, basketAB;
+  let basketFactory;
+  let basketAB;
   let basketABAddress;
 
   // Token instances
   let tokenA, tokenB;
-  const decimals = 18;
-  const initialSupply = 100e18;
-  const faucetAmount = 1e18;
-
-  const tokenParamsA = [HOLDER_A, 'Token A', 'TOKA', decimals, initialSupply, faucetAmount];
-  const tokenParamsB = [HOLDER_A, 'Token B', 'TOKB', decimals, initialSupply, faucetAmount];
+  const tokenParamsA = [HOLDER_A, 'Token A', 'TOKA', DECIMALS, INITIAL_SUPPLY, FAUCET_AMOUNT];
+  const tokenParamsB = [HOLDER_A, 'Token B', 'TOKB', DECIMALS, INITIAL_SUPPLY, FAUCET_AMOUNT];
 
   before('Before: deploy tokens', async () => {
-    console.log(`  ================= START TEST [ ${scriptName} ] =================`);
+    console.log(`  ================= START TEST [ ${path.basename(__filename)} ] =================`);
+
     try {
       basketFactory = await BasketFactory.deployed();
       tokenA = await constructors.TestToken(...tokenParamsA);
@@ -51,13 +45,13 @@ contract('TestToken | Basket', (accounts) => {
     it('get token balances', async () => {
       const supplyA = await tokenA.totalSupply();
       const supplyB = await tokenB.totalSupply();
-      assert.strictEqual(Number(supplyA), initialSupply, 'Incorrect token supply');
-      assert.strictEqual(Number(supplyB), initialSupply, 'Incorrect token supply');
+      assert.strictEqual(Number(supplyA), INITIAL_SUPPLY, 'Incorrect token supply');
+      assert.strictEqual(Number(supplyB), INITIAL_SUPPLY, 'Incorrect token supply');
 
       const balanceA = await tokenA.balanceOf(HOLDER_A);
       const balanceB = await tokenB.balanceOf(HOLDER_A);
-      assert.strictEqual(Number(balanceA), initialSupply, 'Incorrect owner balances');
-      assert.strictEqual(Number(balanceB), initialSupply, 'Incorrect owner balances');
+      assert.strictEqual(Number(balanceA), INITIAL_SUPPLY, 'Incorrect owner balances');
+      assert.strictEqual(Number(balanceB), INITIAL_SUPPLY, 'Incorrect owner balances');
     });
   });
 
@@ -69,7 +63,7 @@ contract('TestToken | Basket', (accounts) => {
         const fee = await basketFactory.productionFee.call();
         initialBalance = await web3.eth.getBalancePromise(ARRANGER);
         const txObj = await basketFactory.createBasket(
-          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1e18, 1e18], ARRANGER, (ARRANGER_FEE * (10 ** FEE_DECIMALS)),
+          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1e18, 1e18], ARRANGER, ARRANGER_FEE,
           { from: ARRANGER, value: Number(fee) },
         );
 
@@ -90,7 +84,7 @@ contract('TestToken | Basket', (accounts) => {
 
     it('calculates the production fee correctly', async () => {
       const balance = await web3.eth.getBalancePromise(ARRANGER);
-      assert.isAbove((initialBalance - balance) / 1e18, PRODUCTION_FEE, 'incorrect production fee amount charged');
+      assert.isAbove((initialBalance - balance), PRODUCTION_FEE, 'incorrect production fee amount charged');
     });
 
     it('remembers the basketFactory', async () => {
@@ -147,7 +141,7 @@ contract('TestToken | Basket', (accounts) => {
       balance = Number(balance) / 1e18;
       assert.strictEqual(
         Math.floor(100 * (initialBalance - balance)),
-        Math.floor(100 * (ARRANGER_FEE * (amount1 / 1e18))),
+        Math.floor(100 * ((ARRANGER_FEE / 1e18) * (amount1 / 1e18))),
         'incorrect amount of arranger fee charged',
       );
     });
@@ -227,7 +221,7 @@ contract('TestToken | Basket', (accounts) => {
       const productionFee = await basketFactory.productionFee.call();
       assert.strictEqual(admin, ADMINISTRATOR, 'wrong admin saved');
       assert.strictEqual(productionFeeRecipient, ADMINISTRATOR, 'wrong productionFeeRecipient saved');
-      assert.strictEqual(Number(productionFee), PRODUCTION_FEE * (10 ** FEE_DECIMALS), 'wrong productionFee saved');
+      assert.strictEqual(Number(productionFee), PRODUCTION_FEE, 'wrong productionFee saved');
     });
 
     it('allows admin to change production fee recipient', async () => {
@@ -251,7 +245,7 @@ contract('TestToken | Basket', (accounts) => {
       const arrangerFee = await basketAB.arrangerFee.call();
       assert.strictEqual(arranger, ARRANGER, 'wrong arranger saved');
       assert.strictEqual(arrangerFeeRecipient, ARRANGER, 'wrong arrangerFeeRecipient saved');
-      assert.strictEqual(Number(arrangerFee), ARRANGER_FEE * (10 ** FEE_DECIMALS), 'wrong arrangerFee saved');
+      assert.strictEqual(Number(arrangerFee), ARRANGER_FEE, 'wrong arrangerFee saved');
     });
 
     it('allows arranger to change arranger fee recipient', async () => {

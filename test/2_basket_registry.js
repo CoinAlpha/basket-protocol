@@ -5,37 +5,35 @@ const BasketRegistry = artifacts.require('./BasketRegistry.sol');
 const BasketFactory = artifacts.require('./BasketFactory.sol');
 const { abi: basketAbi } = require('../build/contracts/Basket.json');
 const { constructors } = require('../migrations/constructors.js');
+const { web3 } = require('../utils/web3');
+const {
+  ARRANGER_FEE,
+  PRODUCTION_FEE,
+  FEE_DECIMALS,
+  DECIMALS,
+  INITIAL_SUPPLY,
+  FAUCET_AMOUNT,
+} = require('../config');
 
-const scriptName = path.basename(__filename);
-
-if (typeof web3.eth.getAccountsPromise === 'undefined') {
-  Promise.promisifyAll(web3.eth, { suffix: 'Promise' });
-}
 
 contract('Basket Factory | Basket Registry', (accounts) => {
   // Accounts
-  const [ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B] = accounts.slice(5);
-  const accountsObj = { ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B };
-
-  const ARRANGER_FEE = 0.01;            // Charge 0.01 ETH of arranger fee per basket minted
-  const PRODUCTION_FEE = 0.3;           // Charge 0.3 ETH of transaction per basket creation
-  const FEE_DECIMALS = 18;
+  const [ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B] = accounts.slice(0, 5);
 
   // Contract instances
-  let basketRegistry, basketFactory;
-
+  let basketRegistry;
+  let basketFactory;
   let basketAB;
   let basketABAddress;
 
   // Token instances
   let tokenA, tokenB;
-  const decimals = 18, initialSupply = 100e18, faucetAmount = 1e18;
-
-  const tokenParamsA = [HOLDER_A, 'Token A', 'TOKA', decimals, initialSupply, faucetAmount];
-  const tokenParamsB = [HOLDER_A, 'Token B', 'TOKB', decimals, initialSupply, faucetAmount];
+  const tokenParamsA = [HOLDER_A, 'Token A', 'TOKA', DECIMALS, INITIAL_SUPPLY, FAUCET_AMOUNT];
+  const tokenParamsB = [HOLDER_A, 'Token B', 'TOKB', DECIMALS, INITIAL_SUPPLY, FAUCET_AMOUNT];
 
   before('Before: deploy contracts', async () => {
-    console.log(`  ================= START TEST [ ${scriptName} ] =================`);
+    console.log(`  ================= START TEST [ ${path.basename(__filename)} ] =================`);
+
     try {
       basketRegistry = await BasketRegistry.deployed();
       basketFactory = await BasketFactory.deployed();
@@ -70,8 +68,8 @@ contract('Basket Factory | Basket Registry', (accounts) => {
     it('deploys the basket', async () => {
       try {
         const txObj = await basketFactory.createBasket(
-          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1e18, 1e18], ARRANGER, (ARRANGER_FEE * (10 ** FEE_DECIMALS)),
-          { from: ARRANGER, value: PRODUCTION_FEE * 1e18 },
+          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1e18, 1e18], ARRANGER, ARRANGER_FEE,
+          { from: ARRANGER, value: PRODUCTION_FEE },
         );
         const txLogs = txObj.logs;
         // Check logs to ensure contract was created
@@ -137,7 +135,7 @@ contract('Basket Factory | Basket Registry', (accounts) => {
       try {
         await tokenA.approve(basketABAddress, amount, { from: HOLDER_A });
         await tokenB.approve(basketABAddress, amount, { from: HOLDER_A });
-        await basketAB.depositAndBundlePromise(amount, { from: HOLDER_A, value: amount * ARRANGER_FEE, gas: 1e6 });
+        await basketAB.depositAndBundlePromise(amount, { from: HOLDER_A, value: amount * (ARRANGER_FEE / 1e18), gas: 1e6 });
       } catch (err) { assert.throw(`Error in minting basket tokens: ${err.toString()}`); }
     });
 
