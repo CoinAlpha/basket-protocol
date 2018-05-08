@@ -6,38 +6,38 @@ const BasketEscrow = artifacts.require('./BasketEscrow.sol');
 const BasketFactory = artifacts.require('./BasketFactory.sol');
 const { abi: basketAbi } = require('../build/contracts/Basket.json');
 const { constructors } = require('../migrations/constructors.js');
+const { web3 } = require('../utils/web3');
+const {
+  ZERO_ADDRESS,
+  ARRANGER_FEE,
+  PRODUCTION_FEE,
+  TRANSACTION_FEE,
+  FEE_DECIMALS,
+  DECIMALS,
+  INITIAL_SUPPLY,
+  FAUCET_AMOUNT,
+} = require('../config');
 
-const scriptName = path.basename(__filename);
-
-if (typeof web3.eth.getAccountsPromise === 'undefined') {
-  Promise.promisifyAll(web3.eth, { suffix: 'Promise' });
-}
 
 contract('Basket Escrow', (accounts) => {
   // Accounts
   const [ADMINISTRATOR, ARRANGER, MARKET_MAKER, HOLDER_A, HOLDER_B] = accounts.slice(0, 5);
-  const zeroAddress = '0x0000000000000000000000000000000000000000';
-
-  const ARRANGER_FEE = 0.01;            // Charge 0.01 ETH of arranger fee per basket minted
-  const PRODUCTION_FEE = 0.3;           // Charge 0.3 ETH of transaction per basket creation
-  const TRANSACTION_FEE = 0.005;        // Charge 0.5% transaction fee
-  const FEE_DECIMALS = 18;
 
   // Contract instances
-  let basketRegistry, basketFactory, basketEscrow;
-
+  let basketRegistry;
+  let basketFactory;
+  let basketEscrow;
   let basketAB;
   let basketABAddress;
 
   // Token instances
   let tokenA, tokenB;
-  const decimals = 18, initialSupply = 100e18, faucetAmount = 1e18;
-
-  const tokenParamsA = [MARKET_MAKER, 'Token A', 'TOKA', decimals, initialSupply, faucetAmount];
-  const tokenParamsB = [MARKET_MAKER, 'Token B', 'TOKB', decimals, initialSupply, faucetAmount];
+  const tokenParamsA = [MARKET_MAKER, 'Token A', 'TOKA', DECIMALS, INITIAL_SUPPLY, FAUCET_AMOUNT];
+  const tokenParamsB = [MARKET_MAKER, 'Token B', 'TOKB', DECIMALS, INITIAL_SUPPLY, FAUCET_AMOUNT];
 
   before('Before: deploy contracts', async () => {
-    console.log(`  ================= START TEST [ ${scriptName} ] =================`);
+    console.log(`  ================= START TEST [ ${path.basename(__filename)} ] =================`);
+
     try {
       basketRegistry = await BasketRegistry.deployed();
       basketEscrow = await BasketEscrow.deployed();
@@ -62,8 +62,8 @@ contract('Basket Escrow', (accounts) => {
     it('deploys the basket correctly', async () => {
       try {
         const txObj = await basketFactory.createBasket(
-          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1e18, 1e18], ARRANGER, (ARRANGER_FEE * (10 ** FEE_DECIMALS)),
-          { from: ARRANGER, value: PRODUCTION_FEE * 1e18 },
+          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1e18, 1e18], ARRANGER, ARRANGER_FEE,
+          { from: ARRANGER, value: PRODUCTION_FEE },
         );
         const txLog = txObj.logs[0];
         basketABAddress = txLog.args.basketAddress;
@@ -79,7 +79,7 @@ contract('Basket Escrow', (accounts) => {
         const balBasketABBefore = await basketAB.balanceOfPromise(MARKET_MAKER);
         await tokenA.approve(basketABAddress, amount, { from: MARKET_MAKER });
         await tokenB.approve(basketABAddress, amount, { from: MARKET_MAKER });
-        await basketAB.depositAndBundlePromise(amount, { from: MARKET_MAKER, value: amount * ARRANGER_FEE, gas: 1e6 });
+        await basketAB.depositAndBundlePromise(amount, { from: MARKET_MAKER, value: amount * (ARRANGER_FEE / 1e18), gas: 1e6 });
 
         await basketAB.approve(basketEscrow.address, amount, { from: MARKET_MAKER, gas: 1e6 });
 
@@ -151,7 +151,7 @@ contract('Basket Escrow', (accounts) => {
         assert.strictEqual(_orderCreator, HOLDER_A, 'incorrect _orderCreator');
         assert.strictEqual(_basket, basketABAddress, 'incorrect _basket');
         assert.strictEqual(Number(_basketAmt), amountBasketsToBuy, 'incorrect _basketAmt');
-        assert.strictEqual(_eth, zeroAddress, 'incorrect _eth');
+        assert.strictEqual(_eth, ZERO_ADDRESS, 'incorrect _eth');
         assert.strictEqual(Number(_ethAmt), amountEthToSend, 'incorrect _ethAmt');
         assert.strictEqual(Number(_expires), Math.floor(expirationInSeconds), 'incorrect _expires');
         assert.strictEqual(Number(_nonce), Math.floor(nonce), 'incorrect _nonce');
@@ -262,12 +262,6 @@ contract('Basket Escrow', (accounts) => {
         assert.strictEqual(Number(_buyerBasketBal), (initialBuyerBasketBal + amountBasketsToBuy), 'buyer basket balance did not increase');
         assert.isBelow(Number(_fillerEthBal), (initialFillerEthBal + amountEthToSend), 'filler eth balance did not increase');
         assert.strictEqual(Number(_escrowEthBal), (initialEscrowEthBal - amountEthToSend), 'escrow eth balance did not decrease');
-        // RUN WHEN GAS PRICE = 0
-        // assert.strictEqual(
-        //   (initialFillerEthBal + amountEthToSend) - Number(_fillerEthBal),
-        //   TRANSACTION_FEE * amountEthToSend,
-        //   'Incorrect amount of transaction fee charged',
-        // );
       } catch (err) { assert.throw(`Error sending ETH to escrow contract: ${err.toString()}`); }
     });
 
@@ -330,7 +324,7 @@ contract('Basket Escrow', (accounts) => {
         const [_orderCreator, _eth, _ethAmt, _basket, _basketAmt, _expires, _nonce, _orderExists, _isFilled] = _orderDetails;
 
         assert.strictEqual(_orderCreator, MARKET_MAKER, 'incorrect _orderCreator');
-        assert.strictEqual(_eth, zeroAddress, 'incorrect _eth');
+        assert.strictEqual(_eth, ZERO_ADDRESS, 'incorrect _eth');
         assert.strictEqual(Number(_ethAmt), amountEthToGet, 'incorrect _ethAmt');
         assert.strictEqual(_basket, basketABAddress, 'incorrect _basket');
         assert.strictEqual(Number(_basketAmt), amountBasketsToSell, 'incorrect _basketAmt');
@@ -442,13 +436,6 @@ contract('Basket Escrow', (accounts) => {
         assert.isBelow(Number(_sellerEthBal), (initialSellerEthBal + amountEthToGet), 'seller eth balance did not increase');
         assert.isBelow(Number(_fillerEthBal), (initialFillerEthBal - amountEthToGet), 'filler eth balance did not decrease');
         assert.strictEqual(Number(_escrowBasketBal), (initialEscrowBasketBal - amountBasketsToSell), 'escrow basket balance did not decrease');
-
-        // RUN WHEN GAS PRICE = 0
-        // assert.strictEqual(
-        //   (initialSellerEthBal + amountEthToGet) - Number(_sellerEthBal),
-        //   TRANSACTION_FEE * amountEthToGet,
-        //   'Incorrect amount of transaction fee charged',
-        // );
       } catch (err) { assert.throw(`Error sending ETH to escrow contract: ${err.toString()}`); }
     });
 
@@ -468,13 +455,13 @@ contract('Basket Escrow', (accounts) => {
       const transactionFee = await basketEscrow.transactionFee.call();
       assert.strictEqual(admin, ADMINISTRATOR, 'wrong admin saved');
       assert.strictEqual(transactionFeeRecipient, ADMINISTRATOR, 'wrong transactionFeeRecipient saved');
-      assert.strictEqual(Number(transactionFee), TRANSACTION_FEE * (10 ** FEE_DECIMALS), 'wrong transactionFee saved');
+      assert.strictEqual(Number(transactionFee), TRANSACTION_FEE, 'wrong transactionFee saved');
     });
 
     it('allows admin to change transaction fee recipient', async () => {
-      await basketEscrow.changeTransactionFeeRecipient(zeroAddress);
+      await basketEscrow.changeTransactionFeeRecipient(ZERO_ADDRESS);
       const transactionFeeRecipient = await basketEscrow.transactionFeeRecipient.call();
-      assert.strictEqual(transactionFeeRecipient, zeroAddress, 'transaction fee recipient did not change accordingly');
+      assert.strictEqual(transactionFeeRecipient, ZERO_ADDRESS, 'transaction fee recipient did not change accordingly');
     });
 
     it('allows admin to change transaction fee', async () => {
