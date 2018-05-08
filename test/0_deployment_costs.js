@@ -6,7 +6,6 @@ const { GAS_PRICE_DEV } = require('../config/params.js');
 
 const BasketFactory = artifacts.require('./BasketFactory.sol');
 const Basket = artifacts.require('./Basket.sol');
-const TokenWallet = artifacts.require('./TokenWallet.sol');
 const scriptName = path.basename(__filename);
 
 if (typeof web3.eth.getAccountsPromise === 'undefined') {
@@ -15,7 +14,7 @@ if (typeof web3.eth.getAccountsPromise === 'undefined') {
 
 /* global vars */
 let adminBalanceStart, adminBalance;
-let basketFactory, basket, tokenWalletFactory, tokenWallet;  // Contract Instances
+let basketFactory, basket;  // Contract Instances
 const gasPriceGwei = GAS_PRICE_DEV;
 
 contract('Deployment costs', (accounts) => {

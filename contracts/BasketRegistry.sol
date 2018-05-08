@@ -90,7 +90,7 @@ contract BasketRegistry {
   function setBasketFactory(address _basketFactory) public returns (bool success) {
     require(msg.sender == admin, "Only an admin can call this function");
     basketFactoryAddress = _basketFactory;
-    LogSetBasketFactory(_basketFactory);
+    emit LogSetBasketFactory(_basketFactory);
     return true;
   }
 

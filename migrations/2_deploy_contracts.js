@@ -1,7 +1,6 @@
 const BasketFactory = artifacts.require('./BasketFactory.sol');
 const BasketRegistry = artifacts.require('./BasketRegistry.sol');
 const BasketEscrow = artifacts.require('./BasketEscrow.sol');
-const TokenWalletFactory = artifacts.require('./TokenWalletFactory.sol');
 
 module.exports = (deployer, network, accounts) => {
   // Accounts
