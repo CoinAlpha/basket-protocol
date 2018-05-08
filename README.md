@@ -13,7 +13,7 @@ The Basket Protocol deconstructs the traditional asset management model into thr
 
 ## Basket Protocol Contract Suite
 
-**Basket Contract**
+**[Basket Contract](contracts/Basket.sol)**
 
 The fundamental building block of the Basket Protocol, a Basket Contract is an extended ERC20 token contract capable of holding and transacting in other ERC20 tokens.  In addition to the basic [ERC20 token specifications](https://en.wikipedia.org/wiki/ERC20), the basket contract adds the following functionality:
 
@@ -28,20 +28,20 @@ function debundleAndWithdraw(uint _quantity) public returns (bool success)
 
 A holder of a basket token issued by a Basket Contract has direct control over and agency of the underlying ERC20 tokens represented by the basket token.  The Basket Contract ensures that the tokens represented by a basket token are always held by the Basket Contract, readily available for any holder who wants to debundle and assume direct ownership of the underlying tokens, at any time.
 
-**Basket Factory**
+**[Basket Factory](contracts/BasketFactory.sol)**
 
 Contract that allows Arrangers to construct new ERC20 token portfolios by creating new Basket Contracts.  When constructing new basekts, Arrangers specify tokens and weights, creating a "template" for minting new Basket tokens from that basket.
 
-**Basket Registry**
+**[Basket Registry](contracts/BasketRegistry.sol)**
 
 A registry to keep track of baskets created, quantity of each basket minted and burned, as well as usage of a particular arranger's baskets.
 
-**Basket Escrow**
+**[Basket Escrow](contracts/BasketEscrow.sol)**
 
 Allows for users to create buy and sell orders for baskets, fill orders, and transact in Ether.
 
 ## Coding Guides
-- [Style guide](STYLE-GUIDE.md)
+- [http://solidity.readthedocs.io/en/develop/style-guide.html](http://solidity.readthedocs.io/en/develop/style-guide.html)
 
 ## Testing
 - [Truffle](http://truffleframework.com/) [v4.1.8](https://github.com/trufflesuite/truffle/releases/tag/v4.1.8)
@@ -78,7 +78,7 @@ truffle test
 - Block Number    :       2868147
 
 ## Security
-The CoinAlpha team at all times aims to follow best practices and keep up to date with the latest changes in the rapidly changing field of smart contract and blockchain development.  Some of the guides and best practices followed include:
+The CoinAlpha team, to the extent possible, aims to follow industry best practices and keep up to date with the rapidly developing field of smart contracts and blockchain engineering.  Some of the guides and best practices followed include:
 - [OpenZeppelin contracts](https://github.com/OpenZeppelin/zeppelin-solidity): the Basket Protocol uses some of the standardized and widely accepted OpenZeppelin contracts
 - [ConsenSys: Smart Contract Security Best Practices](https://github.com/ConsenSys/smart-contract-best-practices)
 
