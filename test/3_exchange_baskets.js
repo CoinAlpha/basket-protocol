@@ -212,7 +212,6 @@ contract('Basket Escrow', (accounts) => {
   describe('Holder_A cancels expired buy order', () => {
     // set expiration time to now to ensure the order will expire
     expirationInSeconds = (new Date().getTime() - 86400000) / 1000;
-    web3.eth.getBlock(console.log);
 
     before('create second buy order and check initial balance', async () => {
       try {
