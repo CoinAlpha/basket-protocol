@@ -47,13 +47,14 @@ Allows for users to create buy and sell orders for baskets, fill orders, and tra
 - [Truffle](http://truffleframework.com/) [v4.1.8](https://github.com/trufflesuite/truffle/releases/tag/v4.1.8)
 
 ```
-truffle test
+npm test
 ```
 
 **Running test coverage (solidity-coverage)**
 
 ```sh
-./node_modules/.bin/solidity-coverage
+# Requires environment variable TEST_COVERAGE=true, which is set in the npm script:
+npm run coverage
 ```
 
 ## Deployed Contracts: Ropsten Testnet
