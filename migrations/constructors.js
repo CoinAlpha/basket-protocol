@@ -11,15 +11,20 @@ const allArtifacts = {
   Basket: artifacts.require('./Basket.sol'),
 };
 
+// solidity-coverage: fails if gasPrice is specified
+// https://github.com/sc-forks/solidity-coverage/blob/master/docs/faq.md#running-out-of-gas
+// Remove gasPrice when running test coverage:
+const gasObj = process.env.TEST_COVERAGE ? {} : { gasPrice: GAS_PRICE_DEV };
+
 const constructors = {
-  BasketRegistry: _owner => allArtifacts.BasketRegistry.new({ from: _owner, gasPrice: GAS_PRICE_DEV }),
+  BasketRegistry: _owner => allArtifacts.BasketRegistry.new(Object.assign({}, { from: _owner }, gasObj)),
 
   BasketEscrow: (_owner, _basketRegistryAddress, _transactionFeeRecipient, _transactionFee) =>
     allArtifacts.BasketEscrow.new(
       _basketRegistryAddress,
       _transactionFeeRecipient,
       _transactionFee,
-      { from: _owner, gasPrice: GAS_PRICE_DEV },
+      Object.assign({}, { from: _owner }, gasObj),
     ),
 
   BasketFactory: (_owner, _basketRegistryAddress, _productionFeeRecipient, _productionFee) =>
@@ -27,7 +32,7 @@ const constructors = {
       _basketRegistryAddress,
       _productionFeeRecipient,
       _productionFee,
-      { from: _owner, gasPrice: GAS_PRICE_DEV },
+      Object.assign({}, { from: _owner }, gasObj),
     ),
 
   TestToken: (_owner, _name, _symbol, _decimals, _initialSupply, _faucetAmount) =>
@@ -37,7 +42,7 @@ const constructors = {
       _decimals,
       _initialSupply,
       _faucetAmount,
-      { from: _owner, gasPrice: GAS_PRICE_DEV },
+      Object.assign({}, { from: _owner }, gasObj),
     ),
 
   Basket: (_owner, _name, _symbol, _tokens, _weights, _registryAddress, _arranger, _arrangerFeeRecipient, _arrangerFee) =>
@@ -50,10 +55,9 @@ const constructors = {
       _arranger,
       _arrangerFeeRecipient,
       _arrangerFee,
-      { from: _owner, gasPrice: GAS_PRICE_DEV },
+      Object.assign({}, { from: _owner }, gasObj),
     ),
 };
-
 
 module.exports = {
   constructors,

@@ -1,5 +1,3 @@
-const { GAS_PRICE_DEV, GAS_LIMIT_DEV } = './config';
-
 module.exports = {
   networks: {
     ropsten: {
@@ -25,13 +23,6 @@ module.exports = {
       gas: 8e6,
       gasPrice: 20e9,           // 20 GWei
       network_id: '1',
-    },
-    coverage: {
-      host: 'localhost',
-      port: 8555,
-      gas: GAS_LIMIT_DEV,
-      gasPrice: GAS_PRICE_DEV,  // 20 GWei
-      network_id: '*',
     },
   },
 };

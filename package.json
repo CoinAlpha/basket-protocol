@@ -6,7 +6,8 @@
   "main": "truffle.js",
   "scripts": {
     "test": "rm -rf build && truffle compile && truffle test",
-    "coverage": "touch allFiredEvents && ./node_modules/.bin/solidity-coverage"
+    "coverage": "TEST_COVERAGE=true npm run run:coverage",
+    "run:coverage": "rm -rf build && ./node_modules/.bin/solidity-coverage"
   },
   "repository": {
     "type": "git",

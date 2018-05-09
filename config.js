@@ -16,4 +16,13 @@ module.exports = {
   DECIMALS: 18,
   INITIAL_SUPPLY: 100e18,
   FAUCET_AMOUNT: 1e18,
+
+  // RPC Port
+  // NOTE:    truffle test creates a new testrpc on port 7545, while the default port for
+  //          solidity-coverage is 8555.
+  //          Excluding 'test'/'development' and 'coverage' networks from specifications in
+  //          truffle.js results in truffle creating its own default testrpc instances.
+  // WARNING: Using ports other than the default ports may result in `truffle test` or
+  //          `solidity-coverage` failure.
+  PORT: process.env.TEST_COVERAGE ? 8555 : 7545,
 };
