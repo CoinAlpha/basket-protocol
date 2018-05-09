@@ -66,11 +66,6 @@ contract BasketRegistry {
     _;
   }
 
-  modifier onlyBasketFactory {
-    require(msg.sender == basketFactoryAddress, "Only the basket factory can call this function");
-    _;
-  }
-
   // Events
   event LogSetBasketFactory(address basketFactory);
   event LogBasketRegistration(address basketAddress, uint basketIndex);

@@ -90,19 +90,21 @@ contract('Basket Escrow', (accounts) => {
   });
 
 
-  let initialEscrowBalance, initialHolderBalance;
+  // Constants for the next section of tests
+  let nextOrderIndex;
+  let initialEscrowBalance;
+  let initialHolderBalance;
   let newOrderIndex;
-  const amountBasketsToBuy = 10e18;
+  const amountBasketsToBuy = 2e18;
   const amountEthToSend = 5e18;
-  const expirationInSeconds = (new Date().getTime() + 86400000) / 1000;
-  let nonce = Math.random() * 1e7;
+  let expirationInSeconds = (new Date().getTime() + 86400000) / 1000; // set to a day from now
+  let nonce = Math.random() * 1e7; // nonce is a random number generated at order placement
 
-  // Change expiration below to ensure that expired contracts cannot be filled
-  // expirationInSeconds = (new Date().getTime()) / 1000;
 
   describe('Holder_A creates buy order', () => {
     before('check initial balance', async () => {
       try {
+        nextOrderIndex = await basketEscrow.orderIndex.call();
         const _initialEscrowBalance = await web3.eth.getBalancePromise(basketEscrow.address);
         const _initialHolderBalance = await web3.eth.getBalancePromise(HOLDER_A);
         initialEscrowBalance = Number(_initialEscrowBalance);
@@ -125,7 +127,7 @@ contract('Basket Escrow', (accounts) => {
         const { buyer, basket, amountEth, amountBasket } = args;
         ({ newOrderIndex } = args);
         assert.strictEqual(event, 'LogBuyOrderCreated', 'incorrect event label');
-        assert.strictEqual(Number(newOrderIndex), 1, 'incorrect new order index');
+        assert.strictEqual(Number(newOrderIndex), Number(nextOrderIndex), 'incorrect new order index');
         assert.strictEqual(Number(amountEth), amountEthToSend, 'incorrect eth amount');
         assert.strictEqual(Number(amountBasket), amountBasketsToBuy, 'incorrect basket amount');
         assert.strictEqual(buyer, HOLDER_A, 'incorrect buyer');
@@ -204,14 +206,75 @@ contract('Basket Escrow', (accounts) => {
         assert.strictEqual(_orderExists, false, 'incorrect _orderExists');
       } catch (err) { assert.throw(`Error in getOrderDetails: ${err.toString()}`); }
     });
+    after('update nonce', () => { nonce = Math.random() * 1e7; });
+  });
+
+  describe('Holder_A cancels expired buy order', () => {
+    // set expiration time to now to ensure the order will expire
+    expirationInSeconds = (new Date().getTime() - 86400000) / 1000;
+
+    before('create second buy order and check initial balance', async () => {
+      try {
+        const buyOrderParams = [
+          basketABAddress, amountBasketsToBuy, expirationInSeconds, nonce,
+          { from: HOLDER_A, value: amountEthToSend, gas: 1e6 },
+        ];
+
+        const _buyOrderResults = await basketEscrow.createBuyOrder(...buyOrderParams);
+        ({ newOrderIndex } = _buyOrderResults.logs[0].args);
+
+        const _initialEscrowBalance = await web3.eth.getBalancePromise(basketEscrow.address);
+        const _initialHolderBalance = await web3.eth.getBalancePromise(HOLDER_A);
+        initialEscrowBalance = Number(_initialEscrowBalance);
+        initialHolderBalance = Number(_initialHolderBalance);
+      } catch (err) { assert.throw(`Error creating second buy order: ${err.toString()}`); }
+    });
+
+    it('allows and logs cancellation of buy orders ', async () => {
+      try {
+        const cancelBuyParams = [
+          basketABAddress, amountBasketsToBuy, amountEthToSend, expirationInSeconds, nonce, { from: HOLDER_A },
+        ];
+        const _cancelBuyResults = await basketEscrow.cancelBuyOrder(...cancelBuyParams);
+
+        const { event, args } = _cancelBuyResults.logs[0];
+        const { buyer, basket, amountEth, amountBasket } = args;
+        assert.strictEqual(event, 'LogBuyOrderCancelled', 'incorrect event label');
+        assert.strictEqual(Number(amountEth), amountEthToSend, 'incorrect eth amount');
+        assert.strictEqual(Number(amountBasket), amountBasketsToBuy, 'incorrect basket amount');
+        assert.strictEqual(buyer, HOLDER_A, 'incorrect buyer');
+        assert.strictEqual(basket, basketABAddress, 'incorrect basket address');
+      } catch (err) { assert.throw(`Error cancelling buy order: ${err.toString()}`); }
+    });
+
+    it('sends ETH back to holder', async () => {
+      try {
+        const escrowBalance = await web3.eth.getBalancePromise(basketEscrow.address);
+        const holderBalance = await web3.eth.getBalancePromise(HOLDER_A);
+        assert.strictEqual(Number(escrowBalance), (initialEscrowBalance - amountEthToSend), 'escrow balance did not decrease');
+        assert.isBelow(Number(holderBalance), (initialHolderBalance + amountEthToSend), 'holder balance did not increase');
+      } catch (err) { assert.throw(`Error sending ETH back to holder: ${err.toString()}`); }
+    });
+
+    it('marks order as no longer exists', async () => {
+      try {
+        const _orderDetails = await basketEscrow.getOrderDetails(newOrderIndex);
+        const _orderExists = _orderDetails[7];
+        assert.strictEqual(_orderExists, false, 'incorrect _orderExists');
+      } catch (err) { assert.throw(`Error in getOrderDetails: ${err.toString()}`); }
+    });
 
     after('update nonce', () => { nonce = Math.random() * 1e7; });
   });
 
   describe('MARKET_MAKER fills HOLDER_A\'s new buy order', () => {
-    let initialFillerBasketBal, initialBuyerBasketBal, initialFillerEthBal, initialEscrowEthBal;
+    let initialFillerBasketBal;
+    let initialBuyerBasketBal;
+    let initialFillerEthBal;
+    let initialEscrowEthBal;
+    expirationInSeconds = (new Date().getTime() + 86400000) / 1000;
 
-    before('create second buy order and check initial balance', async () => {
+    before('create third buy order and check initial balance', async () => {
       try {
         const buyOrderParams = [
           basketABAddress, amountBasketsToBuy, expirationInSeconds, nonce,
@@ -229,7 +292,7 @@ contract('Basket Escrow', (accounts) => {
         initialBuyerBasketBal = Number(_initialBuyerBasketBal);
         initialFillerEthBal = Number(_initialFillerEthBal);
         initialEscrowEthBal = Number(_initialEscrowEthBal);
-      } catch (err) { assert.throw(`Error creating second buy order: ${err.toString()}`); }
+      } catch (err) { assert.throw(`Error creating third buy order: ${err.toString()}`); }
     });
 
     it('allows and logs buy order fills ', async () => {
@@ -274,7 +337,8 @@ contract('Basket Escrow', (accounts) => {
     });
   });
 
-  let initialEscrowBasketBal, initialMMBasketBal, currentOrderIndex;
+  let initialEscrowBasketBal;
+  let initialMMBasketBal;
   const amountBasketsToSell = 7e18;
   const amountEthToGet = 9e18;
   nonce = Math.random() * 1e7;
@@ -282,11 +346,11 @@ contract('Basket Escrow', (accounts) => {
   describe('MARKET_MAKER creates sell order', () => {
     before('check initial balance', async () => {
       try {
+        nextOrderIndex = await basketEscrow.orderIndex.call();
         const _initialEscrowBasketBal = await basketAB.balanceOf(basketEscrow.address);
         const _initialMMBasketBal = await basketAB.balanceOf(MARKET_MAKER);
         initialEscrowBasketBal = Number(_initialEscrowBasketBal);
         initialMMBasketBal = Number(_initialMMBasketBal);
-        currentOrderIndex = 3;
       } catch (err) { assert.throw(`Error reading initial balance: ${err.toString()}`); }
     });
 
@@ -301,7 +365,7 @@ contract('Basket Escrow', (accounts) => {
         const { seller, basket, amountEth, amountBasket } = args;
         ({ newOrderIndex } = args);
         assert.strictEqual(event, 'LogSellOrderCreated', 'incorrect event label');
-        assert.strictEqual(Number(newOrderIndex), Number(currentOrderIndex), 'incorrect new order index');
+        assert.strictEqual(Number(newOrderIndex), Number(nextOrderIndex), 'incorrect new order index');
         assert.strictEqual(Number(amountEth), amountEthToGet, 'incorrect eth amount');
         assert.strictEqual(Number(amountBasket), amountBasketsToSell, 'incorrect basket amount');
         assert.strictEqual(seller, MARKET_MAKER, 'incorrect seller');
