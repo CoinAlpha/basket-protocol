@@ -165,4 +165,26 @@ contract('Basket Factory | Basket Registry', (accounts) => {
       } catch (err) { assert.throw(`Error in incrementing totalBurned: ${err.toString()}`); }
     });
   });
+
+  describe('Fallback', () => {
+    let initialRegistryBalance;
+
+    before('Read initial balance', async () => {
+      try {
+        const _initialRegistryBalance = await web3.eth.getBalancePromise(basketRegistry.address);
+        initialRegistryBalance = Number(_initialRegistryBalance);
+      } catch (err) { assert.throw(`Error reading balances: ${err.toString()}`); }
+    });
+
+    it('Rejects any ether sent to contract', async () => {
+      try {
+        web3.eth.sendTransactionPromise({ from: HOLDER_B, to: basketRegistry.address, value: 1e18, data: 1e18 })
+          .catch(() => {});
+
+        const _currentRegistryBalance = await web3.eth.getBalancePromise(basketRegistry.address);
+
+        assert.strictEqual(initialRegistryBalance, Number(_currentRegistryBalance), 'basket registry balance increased');
+      } catch (err) { assert.throw(`Error: did not revert transaction: ${err.toString()}`); }
+    });
+  });
 });

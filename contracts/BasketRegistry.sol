@@ -65,6 +65,10 @@ contract BasketRegistry {
     require(basketIndexFromAddress[msg.sender] > 0, "Only a basket can call this function");
     _;
   }
+  modifier onlyBasketFactory {
+    require(msg.sender == basketFactoryAddress, "Only the basket factory can call this function");
+    _;
+  }
 
   // Events
   event LogSetBasketFactory(address basketFactory);
@@ -106,6 +110,7 @@ contract BasketRegistry {
     uint[]    _weights
   )
     public
+    onlyBasketFactory
     returns (uint index)
   {
     basketMap[_basketAddress] = BasketStruct(
@@ -173,4 +178,7 @@ contract BasketRegistry {
     emit LogIncrementBasketsBurned(msg.sender, _quantity, _sender);
     return true;
   }
+
+  /// @dev Fallback to reject any ether sent to contract
+  function () public payable { revert("BasketRegistry do not accept ETH transfers"); }
 }

@@ -535,4 +535,24 @@ contract('Basket Escrow', (accounts) => {
       assert.strictEqual(Number(transactionFee), Number(NEW_FEE) * (10 ** FEE_DECIMALS), 'transaction fee did not change accordingly');
     });
   });
+
+  describe('Fallback', () => {
+    before('Read initial balance', async () => {
+      try {
+        const _initialEscrowBalance = await web3.eth.getBalancePromise(basketEscrow.address);
+        initialEscrowBalance = Number(_initialEscrowBalance);
+      } catch (err) { assert.throw(`Error reading balances: ${err.toString()}`); }
+    });
+
+    it('Rejects any ether sent to contract', async () => {
+      try {
+        web3.eth.sendTransactionPromise({ from: HOLDER_B, to: basketEscrow.address, value: 1e18, data: 1e18 })
+          .catch(() => {});
+
+        const _currentEscrowBalance = await web3.eth.getBalancePromise(basketEscrow.address);
+
+        assert.strictEqual(initialEscrowBalance, Number(_currentEscrowBalance), 'basket escrow balance increased');
+      } catch (err) { assert.throw(`Error: did not revert transaction: ${err.toString()}`); }
+    });
+  });
 });
