@@ -210,11 +210,10 @@ contract('Basket Escrow', (accounts) => {
   });
 
   describe('Holder_A cancels expired buy order', () => {
-    // set expiration time to now to ensure the order will expire
-    expirationInSeconds = (new Date().getTime() - 86400000) / 1000;
-
     before('create second buy order and check initial balance', async () => {
       try {
+        // set expiration time to now to ensure the order will expire
+        expirationInSeconds = 0;
         const buyOrderParams = [
           basketABAddress, amountBasketsToBuy, expirationInSeconds, nonce,
           { from: HOLDER_A, value: amountEthToSend, gas: 1e6 },
@@ -238,7 +237,7 @@ contract('Basket Escrow', (accounts) => {
         const _cancelBuyResults = await basketEscrow.cancelBuyOrder(...cancelBuyParams);
 
         const { event, args } = _cancelBuyResults.logs[0];
-        const { buyer, basket, amountEth, amountBasket } = args;
+        const { cancelledOrderIndex, buyer, basket, amountEth, amountBasket } = args;
         assert.strictEqual(event, 'LogBuyOrderCancelled', 'incorrect event label');
         assert.strictEqual(Number(amountEth), amountEthToSend, 'incorrect eth amount');
         assert.strictEqual(Number(amountBasket), amountBasketsToBuy, 'incorrect basket amount');
@@ -272,10 +271,10 @@ contract('Basket Escrow', (accounts) => {
     let initialBuyerBasketBal;
     let initialFillerEthBal;
     let initialEscrowEthBal;
-    expirationInSeconds = (new Date().getTime() + 86400000) / 1000;
 
     before('create third buy order and check initial balance', async () => {
       try {
+        expirationInSeconds = (new Date().getTime() + 86400000) / 1000;
         const buyOrderParams = [
           basketABAddress, amountBasketsToBuy, expirationInSeconds, nonce,
           { from: HOLDER_A, value: amountEthToSend, gas: 1e6 },
