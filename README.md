@@ -1,4 +1,7 @@
 # Basket Protocol
+
+[![Build Status](http://jenkins.coinalpha.com:8080/buildStatus/icon?job=basket-protocol)](http://jenkins.coinalpha.com:8080/job/basket-protocol/) [![Coverage Status](https://coveralls.io/repos/github/CoinAlpha/basket-protocol/badge.svg?t=4jqZIE)](https://coveralls.io/github/CoinAlpha/basket-protocol)
+
 **A new paradigm for asset management**
 
 The Basket protocol establishes a decentralized ecosystem that trustlessly fulfills the primary functions of asset management: selection, execution, and custody. Unlike a traditional investment fund, a Basket is a non-custodial financial instrument collateralized by a portfolio of assets over which the investor has full control and agency.
