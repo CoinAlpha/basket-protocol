@@ -132,7 +132,7 @@ contract Basket is StandardToken {
     for (uint i = 0; i < tokens.length; i++) {
       address t = tokens[i];
       uint w = weights[i];
-      assert(ERC20(t).transfer(msg.sender, w.mul(_quantity).div(10 ** decimals)));
+      ERC20(t).transfer(msg.sender, w.mul(_quantity).div(10 ** decimals));
     }
 
     basketRegistry.incrementBasketsBurned(_quantity, msg.sender);

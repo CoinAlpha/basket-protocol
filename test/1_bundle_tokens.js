@@ -125,8 +125,8 @@ contract('TestToken | Basket', (accounts) => {
     });
   });
 
-  const amount1 = 25e18;
-  const amount2 = 25e17;
+  const amount1 = 5e18;
+  const amount2 = 5e17;
 
   describe(`HOLDER_A: create ${amount1 / 1e18} basketAB tokens`, () => {
     let initialBalance;
@@ -154,8 +154,8 @@ contract('TestToken | Basket', (accounts) => {
 
     it('approve token contracts for basketAB', async () => {
       try {
-        await tokenA.approve(basketABAddress, amount1 + amount2, { from: HOLDER_A });
-        await tokenB.approve(basketABAddress, amount1 + amount2, { from: HOLDER_A });
+        await tokenA.approve(basketABAddress, 1e25, { from: HOLDER_A });
+        await tokenB.approve(basketABAddress, 1e25, { from: HOLDER_A });
         const data = await Promise.all(['name', 'symbol', 'decimals'].map(field => basketAB[field].call()));
       } catch (err) { assert.throw(`Error retrieving basketAB contract data: ${err.toString()}`); }
     });
@@ -256,6 +256,16 @@ contract('TestToken | Basket', (accounts) => {
     });
   });
 
+  describe('Fails to debundle when there is insufficient basket balance', () => {
+    it('should disallow HOLDER_A to debundle and withdraw', async () => {
+      try {
+        const _basketABBalance = await basketAB.balanceOfPromise(HOLDER_A);
+        const basketABBalance = Number(_basketABBalance);
+        await basketAB.debundleAndWithdrawPromise(basketABBalance * 2, { from: HOLDER_A, gas: 1e6 });
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+    });
+  });
+
   describe('Allows factory admin to change key variables', () => {
     before('initialization', async () => {
       const admin = await basketFactory.admin.call();
@@ -280,6 +290,24 @@ contract('TestToken | Basket', (accounts) => {
     });
   });
 
+  describe('Reverts when anyone else tries to change key variables', () => {
+    before('initialization', async () => {
+      const productionFeeRecipient = await basketFactory.productionFeeRecipient.call();
+      assert.strictEqual(productionFeeRecipient, HOLDER_B, 'wrong production fee recipient set in the beginning');
+    });
+
+    it('allows production to change production fee recipient', async () => {
+      try {
+        await basketFactory.changeProductionFeeRecipient(ARRANGER, { from: HOLDER_B });
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+    });
+
+    after('production and production fee stays the same as before', async () => {
+      const productionFeeRecipient = await basketFactory.productionFeeRecipient.call();
+      assert.strictEqual(productionFeeRecipient, HOLDER_B, 'production fee recipient changed when it shouldn\'t');
+    });
+  });
+
   describe('Allows basket admin to change key variables', () => {
     before('initialization', async () => {
       const arranger = await basketAB.arranger.call();
@@ -297,7 +325,7 @@ contract('TestToken | Basket', (accounts) => {
     });
 
     it('allows arranger to change arranger fee', async () => {
-      const NEW_FEE = 0.007;
+      const NEW_FEE = 0;
       await basketAB.changeArrangerFee(NEW_FEE * (10 ** FEE_DECIMALS), { from: ARRANGER });
       const arrangerFee = await basketAB.arrangerFee.call();
       assert.strictEqual(Number(arrangerFee), Number(NEW_FEE) * (10 ** FEE_DECIMALS), 'arranger fee did not change accordingly');
@@ -319,6 +347,30 @@ contract('TestToken | Basket', (accounts) => {
     after('arranger and arranger fee stays the same as before', async () => {
       const arrangerFeeRecipient = await basketAB.arrangerFeeRecipient.call();
       assert.strictEqual(arrangerFeeRecipient, HOLDER_B, 'arranger fee recipient changed when it shouldn\'t');
+    });
+  });
+
+  describe('Allows bundle when fee is zero', () => {
+    let basketABBalance;
+
+    before('get HOLDER_A\'s balance', async () => {
+      try {
+        const balBasketAB = await basketAB.balanceOfPromise(HOLDER_A);
+        basketABBalance = Number(balBasketAB);
+        await tokenA.approve(basketABAddress, amount1, { from: HOLDER_A });
+        await tokenB.approve(basketABAddress, amount1, { from: HOLDER_A });
+      } catch (err) { assert.throw(`Error retrieving basketAB contract data: ${err.toString()}`); }
+    });
+
+    after(`HOLDER_A's balance should have increased by ${amount1} basketAB tokens`, async () => {
+      try {
+        const balBasketAB = await basketAB.balanceOfPromise(HOLDER_A);
+        assert.strictEqual(Number(balBasketAB), basketABBalance + amount1, 'incorrect increase');
+      } catch (err) { assert.throw(`after error: ${err.toString()}`); }
+    });
+
+    it('should allow HOLDER_A to depositAndBundle', async () => {
+      await basketAB.depositAndBundlePromise(amount1, { from: HOLDER_A, value: 0, gas: 1e6 });
     });
   });
 

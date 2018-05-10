@@ -293,6 +293,17 @@ contract('Basket Escrow', (accounts) => {
     after('update nonce', () => { nonce = Math.random() * 1e7; });
   });
 
+  describe('Holder_A fails to cancel buy orders that do not exist', () => {
+    it('disallows cancellation of buy orders that do not exist', async () => {
+      try {
+        const cancelBuyParams = [
+          basketABAddress, amountBasketsToBuy, amountEthToSend, expirationInSeconds, nonce, { from: HOLDER_A },
+        ];
+        await basketEscrow.cancelBuyOrder(...cancelBuyParams);
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+    });
+  });
+
   describe('MARKET_MAKER fills HOLDER_A\'s new buy order', () => {
     let initialFillerBasketBal;
     let initialBuyerBasketBal;
@@ -363,6 +374,17 @@ contract('Basket Escrow', (accounts) => {
     });
   });
 
+  describe('Holder_A fails to cancel buy orders that are filled', () => {
+    it('disallows cancellation of buy orders that are filled', async () => {
+      try {
+        const cancelBuyParams = [
+          basketABAddress, amountBasketsToBuy, amountEthToSend, expirationInSeconds, nonce, { from: HOLDER_A },
+        ];
+        await basketEscrow.cancelBuyOrder(...cancelBuyParams);
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+    });
+  });
+
   describe('MARKET_MAKER fails to fill bad orders', () => {
     it('cannot fill the same order twice', async () => {
       try {
@@ -379,6 +401,30 @@ contract('Basket Escrow', (accounts) => {
       try {
         const fillBuyParams = [
           HOLDER_B, basketABAddress, amountBasketsToBuy, amountEthToSend, expirationInSeconds, nonce,
+          { from: MARKET_MAKER, gas: 1e6 },
+        ];
+        const _fillBuyResults = await basketEscrow.fillBuyOrder(...fillBuyParams);
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+    });
+
+    after('update nonce', () => { nonce = Math.random() * 1e7; });
+  });
+
+  describe('MARKET_MAKER fails to fill orders that are too large', () => {
+    before('HOLDER_A creates large order', async () => {
+      try {
+        const buyOrderParams = [
+          basketABAddress, 1e20, expirationInSeconds, nonce,
+          { from: HOLDER_B, value: amountEthToSend, gas: 1e6 },
+        ];
+        await basketEscrow.createBuyOrder(...buyOrderParams);
+      } catch (err) { assert.throw(`Error in creating another order: ${err.toString()}`); }
+    });
+
+    it('cannot fill an order that does not exist', async () => {
+      try {
+        const fillBuyParams = [
+          HOLDER_B, basketABAddress, 1e20, amountEthToSend, expirationInSeconds, nonce,
           { from: MARKET_MAKER, gas: 1e6 },
         ];
         const _fillBuyResults = await basketEscrow.fillBuyOrder(...fillBuyParams);
@@ -517,16 +563,20 @@ contract('Basket Escrow', (accounts) => {
         assert.strictEqual(_orderExists, false, 'incorrect _orderExists');
       } catch (err) { assert.throw(`Error in getOrderDetails: ${err.toString()}`); }
     });
+
+    after('update nonce', () => { nonce = Math.random() * 1e7; });
   });
 
   describe('Holder_A fails to create bad sell orders', () => {
     it('creates and logs duplicate sell orders ', async () => {
       try {
-        // exact same params as last order
         const sellOrderParams = [
           basketABAddress, amountBasketsToSell, amountEthToGet, expirationInSeconds, nonce,
           { from: MARKET_MAKER, gas: 1e6 },
         ];
+        // creates the order for the first time
+        await basketEscrow.createSellOrder(...sellOrderParams);
+        // creates the same order again
         await basketEscrow.createSellOrder(...sellOrderParams);
       } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
     });
@@ -588,27 +638,7 @@ contract('Basket Escrow', (accounts) => {
       } catch (err) { assert.throw(`Error filling sell order: ${err.toString()}`); }
     });
 
-    it('alters all balances correctly', async () => {
-      try {
-        const _fillerBasketBal = await basketAB.balanceOf(HOLDER_B);
-        const _sellerEthBal = await web3.eth.getBalancePromise(MARKET_MAKER);
-        const _fillerEthBal = await web3.eth.getBalancePromise(HOLDER_B);
-        const _escrowBasketBal = await basketAB.balanceOf(basketEscrow.address);
-
-        assert.strictEqual(Number(_fillerBasketBal), (initialFillerBasketBal + amountBasketsToSell), 'filler basket balance did not increase');
-        assert.isBelow(Number(_sellerEthBal), (initialSellerEthBal + amountEthToGet), 'seller eth balance did not increase');
-        assert.isBelow(Number(_fillerEthBal), (initialFillerEthBal - amountEthToGet), 'filler eth balance did not decrease');
-        assert.strictEqual(Number(_escrowBasketBal), (initialEscrowBasketBal - amountBasketsToSell), 'escrow basket balance did not decrease');
-      } catch (err) { assert.throw(`Error sending ETH to escrow contract: ${err.toString()}`); }
-    });
-
-    it('marks order as filled', async () => {
-      try {
-        const _orderDetails = await basketEscrow.getOrderDetails(newOrderIndex);
-        const _isFilled = _orderDetails[8];
-        assert.strictEqual(_isFilled, true, 'incorrect _isFilled');
-      } catch (err) { assert.throw(`Error in marking order filled: ${err.toString()}`); }
-    });
+    after('update nonce', () => { nonce = Math.random() * 1e7; });
   });
 
   describe('Allows escrow admin to change key variables', () => {
