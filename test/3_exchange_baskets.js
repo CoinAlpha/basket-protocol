@@ -386,6 +386,31 @@ contract('Basket Escrow', (accounts) => {
     });
   });
 
+  const instantExpiration = 0;
+
+  describe('MARKET_MAKER fails to fill expired orders', () => {
+    before('creates an order that expires instantly', async () => {
+      try {
+        nonce = Math.random() * 1e7;
+        const buyOrderParams = [
+          basketABAddress, amountBasketsToBuy, instantExpiration, nonce,
+          { from: HOLDER_A, value: amountEthToSend, gas: 1e6 },
+        ];
+        await basketEscrow.createBuyOrder(...buyOrderParams);
+      } catch (err) { assert.throw(`Error in creating instantly expired order: ${err.toString()}`); }
+    });
+
+    it('cannot fill an expired order', async () => {
+      try {
+        const fillBuyParams = [
+          HOLDER_B, basketABAddress, amountBasketsToBuy, amountEthToSend, instantExpiration, nonce,
+          { from: MARKET_MAKER, gas: 1e6 },
+        ];
+        const _fillBuyResults = await basketEscrow.fillBuyOrder(...fillBuyParams);
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+    });
+  });
+
   let initialEscrowBasketBal;
   let initialMMBasketBal;
   const amountBasketsToSell = 7e18;

@@ -114,7 +114,6 @@ contract BasketEscrow {
     uint      _nonce
   ) public payable returns (bool success) {
     uint index = _createOrder(msg.sender, _basketAddress, _amountBasket, ETH_ADDRESS, msg.value, _expiration, _nonce);
-    assert(index > 0);
 
     emit LogBuyOrderCreated(index, msg.sender, _basketAddress, msg.value, _amountBasket, _expiration, _nonce);
     return true;
@@ -139,7 +138,6 @@ contract BasketEscrow {
   {
     assert(ERC20(_basketAddress).transferFrom(msg.sender, this, _amountBasket));
     uint index = _createOrder(msg.sender, ETH_ADDRESS, _amountEth, _basketAddress, _amountBasket, _expiration, _nonce);
-    assert(index > 0);
 
     emit LogSellOrderCreated(index, msg.sender, _basketAddress, _amountEth, _amountBasket, _expiration, _nonce);
     return true;
@@ -195,7 +193,6 @@ contract BasketEscrow {
     uint      _nonce
   ) public returns (bool success) {
     uint cancelledOrderIndex = _cancelOrder(msg.sender, _basketAddress, _amountBasket, ETH_ADDRESS, _amountEth, _expiration, _nonce);
-    assert(cancelledOrderIndex > 0);
 
     if (now >= _expiration) {
       msg.sender.transfer(_amountEth);                   // if order has expired, no transaction fee is charged
@@ -224,7 +221,6 @@ contract BasketEscrow {
     uint      _nonce
   ) public returns (bool success) {
     uint cancelledOrderIndex = _cancelOrder(msg.sender, ETH_ADDRESS, _amountEth, _basketAddress, _amountBasket, _expiration, _nonce);
-    assert(cancelledOrderIndex > 0);
 
     assert(ERC20(_basketAddress).transfer(msg.sender, _amountBasket));
 
@@ -281,7 +277,6 @@ contract BasketEscrow {
     uint      _nonce
   ) public returns (bool success) {
     uint filledOrderIndex = _fillOrder(_orderCreator, _basketAddress, _amountBasket, ETH_ADDRESS, _amountEth, _expiration, _nonce);
-    assert(filledOrderIndex > 0);
     assert(ERC20(_basketAddress).transferFrom(msg.sender, _orderCreator, _amountBasket));
 
     uint fee = _amountEth.mul(transactionFee).div(10 ** FEE_DECIMALS);
@@ -307,7 +302,6 @@ contract BasketEscrow {
     uint      _nonce
   ) public payable returns (bool success) {
     uint filledOrderIndex = _fillOrder(_orderCreator, ETH_ADDRESS, msg.value, _basketAddress, _amountBasket, _expiration, _nonce);
-    assert(filledOrderIndex > 0);
     assert(ERC20(_basketAddress).transfer(msg.sender, _amountBasket));
 
     uint fee = msg.value.mul(transactionFee).div(10 ** FEE_DECIMALS);
