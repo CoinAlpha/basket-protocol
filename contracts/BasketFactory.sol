@@ -129,4 +129,6 @@ contract BasketFactory {
     return true;
   }
 
+  /// @dev Fallback to reject any ether sent to contract
+  function () public payable { revert("BasketRegistry do not accept ETH transfers"); }
 }

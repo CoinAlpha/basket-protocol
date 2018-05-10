@@ -54,7 +54,6 @@ contract Basket is StandardToken {
   // Events
   event LogDepositAndBundle(address indexed holder, uint quantity);
   event LogDebundleAndWithdraw(address indexed holder, uint quantity);
-  event LogExtract(address indexed holder, uint quantity, address tokenWalletAddress);
   event LogArrangerFeeRecipientChange(address oldRecipient, address newRecipient);
   event LogArrangerFeeChange(uint oldFee, uint newFee);
 
@@ -164,6 +163,6 @@ contract Basket is StandardToken {
   }
 
   /// @dev Fallback to reject any ether sent to contract
-  function () public { revert("Baskets do not accept ETH transfers"); }
+  function () public payable { revert("Baskets do not accept ETH transfers"); }
 
 }

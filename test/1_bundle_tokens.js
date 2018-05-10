@@ -261,4 +261,33 @@ contract('TestToken | Basket', (accounts) => {
       assert.strictEqual(Number(arrangerFee), Number(NEW_FEE) * (10 ** FEE_DECIMALS), 'arranger fee did not change accordingly');
     });
   });
+
+  describe('Fallback', () => {
+    let initialBasketBalance;
+    let initialFactoryBalance;
+
+    before('Read initial balance', async () => {
+      try {
+        const _initialBasketBalance = await web3.eth.getBalancePromise(basketAB.address);
+        const _initialFactoryBalance = await web3.eth.getBalancePromise(basketFactory.address);
+        initialBasketBalance = Number(_initialBasketBalance);
+        initialFactoryBalance = Number(_initialFactoryBalance);
+      } catch (err) { assert.throw(`Error reading balances: ${err.toString()}`); }
+    });
+
+    it('Rejects any ether sent to contract', async () => {
+      try {
+        web3.eth.sendTransactionPromise({ from: HOLDER_B, to: basketAB.address, value: 1e18, data: 1e18 })
+          .catch(() => {});
+        web3.eth.sendTransactionPromise({ from: HOLDER_B, to: basketFactory.address, value: 1e18, data: 1e18 })
+          .catch(() => {});
+
+        const _currentBasketBalance = await web3.eth.getBalancePromise(basketAB.address);
+        const _currentFactoryBalance = await web3.eth.getBalancePromise(basketFactory.address);
+
+        assert.strictEqual(initialBasketBalance, Number(_currentBasketBalance), 'basket balance increased');
+        assert.strictEqual(initialFactoryBalance, Number(_currentFactoryBalance), 'basket factory balance increased');
+      } catch (err) { assert.throw(`Error: did not revert transaction: ${err.toString()}`); }
+    });
+  });
 });
