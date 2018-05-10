@@ -35,7 +35,7 @@ A holder of a basket token issued by a Basket Contract has direct control over a
 
 **[Basket Factory](contracts/BasketFactory.sol)**
 
-Contract that allows Arrangers to construct new ERC20 token portfolios by creating new Basket Contracts.  When constructing new basekts, Arrangers specify tokens and weights, creating a "template" for minting new Basket tokens from that basket.
+Contract that allows Arrangers to construct new ERC20 token portfolios by creating new Basket Contracts.  When constructing new baskets, Arrangers specify tokens and weights, creating a "template" for minting new Basket tokens from that basket.
 
 **[Basket Registry](contracts/BasketRegistry.sol)**
 
