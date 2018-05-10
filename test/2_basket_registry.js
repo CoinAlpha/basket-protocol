@@ -15,6 +15,7 @@ const {
   FAUCET_AMOUNT,
 } = require('../config');
 
+const doesRevert = err => err.message.includes('revert');
 
 contract('Basket Factory | Basket Registry', (accounts) => {
   // Accounts
@@ -184,7 +185,7 @@ contract('Basket Factory | Basket Registry', (accounts) => {
         const _currentRegistryBalance = await web3.eth.getBalancePromise(basketRegistry.address);
 
         assert.strictEqual(initialRegistryBalance, Number(_currentRegistryBalance), 'basket registry balance increased');
-      } catch (err) { assert.throw(`Error: did not revert transaction: ${err.toString()}`); }
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
     });
   });
 });

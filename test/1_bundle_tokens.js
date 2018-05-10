@@ -15,6 +15,8 @@ const {
 } = require('../config');
 
 
+const doesRevert = err => err.message.includes('revert');
+
 contract('TestToken | Basket', (accounts) => {
   // Accounts
   const [ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B] = accounts.slice(0, 5);
@@ -90,6 +92,36 @@ contract('TestToken | Basket', (accounts) => {
     it('remembers the basketFactory', async () => {
       const _factoryAddress = await basketAB.basketFactoryAddress.call();
       assert.strictEqual(_factoryAddress, basketFactory.address, 'incorrect basket factory');
+    });
+  });
+
+  describe('fails to deploy basket when the fee sent is too low', () => {
+    let initialBalance;
+
+    it('fails to deploy the basket', async () => {
+      try {
+        const fee = await basketFactory.productionFee.call();
+        initialBalance = await web3.eth.getBalancePromise(ARRANGER);
+        await basketFactory.createBasket(
+          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1e18, 1e18], ARRANGER, ARRANGER_FEE,
+          { from: ARRANGER, value: Number(fee) / 2 },
+        );
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+    });
+  });
+
+  describe('fails to deploy basket when tokens length does not match weights length', () => {
+    let initialBalance;
+
+    it('fails to deploy the basket', async () => {
+      try {
+        const fee = await basketFactory.productionFee.call();
+        initialBalance = await web3.eth.getBalancePromise(ARRANGER);
+        await basketFactory.createBasket(
+          'A1B1', 'BASK', [tokenA.address, tokenB.address], [1e18], ARRANGER, ARRANGER_FEE,
+          { from: ARRANGER, value: Number(fee) },
+        );
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
     });
   });
 
@@ -176,6 +208,16 @@ contract('TestToken | Basket', (accounts) => {
     it('should allow HOLDER_A to depositAndBundle', async () => {
       const fee = await basketAB.arrangerFee.call();
       await basketAB.depositAndBundlePromise(amount1, { from: HOLDER_A, value: amount1 * (Number(fee) / (10 ** FEE_DECIMALS)), gas: 1e6 });
+    });
+  });
+
+  describe('Fails to bundle when too little fee is paid', () => {
+    it('should allow HOLDER_A to depositAndBundle', async () => {
+      try {
+        const fee = await basketAB.arrangerFee.call();
+        const insufficientFee = (amount1 / 2) * (Number(fee) / (10 ** FEE_DECIMALS));
+        await basketAB.depositAndBundlePromise(amount1, { from: HOLDER_A, value: insufficientFee, gas: 1e6 });
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
     });
   });
 
@@ -271,7 +313,7 @@ contract('TestToken | Basket', (accounts) => {
     it('allows arranger to change arranger fee recipient', async () => {
       try {
         await basketAB.changeArrangerFeeRecipient(ARRANGER, { from: HOLDER_B });
-      } catch (err) { /*  expect to throw */ }
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
     });
 
     after('arranger and arranger fee stays the same as before', async () => {
@@ -305,7 +347,7 @@ contract('TestToken | Basket', (accounts) => {
 
         assert.strictEqual(initialBasketBalance, Number(_currentBasketBalance), 'basket balance increased');
         assert.strictEqual(initialFactoryBalance, Number(_currentFactoryBalance), 'basket factory balance increased');
-      } catch (err) { assert.throw(`Error: did not revert transaction: ${err.toString()}`); }
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
     });
   });
 });
