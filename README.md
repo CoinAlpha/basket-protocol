@@ -24,7 +24,9 @@ The fundamental building block of the Basket Protocol, a Basket Contract is an e
 // Deposit ERC20 tokens into the basket contract and "mint" new Basket ERC20
 // tokens that represent the underlying tokens
 function depositAndBundle(uint _quantity) public payable returns (bool success)
+```
 
+```js
 // Extract the underlying ERC20 tokens and "burning" the Basket token
 function debundleAndWithdraw(uint _quantity) public returns (bool success)
 ```
