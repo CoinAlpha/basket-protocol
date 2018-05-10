@@ -262,6 +262,24 @@ contract('TestToken | Basket', (accounts) => {
     });
   });
 
+  describe('Reverts when anyone else tries to change key variables', () => {
+    before('initialization', async () => {
+      const arrangerFeeRecipient = await basketAB.arrangerFeeRecipient.call();
+      assert.strictEqual(arrangerFeeRecipient, HOLDER_B, 'wrong arranger set in the beginning');
+    });
+
+    it('allows arranger to change arranger fee recipient', async () => {
+      try {
+        await basketAB.changeArrangerFeeRecipient(ARRANGER, { from: HOLDER_B });
+      } catch (err) { /*  expect to throw */ }
+    });
+
+    after('arranger and arranger fee stays the same as before', async () => {
+      const arrangerFeeRecipient = await basketAB.arrangerFeeRecipient.call();
+      assert.strictEqual(arrangerFeeRecipient, HOLDER_B, 'arranger fee recipient changed when it shouldn\'t');
+    });
+  });
+
   describe('Fallback', () => {
     let initialBasketBalance;
     let initialFactoryBalance;
