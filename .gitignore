@@ -9,3 +9,4 @@ archive/*
 coverage/*
 coverage.json
 coverageEnv/*
+.coveralls.yml
