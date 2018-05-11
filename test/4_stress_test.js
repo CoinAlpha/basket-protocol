@@ -51,6 +51,11 @@ contract('Basket Factory Limit', (accounts) => {
     });
 
     it('deploy baskets with as many tokens as possible', async () => {
+      if (process.env.TEST_COVERAGE) {
+        console.log('SKIPPING THIS TEST IN COVERAGE');
+        return;
+      }
+
       let breakLoop = false;
       console.log('STARTING TO DEPLOY BASKETS...');
       while (!breakLoop) {
@@ -92,6 +97,11 @@ contract('Basket Factory Limit', (accounts) => {
 
   describe('stress test basket bundling', () => {
     it('bundle baskets with as many tokens as possible', async () => {
+      if (process.env.TEST_COVERAGE) {
+        console.log('SKIPPING THIS TEST IN COVERAGE');
+        return;
+      }
+
       let breakLoop = false;
       console.log('STARTING TO BUNDLE BASKETS...');
       while (!breakLoop) {
@@ -118,6 +128,11 @@ contract('Basket Factory Limit', (accounts) => {
 
   describe('stress test basket debundling', () => {
     it('debundle baskets with as many tokens as possible', async () => {
+      if (process.env.TEST_COVERAGE) {
+        console.log('SKIPPING THIS TEST IN COVERAGE');
+        return;
+      }
+
       let breakLoop = false;
 
       console.log('STARTING TO DEBUNDLE BASKETS...');
@@ -139,29 +154,4 @@ contract('Basket Factory Limit', (accounts) => {
       }
     });
   });
-
-
-  // xdescribe('stress test basket constructor', () => {
-  //   it('deploy baskets with long symbol', async () => {
-  //     let breakLoop = false;
-  //     let symbol = 'a';
-  //
-  //     console.log('STARTING TO DEPLOY BASKETS WITH LONG SYMBOL...');
-  //     while (!breakLoop) {
-  //       try {
-  //         await basketFactory.createBasket(
-  //           'A1B1', symbol, [tokenArray[0].address], [1e18], ARRANGER, 0,
-  //           { from: ARRANGER },
-  //         );
-  //         console.log(`DEPLOYED BASKET WITH SYMBOL LENGTH ${symbol.length}`);
-  //         symbol += 'a';
-  //       } catch (err) {
-  //         console.log(err);
-  //         // assert.equal(doesRevert(err), true, 'did not revert as expected');
-  //         console.log(`MAXIMUM STRING CHAR COUNT ALLOWED FOR DEPLOYMENT: ${symbol.length}`);
-  //         breakLoop = true;
-  //       }
-  //     }
-  //   });
-  // });
 });
