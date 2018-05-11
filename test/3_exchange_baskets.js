@@ -1,5 +1,4 @@
 const path = require('path');
-const Promise = require('bluebird');
 
 const BasketRegistry = artifacts.require('./BasketRegistry.sol');
 const BasketEscrow = artifacts.require('./BasketEscrow.sol');
