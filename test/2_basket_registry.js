@@ -15,10 +15,11 @@ const {
   FAUCET_AMOUNT,
 } = require('../config');
 
+const doesRevert = err => err.message.includes('revert');
 
 contract('Basket Factory | Basket Registry', (accounts) => {
   // Accounts
-  const [ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B] = accounts.slice(0, 5);
+  const [ADMINISTRATOR, ARRANGER, MARKETMAKER, HOLDER_A, HOLDER_B, INVALID_ADDRESS] = accounts.slice(0, 6);
 
   // Contract instances
   let basketRegistry;
@@ -62,6 +63,29 @@ contract('Basket Factory | Basket Registry', (accounts) => {
     });
   });
 
+  describe('sets the basket factory correctly', () => {
+    it('lets admin set basket factory correctly', async () => {
+      try {
+        // check addresses in both contracts have been set correctly
+        const result = await basketRegistry.setBasketFactory(INVALID_ADDRESS, { from: ADMINISTRATOR });
+        const _basketFactoryAddress = await basketRegistry.basketFactoryAddress.call();
+        assert.strictEqual(_basketFactoryAddress, INVALID_ADDRESS, 'basket factory address not set correctly');
+      } catch (err) { assert.throw(`Failed to set basket factory in registry: ${err.toString()}`); }
+    });
+
+    it('disallows anyone else to set basket factory', async () => {
+      try {
+        // check addresses in both contracts have been set correctly
+        const result = await basketRegistry.setBasketFactory(INVALID_ADDRESS, { from: INVALID_ADDRESS });
+        await basketRegistry.basketFactoryAddress.call();
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+    });
+
+    after('reset basket factory', async () => {
+      await basketRegistry.setBasketFactory(basketFactory.address);
+    });
+  });
+
   describe('deploy test basket', () => {
     let basketIndex;
 
@@ -98,6 +122,17 @@ contract('Basket Factory | Basket Registry', (accounts) => {
         basketAB = web3.eth.contract(basketAbi).at(basketABAddress);
         Promise.promisifyAll(basketAB, { suffix: 'Promise' });
       } catch (err) { assert.throw(`Error updating basket registry: ${err.toString()}`); }
+    });
+  });
+
+  describe('fails to register basket from anywhere but the factory', () => {
+    it('deploys the basket', async () => {
+      try {
+        await basketRegistry.registerBasket(
+          INVALID_ADDRESS, ARRANGER, 'A1B1', 'BASK', [tokenA.address, tokenB.address], [1e18, 1e18],
+          { from: ARRANGER },
+        );
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
     });
   });
 
@@ -166,6 +201,20 @@ contract('Basket Factory | Basket Registry', (accounts) => {
     });
   });
 
+  describe('disallows anyone to increment basket mint / burn count', () => {
+    it('disallows increment total minted', async () => {
+      try {
+        await basketRegistry.incrementBasketsMinted(1e18, INVALID_ADDRESS, { from: INVALID_ADDRESS });
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+    });
+
+    it('disallows increment total burned', async () => {
+      try {
+        await basketRegistry.incrementBasketsBurned(1e18, INVALID_ADDRESS, { from: INVALID_ADDRESS });
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+    });
+  });
+
   describe('Fallback', () => {
     let initialRegistryBalance;
 
@@ -184,7 +233,7 @@ contract('Basket Factory | Basket Registry', (accounts) => {
         const _currentRegistryBalance = await web3.eth.getBalancePromise(basketRegistry.address);
 
         assert.strictEqual(initialRegistryBalance, Number(_currentRegistryBalance), 'basket registry balance increased');
-      } catch (err) { assert.throw(`Error: did not revert transaction: ${err.toString()}`); }
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
     });
   });
 });

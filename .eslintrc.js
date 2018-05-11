@@ -18,6 +18,7 @@ module.exports = {
     "one-var": "off",
     "one-var-declaration-per-line": "off",
     "no-buffer-constructor": "off",
+    "no-await-in-loop": "off",
   },
   "globals": {
     "after": true,
