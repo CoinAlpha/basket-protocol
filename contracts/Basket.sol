@@ -108,6 +108,9 @@ contract Basket is StandardToken {
     if (arrangerFee > 0) {
       require(msg.value >= arrangerFee.mul(_quantity).div(10 ** decimals), "Insufficient ETH for arranger fee to bundle");
       arrangerFeeRecipient.transfer(msg.value);
+    } else {
+      // prevent transfers of unnecessary ether into the contract
+      require(msg.value == 0);
     }
 
     balances[msg.sender] = balances[msg.sender].add(_quantity);
