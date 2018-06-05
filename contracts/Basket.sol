@@ -23,6 +23,7 @@ import "./zeppelin/ERC20.sol";
 
 import "./BasketFactory.sol";
 import "./BasketRegistry.sol";
+import "./BasketSwap.sol";
 
 /// @title Basket -- Basket contract for bundling and debundling tokens
 /// @author CoinAlpha, Inc. <contact@coinalpha.com>
@@ -32,15 +33,15 @@ contract Basket is StandardToken {
   // Constants set at contract inception
   string                  public name;
   string                  public symbol;
-  uint                    public decimals;
   address[]               public tokens;
   uint[]                  public weights;
-  address                 public basketFactoryAddress;
-  address                 public basketRegistryAddress;
 
   address                 public arranger;
   address                 public arrangerFeeRecipient;
   uint                    public arrangerFee;
+
+  address                 public previousBasketSwap;
+  address                 public nextBasketSwap;
 
   // Modules
   IBasketRegistry         public basketRegistry;
@@ -52,10 +53,13 @@ contract Basket is StandardToken {
   }
 
   // Events
-  event LogDepositAndBundle(address indexed holder, uint quantity);
-  event LogDebundleAndWithdraw(address indexed holder, uint quantity);
-  event LogArrangerFeeRecipientChange(address oldRecipient, address newRecipient);
-  event LogArrangerFeeChange(uint oldFee, uint newFee);
+  event LogDepositAndBundle(address indexed holder, uint indexed quantity);
+  event LogDebundleAndWithdraw(address indexed holder, uint indexed quantity);
+  event LogArrangerFeeRecipientChange(address indexed newRecipient);
+  event LogArrangerFeeChange(uint indexed newFee);
+  event LogRebalance(address indexed holder, uint indexed quantity);
+  event LogSetPreviousBasketSwap(address indexed previousBasketSwap);
+  event LogSetNextBasketSwap(address indexed nextBasketSwap);
 
   /// @dev Basket constructor
   /// @param  _name                                Token name
@@ -83,15 +87,11 @@ contract Basket is StandardToken {
     tokens = _tokens;
     weights = _weights;
 
-    basketFactoryAddress = msg.sender;             // This contract is created only by the Factory
-    basketRegistryAddress = _basketRegistryAddress;
     basketRegistry = IBasketRegistry(_basketRegistryAddress);
 
     arranger = _arranger;
     arrangerFeeRecipient = _arrangerFeeRecipient;
     arrangerFee = _arrangerFee;
-
-    decimals = 18;
   }
 
   /// @dev Combined deposit of all component tokens (not yet deposited) and bundle
@@ -101,12 +101,13 @@ contract Basket is StandardToken {
     for (uint i = 0; i < tokens.length; i++) {
       address t = tokens[i];
       uint w = weights[i];
-      assert(ERC20(t).transferFrom(msg.sender, this, w.mul(_quantity).div(10 ** decimals)));
+      assert(ERC20(t).transferFrom(msg.sender, this, w.mul(_quantity).div(10 ** 18)));
     }
 
     // charging market makers a fee for every new basket minted
-    if (arrangerFee > 0) {
-      require(msg.value >= arrangerFee.mul(_quantity).div(10 ** decimals), "Insufficient ETH for arranger fee to bundle");
+    // skip fees if tokens are minted through swaps
+    if (previousBasketSwap != msg.sender && arrangerFee > 0) {
+      require(msg.value >= arrangerFee.mul(_quantity).div(10 ** 18), "Insufficient ETH for arranger fee to bundle");
       arrangerFeeRecipient.transfer(msg.value);
     } else {
       // prevent transfers of unnecessary ether into the contract
@@ -126,20 +127,40 @@ contract Basket is StandardToken {
   /// @param  _quantity                            Quantity of basket tokens to convert back to original tokens
   /// @return success                              Operation successful
   function debundleAndWithdraw(uint _quantity) public returns (bool success) {
-    require(balances[msg.sender] >= _quantity, "Insufficient basket balance to debundle");
+    assert(debundle(_quantity, msg.sender, msg.sender));
+    emit LogDebundleAndWithdraw(msg.sender, _quantity);
+    return true;
+  }
+
+  /// @dev Convert basketTokens back to original tokens and transfer to swap contract and initiate swap
+  /// @param  _quantity                            Quantity of basket tokens to swap
+  /// @return success                              Operation successful
+  function rebalance(uint _quantity) public returns (bool success) {
+    assert(debundle(_quantity, msg.sender, previousBasketSwap));
+    assert(BasketSwap(nextBasketSwap).swap(msg.sender, _quantity));
+    emit LogRebalance(msg.sender, _quantity);
+    return true;
+  }
+
+  /// @dev Convert basketTokens back to original tokens and transfer to swap contract and initiate swap
+  /// @param  _quantity                            Quantity of basket tokens to swap
+  /// @param  _sender                              Address of transaction sender
+  /// @param  _recipient                           Address of token recipient
+  /// @return success                              Operation successful
+  function debundle(uint _quantity, address _sender, address _recipient) internal returns (bool success) {
+    require(balances[_sender] >= _quantity, "Insufficient basket balance to debundle");
     // decrease holder balance and total supply by _quantity
-    balances[msg.sender] = balances[msg.sender].sub(_quantity);
+    balances[_sender] = balances[_sender].sub(_quantity);
     totalSupply_ = totalSupply_.sub(_quantity);
 
     // increase balance of each of the tokens by their weights
     for (uint i = 0; i < tokens.length; i++) {
       address t = tokens[i];
       uint w = weights[i];
-      ERC20(t).transfer(msg.sender, w.mul(_quantity).div(10 ** decimals));
+      ERC20(t).transfer(_recipient, w.mul(_quantity).div(10 ** 18));
     }
 
-    basketRegistry.incrementBasketsBurned(_quantity, msg.sender);
-    emit LogDebundleAndWithdraw(msg.sender, _quantity);
+    basketRegistry.incrementBasketsBurned(_quantity, _sender);
     return true;
   }
 
@@ -147,10 +168,8 @@ contract Basket is StandardToken {
   /// @param  _newRecipient                        New fee recipient
   /// @return success                              Operation successful
   function changeArrangerFeeRecipient(address _newRecipient) public onlyArranger returns (bool success) {
-    address oldRecipient = arrangerFeeRecipient;
     arrangerFeeRecipient = _newRecipient;
-
-    emit LogArrangerFeeRecipientChange(oldRecipient, arrangerFeeRecipient);
+    emit LogArrangerFeeRecipientChange(arrangerFeeRecipient);
     return true;
   }
 
@@ -158,12 +177,29 @@ contract Basket is StandardToken {
   /// @param  _newFee                              New fee amount
   /// @return success                              Operation successful
   function changeArrangerFee(uint _newFee) public onlyArranger returns (bool success) {
-    uint oldFee = arrangerFee;
     arrangerFee = _newFee;
-
-    emit LogArrangerFeeChange(oldFee, arrangerFee);
+    emit LogArrangerFeeChange(arrangerFee);
     return true;
   }
+
+  /// @dev Change permitted previousBasketSwap for rebalance
+  /// @param  _newPreviousBasketSwap               New premitted previous basketSwap
+  /// @return success                              Operation successful
+  function setPreviousBasketSwap(address _newPreviousBasketSwap) public onlyArranger returns (bool success) {
+    previousBasketSwap = _newPreviousBasketSwap;
+    emit LogSetPreviousBasketSwap(previousBasketSwap);
+    return true;
+  }
+
+  /// @dev Change permitted nextBasketSwap for rebalance
+  /// @param  _newNextBasketSwap                   New premitted next basketSwap
+  /// @return success                              Operation successful
+  function setNextBasketSwap(address _newNextBasketSwap) public onlyArranger returns (bool success) {
+    nextBasketSwap = _newNextBasketSwap;
+    emit LogSetNextBasketSwap(nextBasketSwap);
+    return true;
+  }
+
 
   /// @dev Fallback to reject any ether sent to contract
   function () public payable { revert("Baskets do not accept ETH transfers"); }

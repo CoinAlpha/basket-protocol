@@ -22,6 +22,7 @@ contract IBasketRegistry {
   // Called by BasketFactory
   function registerBasket(address, address, string, string, address[], uint[]) public returns (uint) {}
   function checkBasketExists (address) public returns (bool) {}
+  function getBasketArranger (address) public returns (address) {}
 
   // Called by Basket
   function incrementBasketsMinted (uint, address) public returns (bool) {}
@@ -157,6 +158,13 @@ contract BasketRegistry {
   {
     BasketStruct memory b = basketMap[_basketAddress];
     return (b.basketAddress, b.arranger, b.name, b.symbol, b.tokens, b.weights, b.totalMinted, b.totalBurned);
+  }
+
+  /// @dev Look up a basket's arranger
+  /// @param  _basketAddress                       Address of basket to check
+  /// @return arranger
+  function getBasketArranger(address _basketAddress) public view returns (address) {
+    return basketMap[_basketAddress].arranger;
   }
 
   /// @dev Increment totalMinted from BasketStruct
