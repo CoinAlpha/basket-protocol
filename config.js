@@ -4,9 +4,10 @@ module.exports = {
   GAS_LIMIT: 5e6,
 
   // Fee amounts used for development and testing
-  TRANSACTION_FEE: 0.005 * 1e18,    // Charge 0.5% transaction fee
-  PRODUCTION_FEE: 0.3 * 1e18,       // Charge 0.3 ETH of transaction per basket creation
-  ARRANGER_FEE: 0.01 * 1e18,        // Charge 0.01 ETH of transaction per basket minted
+  TRANSACTION_FEE: 0.005 * 1e18,        // Charge 0.5% transaction fee
+  PRODUCTION_FEE: 0.3 * 1e18,           // Charge 0.3 ETH of transaction per basket creation
+  SWAPPABLE_PRODUCTION_FEE: 0.3 * 1e18, // Charge 0.5 ETH of transaction per basket creation
+  ARRANGER_FEE: 0.01 * 1e18,            // Charge 0.01 ETH of transaction per basket minted
   FEE_DECIMALS: 18,
 
   // Zero address
