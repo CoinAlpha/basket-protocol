@@ -18,14 +18,14 @@
 pragma solidity ^0.4.22;
 
 import "./zeppelin/SafeMath.sol";
-import "./Basket.sol";
+import "./SwappableBasket.sol";
 import "./BasketRegistry.sol";
 
 /**
-  * @title BasketFactory -- Factory contract for creating different baskets
+  * @title SwappableBasketFactory -- Factory contract for creating different swappable baskets
   * @author CoinAlpha, Inc. <contact@coinalpha.com>
   */
-contract BasketFactory {
+contract SwappableBasketFactory {
   using SafeMath for uint;
 
   address                       public admin;
@@ -88,7 +88,7 @@ contract BasketFactory {
     require(msg.value >= productionFee, "Insufficient ETH for basket creation fee");
     productionFeeRecipient.transfer(msg.value);
 
-    Basket b = new Basket(
+    SwappableBasket b = new SwappableBasket(
       _name,
       _symbol,
       _tokens,
