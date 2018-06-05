@@ -37,7 +37,7 @@ contract IBasketRegistry {
 contract BasketRegistry {
   // Constants set at contract inception
   address                           public admin;
-  address                           public basketFactoryAddress;
+  mapping(address => bool)          public basketFactoryMap;
 
   uint                              public basketIndex;           // Baskets index starting from index = 1
   address[]                         public basketList;
@@ -67,12 +67,12 @@ contract BasketRegistry {
     _;
   }
   modifier onlyBasketFactory {
-    require(msg.sender == basketFactoryAddress, "Only the basket factory can call this function");
+    require(basketFactoryMap[msg.sender] == true, "Only the basket factory can call this function");
     _;
   }
 
   // Events
-  event LogSetBasketFactory(address basketFactory);
+  event LogWhitelistBasketFactory(address basketFactory);
   event LogBasketRegistration(address basketAddress, uint basketIndex);
   event LogIncrementBasketsMinted(address basketAddress, uint quantity, address sender);
   event LogIncrementBasketsBurned(address basketAddress, uint quantity, address sender);
@@ -87,10 +87,10 @@ contract BasketRegistry {
   /// @dev Set basket factory address after deployment
   /// @param  _basketFactory                       Basket factory address
   /// @return success                              Operation successful
-  function setBasketFactory(address _basketFactory) public returns (bool success) {
+  function whitelistBasketFactory(address _basketFactory) public returns (bool success) {
     require(msg.sender == admin, "Only an admin can call this function");
-    basketFactoryAddress = _basketFactory;
-    emit LogSetBasketFactory(_basketFactory);
+    basketFactoryMap[_basketFactory] = true;
+    emit LogWhitelistBasketFactory(_basketFactory);
     return true;
   }
 
