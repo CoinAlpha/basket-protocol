@@ -35,7 +35,7 @@ module.exports = (deployer, network, accounts) => {
     .then(_instance => basketFactory = _instance)
 
     // 4. Set basketFactory address to basketRegistry
-    .then(() => basketRegistry.setBasketFactory(
+    .then(() => basketRegistry.whitelistBasketFactory(
       basketFactory.address,
       { from: ADMINISTRATOR },
     ))
