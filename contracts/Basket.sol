@@ -55,8 +55,9 @@ contract Basket is StandardToken {
   // Events
   event LogDepositAndBundle(address indexed holder, uint indexed quantity);
   event LogDebundleAndWithdraw(address indexed holder, uint indexed quantity);
-  event LogArrangerFeeRecipientChange(address indexed newRecipient);
-  event LogArrangerFeeChange(uint indexed newFee);
+  event LogPartialDebundle(address indexed holder, uint indexed quantity);
+  event LogArrangerFeeRecipientChange(address indexed oldRecipient, address indexed newRecipient);
+  event LogArrangerFeeChange(uint indexed oldFee, uint indexed newFee);
   event LogRebalance(address indexed holder, uint indexed quantity);
   event LogSetPreviousBasketSwap(address indexed previousBasketSwap);
   event LogSetNextBasketSwap(address indexed nextBasketSwap);
@@ -122,13 +123,21 @@ contract Basket is StandardToken {
     return true;
   }
 
-
   /// @dev Convert basketTokens back to original tokens and transfer to requester
   /// @param  _quantity                            Quantity of basket tokens to convert back to original tokens
   /// @return success                              Operation successful
   function debundleAndWithdraw(uint _quantity) public returns (bool success) {
-    assert(debundle(_quantity, msg.sender, msg.sender));
+    assert(debundle(_quantity, msg.sender, msg.sender, true));
     emit LogDebundleAndWithdraw(msg.sender, _quantity);
+    return true;
+  }
+
+  /// @dev Convert basketTokens back to original tokens (does not throw if single token transfer fails)
+  /// @param  _quantity                            Quantity of basket tokens to partial debundle
+  /// @return success                              Operation successful
+  function partialDebundle(uint _quantity) public returns (bool success) {
+    assert(debundle(_quantity, msg.sender, msg.sender, false));
+    emit LogPartialDebundle(msg.sender, _quantity);
     return true;
   }
 
@@ -136,7 +145,7 @@ contract Basket is StandardToken {
   /// @param  _quantity                            Quantity of basket tokens to swap
   /// @return success                              Operation successful
   function rebalance(uint _quantity) public returns (bool success) {
-    assert(debundle(_quantity, msg.sender, previousBasketSwap));
+    assert(debundle(_quantity, msg.sender, previousBasketSwap, true));
     assert(BasketSwap(nextBasketSwap).swap(msg.sender, _quantity));
     emit LogRebalance(msg.sender, _quantity);
     return true;
@@ -146,8 +155,14 @@ contract Basket is StandardToken {
   /// @param  _quantity                            Quantity of basket tokens to swap
   /// @param  _sender                              Address of transaction sender
   /// @param  _recipient                           Address of token recipient
+  /// @param  _revertOnFailedTransfer              If partial debundle is allowed (allow when tokens are paused / debundle function is stuck)
   /// @return success                              Operation successful
-  function debundle(uint _quantity, address _sender, address _recipient) internal returns (bool success) {
+  function debundle(
+    uint      _quantity,
+    address   _sender,
+    address   _recipient,
+    bool      _revertOnFailedTransfer
+  ) internal returns (bool success) {
     require(balances[_sender] >= _quantity, "Insufficient basket balance to debundle");
     // decrease holder balance and total supply by _quantity
     balances[_sender] = balances[_sender].sub(_quantity);
@@ -157,7 +172,8 @@ contract Basket is StandardToken {
     for (uint i = 0; i < tokens.length; i++) {
       address t = tokens[i];
       uint w = weights[i];
-      ERC20(t).transfer(_recipient, w.mul(_quantity).div(10 ** 18));
+      bool successfulTransfer = ERC20(t).transfer(_recipient, w.mul(_quantity).div(10 ** 18));
+      if (_revertOnFailedTransfer) assert(successfulTransfer);
     }
 
     basketRegistry.incrementBasketsBurned(_quantity, _sender);
@@ -168,8 +184,10 @@ contract Basket is StandardToken {
   /// @param  _newRecipient                        New fee recipient
   /// @return success                              Operation successful
   function changeArrangerFeeRecipient(address _newRecipient) public onlyArranger returns (bool success) {
+    address oldRecipient = arrangerFeeRecipient;
     arrangerFeeRecipient = _newRecipient;
-    emit LogArrangerFeeRecipientChange(arrangerFeeRecipient);
+
+    emit LogArrangerFeeRecipientChange(oldRecipient, arrangerFeeRecipient);
     return true;
   }
 
@@ -177,8 +195,10 @@ contract Basket is StandardToken {
   /// @param  _newFee                              New fee amount
   /// @return success                              Operation successful
   function changeArrangerFee(uint _newFee) public onlyArranger returns (bool success) {
+    uint oldFee = arrangerFee;
     arrangerFee = _newFee;
-    emit LogArrangerFeeChange(arrangerFee);
+
+    emit LogArrangerFeeChange(oldFee, arrangerFee);
     return true;
   }
 
@@ -199,7 +219,6 @@ contract Basket is StandardToken {
     emit LogSetNextBasketSwap(nextBasketSwap);
     return true;
   }
-
 
   /// @dev Fallback to reject any ether sent to contract
   function () public payable { revert("Baskets do not accept ETH transfers"); }
