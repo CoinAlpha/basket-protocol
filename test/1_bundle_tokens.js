@@ -88,11 +88,6 @@ contract('TestToken | Basket', (accounts) => {
       const balance = await web3.eth.getBalancePromise(ARRANGER);
       assert.isAbove((initialBalance - balance), PRODUCTION_FEE, 'incorrect production fee amount charged');
     });
-
-    it('remembers the basketFactory', async () => {
-      const _factoryAddress = await basketAB.basketFactoryAddress.call();
-      assert.strictEqual(_factoryAddress, basketFactory.address, 'incorrect basket factory');
-    });
   });
 
   describe('fails to deploy basket when the fee sent is too low', () => {
@@ -156,7 +151,7 @@ contract('TestToken | Basket', (accounts) => {
       try {
         await tokenA.approve(basketABAddress, 1e25, { from: HOLDER_A });
         await tokenB.approve(basketABAddress, 1e25, { from: HOLDER_A });
-        const data = await Promise.all(['name', 'symbol', 'decimals'].map(field => basketAB[field].call()));
+        const data = await Promise.all(['name', 'symbol'].map(field => basketAB[field].call()));
       } catch (err) { assert.throw(`Error retrieving basketAB contract data: ${err.toString()}`); }
     });
 
