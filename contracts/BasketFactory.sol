@@ -18,7 +18,7 @@
 pragma solidity ^0.4.22;
 
 import "./zeppelin/SafeMath.sol";
-import "./Basket.sol";
+import "./SwappableBasket.sol";
 import "./BasketRegistry.sol";
 
 /**
@@ -88,7 +88,7 @@ contract BasketFactory {
     require(msg.value >= productionFee, "Insufficient ETH for basket creation fee");
     productionFeeRecipient.transfer(msg.value);
 
-    Basket b = new Basket(
+    SwappableBasket b = new SwappableBasket(
       _name,
       _symbol,
       _tokens,

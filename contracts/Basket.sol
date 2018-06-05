@@ -21,7 +21,6 @@ import "./zeppelin/SafeMath.sol";
 import "./zeppelin/StandardToken.sol";
 import "./zeppelin/ERC20.sol";
 
-import "./BasketFactory.sol";
 import "./BasketRegistry.sol";
 import "./BasketSwap.sol";
 
@@ -58,9 +57,6 @@ contract Basket is StandardToken {
   event LogPartialDebundle(address indexed holder, uint indexed quantity);
   event LogArrangerFeeRecipientChange(address indexed oldRecipient, address indexed newRecipient);
   event LogArrangerFeeChange(uint indexed oldFee, uint indexed newFee);
-  event LogRebalance(address indexed holder, uint indexed quantity);
-  event LogSetPreviousBasketSwap(address indexed previousBasketSwap);
-  event LogSetNextBasketSwap(address indexed nextBasketSwap);
 
   /// @dev Basket constructor
   /// @param  _name                                Token name
@@ -71,7 +67,7 @@ contract Basket is StandardToken {
   /// @param  _arranger                            Address of arranger
   /// @param  _arrangerFeeRecipient                Address to send arranger fees
   /// @param  _arrangerFee                         Amount of fee in ETH for every basket minted
-  constructor(
+  constructor (
     string    _name,
     string    _symbol,
     address[] _tokens,
@@ -143,16 +139,6 @@ contract Basket is StandardToken {
 
   /// @dev Convert basketTokens back to original tokens and transfer to swap contract and initiate swap
   /// @param  _quantity                            Quantity of basket tokens to swap
-  /// @return success                              Operation successful
-  function rebalance(uint _quantity) public returns (bool success) {
-    assert(debundle(_quantity, msg.sender, previousBasketSwap, true));
-    assert(BasketSwap(nextBasketSwap).swap(msg.sender, _quantity));
-    emit LogRebalance(msg.sender, _quantity);
-    return true;
-  }
-
-  /// @dev Convert basketTokens back to original tokens and transfer to swap contract and initiate swap
-  /// @param  _quantity                            Quantity of basket tokens to swap
   /// @param  _sender                              Address of transaction sender
   /// @param  _recipient                           Address of token recipient
   /// @param  _revertOnFailedTransfer              If partial debundle is allowed (allow when tokens are paused / debundle function is stuck)
@@ -199,24 +185,6 @@ contract Basket is StandardToken {
     arrangerFee = _newFee;
 
     emit LogArrangerFeeChange(oldFee, arrangerFee);
-    return true;
-  }
-
-  /// @dev Change permitted previousBasketSwap for rebalance
-  /// @param  _newPreviousBasketSwap               New premitted previous basketSwap
-  /// @return success                              Operation successful
-  function setPreviousBasketSwap(address _newPreviousBasketSwap) public onlyArranger returns (bool success) {
-    previousBasketSwap = _newPreviousBasketSwap;
-    emit LogSetPreviousBasketSwap(previousBasketSwap);
-    return true;
-  }
-
-  /// @dev Change permitted nextBasketSwap for rebalance
-  /// @param  _newNextBasketSwap                   New premitted next basketSwap
-  /// @return success                              Operation successful
-  function setNextBasketSwap(address _newNextBasketSwap) public onlyArranger returns (bool success) {
-    nextBasketSwap = _newNextBasketSwap;
-    emit LogSetNextBasketSwap(nextBasketSwap);
     return true;
   }
 
