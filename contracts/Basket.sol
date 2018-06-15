@@ -105,7 +105,7 @@ contract Basket is StandardToken {
 
     // charging market makers a fee for every new basket minted
     // skip fees if tokens are minted through swaps
-    if (previousBasketSwap != msg.sender && arrangerFee > 0) {
+    if (arrangerFee > 0) {
       require(msg.value >= arrangerFee.mul(_quantity).div(10 ** 18), "Insufficient ETH for arranger fee to bundle");
       arrangerFeeRecipient.transfer(msg.value);
     } else {
