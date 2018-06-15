@@ -39,9 +39,6 @@ contract Basket is StandardToken {
   address                 public arrangerFeeRecipient;
   uint                    public arrangerFee;
 
-  address                 public previousBasketSwap;
-  address                 public nextBasketSwap;
-
   // mapping of token addresses to mapping of account balances
   // ADDRESS USER  || ADDRESS TOKEN || UINT BALANCE
   mapping(address => mapping(address => uint)) public outstandingBalances;
