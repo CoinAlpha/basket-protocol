@@ -74,7 +74,7 @@ contract SwappableBasket is Basket  {
   /// @param  _quantity                            Quantity of basket tokens to swap
   /// @return success                              Operation successful
   function rebalance(uint _quantity) public returns (bool success) {
-    assert(debundle(_quantity, msg.sender, previousBasketSwap, true));
+    assert(debundle(_quantity, msg.sender, nextBasketSwap, true));
     assert(BasketSwap(nextBasketSwap).swap(msg.sender, _quantity));
     emit LogRebalance(msg.sender, _quantity);
     return true;

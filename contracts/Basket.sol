@@ -42,6 +42,10 @@ contract Basket is StandardToken {
   address                 public previousBasketSwap;
   address                 public nextBasketSwap;
 
+  // mapping of token addresses to mapping of account balances
+  // ADDRESS USER  || ADDRESS TOKEN || UINT BALANCE
+  mapping(address => mapping(address => uint)) public outstandingBalances;
+
   // Modules
   IBasketRegistry         public basketRegistry;
 
@@ -159,10 +163,23 @@ contract Basket is StandardToken {
       address t = tokens[i];
       uint w = weights[i];
       bool successfulTransfer = ERC20(t).transfer(_recipient, w.mul(_quantity).div(10 ** 18));
-      if (_revertOnFailedTransfer) assert(successfulTransfer);
+      if (_revertOnFailedTransfer) {
+        assert(successfulTransfer);
+      } else if (successfulTransfer != true) {
+        outstandingBalances[_sender][t] = outstandingBalances[_sender][t].add(w.mul(_quantity).div(10 ** 18));
+      }
     }
 
     basketRegistry.incrementBasketsBurned(_quantity, _sender);
+    return true;
+  }
+
+  /// @dev Allow holder to withdraw outstanding balances from contract (such as previously paused tokens)
+  /// @param  _token                               Address of token to withdraw
+  /// @return success                              Operation successful
+  function withdraw(address _token) public returns (bool success) {
+    require(outstandingBalances[msg.sender][_token] > 0);
+    assert(ERC20(_token).transfer(msg.sender, outstandingBalances[msg.sender][_token]));
     return true;
   }
 
