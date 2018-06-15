@@ -59,6 +59,7 @@ contract Basket is StandardToken {
   event LogDepositAndBundle(address indexed holder, uint indexed quantity);
   event LogDebundleAndWithdraw(address indexed holder, uint indexed quantity);
   event LogPartialDebundle(address indexed holder, uint indexed quantity);
+  event LogWithdraw(address indexed holder, address indexed token, uint indexed quantity);
   event LogArrangerFeeRecipientChange(address indexed oldRecipient, address indexed newRecipient);
   event LogArrangerFeeChange(uint indexed oldFee, uint indexed newFee);
 
@@ -178,8 +179,11 @@ contract Basket is StandardToken {
   /// @param  _token                               Address of token to withdraw
   /// @return success                              Operation successful
   function withdraw(address _token) public returns (bool success) {
-    require(outstandingBalances[msg.sender][_token] > 0);
-    assert(ERC20(_token).transfer(msg.sender, outstandingBalances[msg.sender][_token]));
+    uint bal = outstandingBalances[msg.sender][_token];
+    require(bal > 0);
+    assert(ERC20(_token).transfer(msg.sender, bal));
+
+    emit LogWithdraw(msg.sender, _token, bal);
     return true;
   }
 
