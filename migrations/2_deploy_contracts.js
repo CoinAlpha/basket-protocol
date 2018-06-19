@@ -7,7 +7,7 @@ const { TRANSACTION_FEE, PRODUCTION_FEE, SWAPPABLE_PRODUCTION_FEE } = require('.
 
 module.exports = (deployer, network, accounts) => {
   // Accounts
-  const ADMINISTRATOR = accounts[5];    // Protocol administrator, BasketFactory deployer
+  const ADMINISTRATOR = accounts[0];    // Protocol administrator, BasketFactory deployer
 
   // Contract instances
   let basketRegistry, basketEscrow, basketFactory, swappableBasketFactory;
