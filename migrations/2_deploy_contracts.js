@@ -1,4 +1,5 @@
 const BasketFactory = artifacts.require('./BasketFactory.sol');
+const SwappableBasketFactory = artifacts.require('./SwappableBasketFactory.sol');
 const BasketRegistry = artifacts.require('./BasketRegistry.sol');
 const BasketEscrow = artifacts.require('./BasketEscrow.sol');
 const { TRANSACTION_FEE, PRODUCTION_FEE, SWAPPABLE_PRODUCTION_FEE } = require('../config');
