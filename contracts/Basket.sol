@@ -31,6 +31,7 @@ contract Basket is StandardToken {
   // Constants set at contract inception
   string                  public name;
   string                  public symbol;
+  uint                    public decimals;
   address[]               public tokens;
   uint[]                  public weights;
 
@@ -90,6 +91,8 @@ contract Basket is StandardToken {
     arranger = _arranger;
     arrangerFeeRecipient = _arrangerFeeRecipient;
     arrangerFee = _arrangerFee;
+
+    decimals = 18;
   }
 
   /// @dev Combined deposit of all component tokens (not yet deposited) and bundle
