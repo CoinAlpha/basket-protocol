@@ -397,4 +397,46 @@ contract('TestToken | Basket', (accounts) => {
       } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
     });
   });
+
+  describe('Allows burn and withdraw tokens individually', async () => {
+    let balTokenA, balTokenB, balBasketAB;
+    const amountToDebundle = 5e18;
+
+    before('Read initial balance and pause token A', async () => {
+      try {
+        balTokenA = await tokenA.balanceOf(HOLDER_A);
+        balTokenB = await tokenB.balanceOf(HOLDER_A);
+        balBasketAB = await basketAB.balanceOfPromise(HOLDER_A);
+
+        await tokenA.pause({ from: HOLDER_A });
+      } catch (err) { assert.throw(`Error reading balances: ${err.toString()}`); }
+    });
+
+    it('Successfully burns the basket and alters ', async () => {
+      const result = await basketAB.burnPromise(amountToDebundle, { from: HOLDER_A, gas: 1e6 });
+    });
+
+    it('HOLDER_A should have same amount of tokens A and B, 0 basketAB', async () => {
+      try {
+        const _balTokenA = await tokenA.balanceOf(HOLDER_A);
+        const _balTokenB = await tokenB.balanceOf(HOLDER_A);
+        const _balBasketAB = await basketAB.balanceOf(HOLDER_A);
+        const _outstandingTokenA = Number(basketAB.outstandingBalance(HOLDER_A, tokenA.address));
+        const _outstandingTokenB = Number(basketAB.outstandingBalance(HOLDER_A, tokenB.address));
+        assert.strictEqual(_outstandingTokenA, amountToDebundle, 'tokenA did not increase in outstanding balance');
+        assert.strictEqual(_outstandingTokenB, amountToDebundle, 'tokenB did not increase in outstanding balance');
+        assert.strictEqual(Number(_balTokenA), Number(balTokenA), `tokenA balance is not ${balTokenA / 1e18}`);
+        assert.strictEqual(Number(_balTokenB), Number(balTokenB), `tokenB balance is not ${balTokenB / 1e18}`);
+        assert.strictEqual(Number(_balBasketAB), Number(balBasketAB) - amountToDebundle, 'basketAB balance did not decrease correctly');
+      } catch (err) { assert.throw(`after error: ${err.toString()}`); }
+    });
+
+    it('HOLDER_A should have same amount of tokens A and B, 0 basketAB', async () => {
+      try {
+        await basketAB.withdrawPromise(tokenB.address, { from: HOLDER_A });
+        const _balTokenB = await tokenB.balanceOf(HOLDER_A);
+        assert.strictEqual(Number(_balTokenB), Number(balTokenB) + amountToDebundle, 'tokenB balance did not increase');
+      } catch (err) { assert.throw(`after error: ${err.toString()}`); }
+    });
+  });
 });

@@ -1,5 +1,4 @@
 const BasketFactory = artifacts.require('./BasketFactory.sol');
-const SwappableBasketFactory = artifacts.require('./SwappableBasketFactory.sol');
 const BasketRegistry = artifacts.require('./BasketRegistry.sol');
 const BasketEscrow = artifacts.require('./BasketEscrow.sol');
 const { TRANSACTION_FEE, PRODUCTION_FEE, SWAPPABLE_PRODUCTION_FEE } = require('../config');
@@ -36,12 +35,12 @@ module.exports = (deployer, network, accounts) => {
     .then(_instance => basketFactory = _instance)
 
     // 4. Deploy SwappableBasketFactory contract with basketRegistry address
-    .then(() => deployer.deploy(
-      SwappableBasketFactory, basketRegistry.address, ADMINISTRATOR, SWAPPABLE_PRODUCTION_FEE,
-      { from: ADMINISTRATOR },
-    ))
-    .then(() => SwappableBasketFactory.deployed())
-    .then(_instance => swappableBasketFactory = _instance)
+    // .then(() => deployer.deploy(
+    //   SwappableBasketFactory, basketRegistry.address, ADMINISTRATOR, SWAPPABLE_PRODUCTION_FEE,
+    //   { from: ADMINISTRATOR },
+    // ))
+    // .then(() => SwappableBasketFactory.deployed())
+    // .then(_instance => swappableBasketFactory = _instance)
 
     // 5. Whitelist basketFactory address
     .then(() => basketRegistry.whitelistBasketFactory(
@@ -50,15 +49,15 @@ module.exports = (deployer, network, accounts) => {
     ))
 
     // 6. Whitelist swappableBasketFactory address
-    .then(() => basketRegistry.whitelistBasketFactory(
-      swappableBasketFactory.address,
-      { from: ADMINISTRATOR },
-    ))
+    // .then(() => basketRegistry.whitelistBasketFactory(
+    //   swappableBasketFactory.address,
+    //   { from: ADMINISTRATOR },
+    // ))
 
     // @dev Logs
     .then(() => console.log('  Contract addresses:'))
     .then(() => console.log(`  - BasketRegistry            : ${basketRegistry.address}`))
     .then(() => console.log(`  - BasketEscrow              : ${basketEscrow.address}`))
-    .then(() => console.log(`  - BasketFactory             : ${basketFactory.address}`))
-    .then(() => console.log(`  - swappableBasketFactory    : ${swappableBasketFactory.address}`));
+    .then(() => console.log(`  - BasketFactory             : ${basketFactory.address}`));
+  // .then(() => console.log(`  - SwappableBasketFactory    : ${swappableBasketFactory.address}`));
 };

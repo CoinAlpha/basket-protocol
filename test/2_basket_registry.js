@@ -210,6 +210,15 @@ contract('Basket Factory | Basket Registry', (accounts) => {
     });
   });
 
+  describe('returns the correct arranger', () => {
+    it('returns the correct arranger of a basket', async () => {
+      try {
+        const _arranger = await basketRegistry.getBasketArranger(basketAB.address);
+        assert.strictEqual(_arranger, ARRANGER, 'incorrect arranger');
+      } catch (err) { assert.throw(`Error in returning correct arranger: ${err.toString()}`); }
+    });
+  });
+
   describe('Fallback', () => {
     let initialRegistryBalance;
 
