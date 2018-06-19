@@ -412,12 +412,9 @@ contract('TestToken | Basket', (accounts) => {
       } catch (err) { assert.throw(`Error reading balances: ${err.toString()}`); }
     });
 
-    it('Successfully burns the basket and alters ', async () => {
-      const result = await basketAB.burnPromise(amountToDebundle, { from: HOLDER_A, gas: 1e6 });
-    });
-
-    it('HOLDER_A should have same amount of tokens A and B, 0 basketAB', async () => {
+    it('Successfully burns the basket and alters outstanding balance', async () => {
       try {
+        const result = await basketAB.burnPromise(amountToDebundle, { from: HOLDER_A, gas: 1e6 });
         const _balTokenA = await tokenA.balanceOf(HOLDER_A);
         const _balTokenB = await tokenB.balanceOf(HOLDER_A);
         const _balBasketAB = await basketAB.balanceOf(HOLDER_A);
@@ -431,7 +428,7 @@ contract('TestToken | Basket', (accounts) => {
       } catch (err) { assert.throw(`after error: ${err.toString()}`); }
     });
 
-    it('HOLDER_A should have same amount of tokens A and B, 0 basketAB', async () => {
+    it('HOLDER_A should be able to withdraw tokens individually', async () => {
       try {
         await basketAB.withdrawPromise(tokenB.address, { from: HOLDER_A });
         const _balTokenB = await tokenB.balanceOf(HOLDER_A);

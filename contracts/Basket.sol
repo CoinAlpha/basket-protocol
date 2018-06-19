@@ -22,7 +22,6 @@ import "./zeppelin/StandardToken.sol";
 import "./zeppelin/ERC20.sol";
 
 import "./BasketRegistry.sol";
-import "./BasketSwap.sol";
 
 /// @title Basket -- Basket contract for bundling and debundling tokens
 /// @author CoinAlpha, Inc. <contact@coinalpha.com>
@@ -41,11 +40,7 @@ contract Basket is StandardToken {
 
   // mapping of token addresses to mapping of account balances
   // ADDRESS USER  || ADDRESS TOKEN || UINT BALANCE
-<<<<<<< HEAD
   mapping(address => mapping(address => uint)) public outstandingBalance;
-=======
-  mapping(address => mapping(address => uint)) public outstandingBalances;
->>>>>>> 2afada5ddf4d902117ef5d8299a56d7b65a3823c
 
   // Modules
   IBasketRegistry         public basketRegistry;
@@ -129,50 +124,24 @@ contract Basket is StandardToken {
   /// @param  _quantity                            Quantity of basket tokens to convert back to original tokens
   /// @return success                              Operation successful
   function debundleAndWithdraw(uint _quantity) public returns (bool success) {
-<<<<<<< HEAD
     assert(debundle(_quantity, msg.sender, msg.sender));
-=======
-    assert(debundle(_quantity, msg.sender, msg.sender, true));
->>>>>>> 2afada5ddf4d902117ef5d8299a56d7b65a3823c
     emit LogDebundleAndWithdraw(msg.sender, _quantity);
     return true;
   }
 
-<<<<<<< HEAD
-=======
-  /// @dev Convert basketTokens back to original tokens (does not throw if single token transfer fails)
-  /// @param  _quantity                            Quantity of basket tokens to partial debundle
-  /// @return success                              Operation successful
-  function partialDebundle(uint _quantity) public returns (bool success) {
-    assert(debundle(_quantity, msg.sender, msg.sender, false));
-    emit LogPartialDebundle(msg.sender, _quantity);
-    return true;
-  }
-
->>>>>>> 2afada5ddf4d902117ef5d8299a56d7b65a3823c
   /// @dev Convert basketTokens back to original tokens and transfer to swap contract and initiate swap
   /// @param  _quantity                            Quantity of basket tokens to swap
   /// @param  _sender                              Address of transaction sender
   /// @param  _recipient                           Address of token recipient
-<<<<<<< HEAD
-=======
-  /// @param  _revertOnFailedTransfer              If partial debundle is allowed (allow when tokens are paused / debundle function is stuck)
->>>>>>> 2afada5ddf4d902117ef5d8299a56d7b65a3823c
   /// @return success                              Operation successful
   function debundle(
     uint      _quantity,
     address   _sender,
-<<<<<<< HEAD
     address   _recipient
-=======
-    address   _recipient,
-    bool      _revertOnFailedTransfer
->>>>>>> 2afada5ddf4d902117ef5d8299a56d7b65a3823c
   ) internal returns (bool success) {
     require(balances[_sender] >= _quantity, "Insufficient basket balance to debundle");
     // decrease holder balance and total supply by _quantity
     balances[_sender] = balances[_sender].sub(_quantity);
-<<<<<<< HEAD
     totalSupply_ = totalSupply_.sub(_quantity);
 
     // transfer tokens back to holder
@@ -191,30 +160,16 @@ contract Basket is StandardToken {
   /// @return success                              Operation successful
   function burn(uint _quantity) public returns (bool success) {
     balances[msg.sender] = balances[msg.sender].sub(_quantity);
-=======
->>>>>>> 2afada5ddf4d902117ef5d8299a56d7b65a3823c
     totalSupply_ = totalSupply_.sub(_quantity);
 
     // increase outstanding balance of each of the tokens by their weights
     for (uint i = 0; i < tokens.length; i++) {
       address t = tokens[i];
       uint w = weights[i];
-<<<<<<< HEAD
       outstandingBalance[msg.sender][t] = outstandingBalance[msg.sender][t].add(w.mul(_quantity).div(10 ** 18));
     }
 
     basketRegistry.incrementBasketsBurned(_quantity, msg.sender);
-=======
-      bool successfulTransfer = ERC20(t).transfer(_recipient, w.mul(_quantity).div(10 ** 18));
-      if (_revertOnFailedTransfer) {
-        assert(successfulTransfer);
-      } else if (successfulTransfer != true) {
-        outstandingBalances[_sender][t] = outstandingBalances[_sender][t].add(w.mul(_quantity).div(10 ** 18));
-      }
-    }
-
-    basketRegistry.incrementBasketsBurned(_quantity, _sender);
->>>>>>> 2afada5ddf4d902117ef5d8299a56d7b65a3823c
     return true;
   }
 
@@ -222,11 +177,7 @@ contract Basket is StandardToken {
   /// @param  _token                               Address of token to withdraw
   /// @return success                              Operation successful
   function withdraw(address _token) public returns (bool success) {
-<<<<<<< HEAD
     uint bal = outstandingBalance[msg.sender][_token];
-=======
-    uint bal = outstandingBalances[msg.sender][_token];
->>>>>>> 2afada5ddf4d902117ef5d8299a56d7b65a3823c
     require(bal > 0);
     assert(ERC20(_token).transfer(msg.sender, bal));
 
