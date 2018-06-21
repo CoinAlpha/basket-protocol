@@ -67,7 +67,7 @@ contract BasketRegistry {
     _;
   }
   modifier onlyBasketFactory {
-    require(basketFactoryMap[msg.sender] == true, "Only the basket factory can call this function");
+    require(basketFactoryMap[msg.sender] == true, "Only a basket factory can call this function");
     _;
   }
 
@@ -188,5 +188,5 @@ contract BasketRegistry {
   }
 
   /// @dev Fallback to reject any ether sent to contract
-  function () public payable { revert("BasketRegistry do not accept ETH transfers"); }
+  function () public payable { revert("BasketRegistry does not accept ETH transfers"); }
 }

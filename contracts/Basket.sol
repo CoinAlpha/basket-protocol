@@ -77,7 +77,7 @@ contract Basket is StandardToken {
     address   _basketRegistryAddress,
     address   _arranger,
     address   _arrangerFeeRecipient,
-    uint      _arrangerFee                         // Amount of ETH charged per basket minted
+    uint      _arrangerFee                         // in wei, i.e. 1e18 = 1 ETH
   ) public {
     require(_tokens.length > 0 && _tokens.length == _weights.length, "Constructor: invalid number of tokens and weights");
 
@@ -102,13 +102,13 @@ contract Basket is StandardToken {
     for (uint i = 0; i < tokens.length; i++) {
       address t = tokens[i];
       uint w = weights[i];
-      assert(ERC20(t).transferFrom(msg.sender, this, w.mul(_quantity).div(10 ** 18)));
+      assert(ERC20(t).transferFrom(msg.sender, this, w.mul(_quantity).div(10 ** decimals)));
     }
 
-    // charging market makers a fee for every new basket minted
+    // charging suppliers a fee for every new basket minted
     // skip fees if tokens are minted through swaps
     if (arrangerFee > 0) {
-      require(msg.value >= arrangerFee.mul(_quantity).div(10 ** 18), "Insufficient ETH for arranger fee to bundle");
+      require(msg.value >= arrangerFee.mul(_quantity).div(10 ** decimals), "Insufficient ETH for arranger fee to bundle");
       arrangerFeeRecipient.transfer(msg.value);
     } else {
       // prevent transfers of unnecessary ether into the contract
@@ -132,7 +132,7 @@ contract Basket is StandardToken {
     return true;
   }
 
-  /// @dev Convert basketTokens back to original tokens and transfer to swap contract and initiate swap
+  /// @dev Convert basketTokens back to original tokens and transfer to specified recipient
   /// @param  _quantity                            Quantity of basket tokens to swap
   /// @param  _sender                              Address of transaction sender
   /// @param  _recipient                           Address of token recipient
@@ -147,11 +147,11 @@ contract Basket is StandardToken {
     balances[_sender] = balances[_sender].sub(_quantity);
     totalSupply_ = totalSupply_.sub(_quantity);
 
-    // transfer tokens back to holder
+    // transfer tokens back to _recipient
     for (uint i = 0; i < tokens.length; i++) {
       address t = tokens[i];
       uint w = weights[i];
-      ERC20(t).transfer(_recipient, w.mul(_quantity).div(10 ** 18));
+      ERC20(t).transfer(_recipient, w.mul(_quantity).div(10 ** decimals));
     }
 
     basketRegistry.incrementBasketsBurned(_quantity, _sender);
@@ -159,7 +159,7 @@ contract Basket is StandardToken {
   }
 
   /// @dev Allow holder to convert baskets to its underlying tokens and withdraw them individually
-  /// @param  _quantity                            quantity of tokens to withdraw
+  /// @param  _quantity                            quantity of tokens to burn
   /// @return success                              Operation successful
   function burn(uint _quantity) public returns (bool success) {
     balances[msg.sender] = balances[msg.sender].sub(_quantity);
@@ -169,7 +169,7 @@ contract Basket is StandardToken {
     for (uint i = 0; i < tokens.length; i++) {
       address t = tokens[i];
       uint w = weights[i];
-      outstandingBalance[msg.sender][t] = outstandingBalance[msg.sender][t].add(w.mul(_quantity).div(10 ** 18));
+      outstandingBalance[msg.sender][t] = outstandingBalance[msg.sender][t].add(w.mul(_quantity).div(10 ** decimals));
     }
 
     basketRegistry.incrementBasketsBurned(_quantity, msg.sender);
@@ -182,6 +182,7 @@ contract Basket is StandardToken {
   function withdraw(address _token) public returns (bool success) {
     uint bal = outstandingBalance[msg.sender][_token];
     require(bal > 0);
+    outstandingBalance[msg.sender][_token] = 0;
     assert(ERC20(_token).transfer(msg.sender, bal));
 
     emit LogWithdraw(msg.sender, _token, bal);
@@ -192,6 +193,10 @@ contract Basket is StandardToken {
   /// @param  _newRecipient                        New fee recipient
   /// @return success                              Operation successful
   function changeArrangerFeeRecipient(address _newRecipient) public onlyArranger returns (bool success) {
+    require(
+      _newRecipient != address(0) && _newRecipient != arrangerFeeRecipient,
+      "New receipient can not be 0x0 or the same as the current recipient"
+    );
     address oldRecipient = arrangerFeeRecipient;
     arrangerFeeRecipient = _newRecipient;
 

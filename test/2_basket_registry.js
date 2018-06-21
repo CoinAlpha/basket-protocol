@@ -69,7 +69,6 @@ contract('Basket Factory | Basket Registry', (accounts) => {
         // check addresses in both contracts have been set correctly
         const result = await basketRegistry.whitelistBasketFactory(INVALID_ADDRESS, { from: ADMINISTRATOR });
         const _basketFactoryExists = await basketRegistry.basketFactoryMap.call(INVALID_ADDRESS);
-        console.log(_basketFactoryExists);
         assert.strictEqual(_basketFactoryExists, true, 'basket factory address not whitelisted');
       } catch (err) { assert.throw(`Failed to set basket factory in registry: ${err.toString()}`); }
     });

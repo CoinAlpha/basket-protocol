@@ -498,7 +498,7 @@ contract('Basket Escrow', (accounts) => {
         const escrowBalance = await basketAB.balanceOf(basketEscrow.address);
         const sellerBalance = await basketAB.balanceOf(MARKET_MAKER);
         assert.strictEqual(Number(escrowBalance), (initialEscrowBasketBal + amountBasketsToSell), 'escrow balance did not increase');
-        assert.strictEqual(Number(sellerBalance), (initialMMBasketBal - amountBasketsToSell), 'market maker balance did not decrease');
+        assert.strictEqual(Number(sellerBalance), (initialMMBasketBal - amountBasketsToSell), 'supplier balance did not decrease');
       } catch (err) { assert.throw(`Error sending ETH to escrow contract: ${err.toString()}`); }
     });
 
@@ -547,12 +547,12 @@ contract('Basket Escrow', (accounts) => {
       } catch (err) { assert.throw(`Error creating buy order: ${err.toString()}`); }
     });
 
-    it('sends Baskets back to market maker', async () => {
+    it('sends Baskets back to supplier', async () => {
       try {
         const escrowBalance = await basketAB.balanceOf(basketEscrow.address);
         const sellerBalance = await basketAB.balanceOf(MARKET_MAKER);
         assert.strictEqual(Number(escrowBalance), (initialEscrowBasketBal - amountBasketsToSell), 'escrow balance did not decrease');
-        assert.strictEqual(Number(sellerBalance), (initialMMBasketBal + amountBasketsToSell), 'market maker balance did not increase');
+        assert.strictEqual(Number(sellerBalance), (initialMMBasketBal + amountBasketsToSell), 'supplier balance did not increase');
       } catch (err) { assert.throw(`Error sending ETH to escrow contract: ${err.toString()}`); }
     });
 

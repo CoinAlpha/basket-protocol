@@ -130,5 +130,5 @@ contract BasketFactory {
   }
 
   /// @dev Fallback to reject any ether sent to contract
-  function () public payable { revert("BasketFactory do not accept ETH transfers"); }
+  function () public payable { revert("BasketFactory does not accept ETH transfers"); }
 }
