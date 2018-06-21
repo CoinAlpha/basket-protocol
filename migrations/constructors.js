@@ -7,6 +7,7 @@ const allArtifacts = {
   TestToken: artifacts.require('./TestToken.sol'),
   BasketEscrow: artifacts.require('./BasketEscrow.sol'),
   BasketFactory: artifacts.require('./BasketFactory.sol'),
+  // SwappableBasketFactory: artifacts.require('./SwappableBasketFactory.sol'),
   BasketRegistry: artifacts.require('./BasketRegistry.sol'),
   Basket: artifacts.require('./Basket.sol'),
 };
@@ -34,6 +35,14 @@ const constructors = {
       _productionFee,
       Object.assign({}, { from: _owner }, gasObj),
     ),
+
+  // SwappableBasketFactory: (_owner, _basketRegistryAddress, _productionFeeRecipient, _productionFee) =>
+  //   allArtifacts.SwappableBasketFactory.new(
+  //     _basketRegistryAddress,
+  //     _productionFeeRecipient,
+  //     _productionFee,
+  //     Object.assign({}, { from: _owner }, gasObj),
+  //   ),
 
   TestToken: (_owner, _name, _symbol, _decimals, _initialSupply, _faucetAmount) =>
     allArtifacts.TestToken.new(

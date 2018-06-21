@@ -21,7 +21,6 @@ import "./zeppelin/SafeMath.sol";
 import "./zeppelin/StandardToken.sol";
 import "./zeppelin/ERC20.sol";
 
-import "./BasketFactory.sol";
 import "./BasketRegistry.sol";
 
 /// @title Basket -- Basket contract for bundling and debundling tokens
@@ -35,12 +34,14 @@ contract Basket is StandardToken {
   uint                    public decimals;
   address[]               public tokens;
   uint[]                  public weights;
-  address                 public basketFactoryAddress;
-  address                 public basketRegistryAddress;
 
   address                 public arranger;
   address                 public arrangerFeeRecipient;
   uint                    public arrangerFee;
+
+  // mapping of token addresses to mapping of account balances
+  // ADDRESS USER  || ADDRESS TOKEN || UINT BALANCE
+  mapping(address => mapping(address => uint)) public outstandingBalance;
 
   // Modules
   IBasketRegistry         public basketRegistry;
@@ -52,10 +53,12 @@ contract Basket is StandardToken {
   }
 
   // Events
-  event LogDepositAndBundle(address indexed holder, uint quantity);
-  event LogDebundleAndWithdraw(address indexed holder, uint quantity);
-  event LogArrangerFeeRecipientChange(address oldRecipient, address newRecipient);
-  event LogArrangerFeeChange(uint oldFee, uint newFee);
+  event LogDepositAndBundle(address indexed holder, uint indexed quantity);
+  event LogDebundleAndWithdraw(address indexed holder, uint indexed quantity);
+  event LogPartialDebundle(address indexed holder, uint indexed quantity);
+  event LogWithdraw(address indexed holder, address indexed token, uint indexed quantity);
+  event LogArrangerFeeRecipientChange(address indexed oldRecipient, address indexed newRecipient);
+  event LogArrangerFeeChange(uint indexed oldFee, uint indexed newFee);
 
   /// @dev Basket constructor
   /// @param  _name                                Token name
@@ -66,7 +69,7 @@ contract Basket is StandardToken {
   /// @param  _arranger                            Address of arranger
   /// @param  _arrangerFeeRecipient                Address to send arranger fees
   /// @param  _arrangerFee                         Amount of fee in ETH for every basket minted
-  constructor(
+  constructor (
     string    _name,
     string    _symbol,
     address[] _tokens,
@@ -74,7 +77,7 @@ contract Basket is StandardToken {
     address   _basketRegistryAddress,
     address   _arranger,
     address   _arrangerFeeRecipient,
-    uint      _arrangerFee                         // Amount of ETH charged per basket minted
+    uint      _arrangerFee                         // in wei, i.e. 1e18 = 1 ETH
   ) public {
     require(_tokens.length > 0 && _tokens.length == _weights.length, "Constructor: invalid number of tokens and weights");
 
@@ -83,8 +86,6 @@ contract Basket is StandardToken {
     tokens = _tokens;
     weights = _weights;
 
-    basketFactoryAddress = msg.sender;             // This contract is created only by the Factory
-    basketRegistryAddress = _basketRegistryAddress;
     basketRegistry = IBasketRegistry(_basketRegistryAddress);
 
     arranger = _arranger;
@@ -104,7 +105,8 @@ contract Basket is StandardToken {
       assert(ERC20(t).transferFrom(msg.sender, this, w.mul(_quantity).div(10 ** decimals)));
     }
 
-    // charging market makers a fee for every new basket minted
+    // charging suppliers a fee for every new basket minted
+    // skip fees if tokens are minted through swaps
     if (arrangerFee > 0) {
       require(msg.value >= arrangerFee.mul(_quantity).div(10 ** decimals), "Insufficient ETH for arranger fee to bundle");
       arrangerFeeRecipient.transfer(msg.value);
@@ -121,25 +123,69 @@ contract Basket is StandardToken {
     return true;
   }
 
-
   /// @dev Convert basketTokens back to original tokens and transfer to requester
   /// @param  _quantity                            Quantity of basket tokens to convert back to original tokens
   /// @return success                              Operation successful
   function debundleAndWithdraw(uint _quantity) public returns (bool success) {
-    require(balances[msg.sender] >= _quantity, "Insufficient basket balance to debundle");
+    assert(debundle(_quantity, msg.sender, msg.sender));
+    emit LogDebundleAndWithdraw(msg.sender, _quantity);
+    return true;
+  }
+
+  /// @dev Convert basketTokens back to original tokens and transfer to specified recipient
+  /// @param  _quantity                            Quantity of basket tokens to swap
+  /// @param  _sender                              Address of transaction sender
+  /// @param  _recipient                           Address of token recipient
+  /// @return success                              Operation successful
+  function debundle(
+    uint      _quantity,
+    address   _sender,
+    address   _recipient
+  ) internal returns (bool success) {
+    require(balances[_sender] >= _quantity, "Insufficient basket balance to debundle");
     // decrease holder balance and total supply by _quantity
-    balances[msg.sender] = balances[msg.sender].sub(_quantity);
+    balances[_sender] = balances[_sender].sub(_quantity);
     totalSupply_ = totalSupply_.sub(_quantity);
 
-    // increase balance of each of the tokens by their weights
+    // transfer tokens back to _recipient
     for (uint i = 0; i < tokens.length; i++) {
       address t = tokens[i];
       uint w = weights[i];
-      ERC20(t).transfer(msg.sender, w.mul(_quantity).div(10 ** decimals));
+      ERC20(t).transfer(_recipient, w.mul(_quantity).div(10 ** decimals));
+    }
+
+    basketRegistry.incrementBasketsBurned(_quantity, _sender);
+    return true;
+  }
+
+  /// @dev Allow holder to convert baskets to its underlying tokens and withdraw them individually
+  /// @param  _quantity                            quantity of tokens to burn
+  /// @return success                              Operation successful
+  function burn(uint _quantity) public returns (bool success) {
+    balances[msg.sender] = balances[msg.sender].sub(_quantity);
+    totalSupply_ = totalSupply_.sub(_quantity);
+
+    // increase outstanding balance of each of the tokens by their weights
+    for (uint i = 0; i < tokens.length; i++) {
+      address t = tokens[i];
+      uint w = weights[i];
+      outstandingBalance[msg.sender][t] = outstandingBalance[msg.sender][t].add(w.mul(_quantity).div(10 ** decimals));
     }
 
     basketRegistry.incrementBasketsBurned(_quantity, msg.sender);
-    emit LogDebundleAndWithdraw(msg.sender, _quantity);
+    return true;
+  }
+
+  /// @dev Allow holder to withdraw outstanding balances from contract (such as previously paused tokens)
+  /// @param  _token                               Address of token to withdraw
+  /// @return success                              Operation successful
+  function withdraw(address _token) public returns (bool success) {
+    uint bal = outstandingBalance[msg.sender][_token];
+    require(bal > 0);
+    outstandingBalance[msg.sender][_token] = 0;
+    assert(ERC20(_token).transfer(msg.sender, bal));
+
+    emit LogWithdraw(msg.sender, _token, bal);
     return true;
   }
 
@@ -147,6 +193,10 @@ contract Basket is StandardToken {
   /// @param  _newRecipient                        New fee recipient
   /// @return success                              Operation successful
   function changeArrangerFeeRecipient(address _newRecipient) public onlyArranger returns (bool success) {
+    require(
+      _newRecipient != address(0) && _newRecipient != arrangerFeeRecipient,
+      "New receipient can not be 0x0 or the same as the current recipient"
+    );
     address oldRecipient = arrangerFeeRecipient;
     arrangerFeeRecipient = _newRecipient;
 
@@ -167,5 +217,4 @@ contract Basket is StandardToken {
 
   /// @dev Fallback to reject any ether sent to contract
   function () public payable { revert("Baskets do not accept ETH transfers"); }
-
 }

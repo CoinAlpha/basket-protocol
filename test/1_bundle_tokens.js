@@ -88,11 +88,6 @@ contract('TestToken | Basket', (accounts) => {
       const balance = await web3.eth.getBalancePromise(ARRANGER);
       assert.isAbove((initialBalance - balance), PRODUCTION_FEE, 'incorrect production fee amount charged');
     });
-
-    it('remembers the basketFactory', async () => {
-      const _factoryAddress = await basketAB.basketFactoryAddress.call();
-      assert.strictEqual(_factoryAddress, basketFactory.address, 'incorrect basket factory');
-    });
   });
 
   describe('fails to deploy basket when the fee sent is too low', () => {
@@ -156,7 +151,7 @@ contract('TestToken | Basket', (accounts) => {
       try {
         await tokenA.approve(basketABAddress, 1e25, { from: HOLDER_A });
         await tokenB.approve(basketABAddress, 1e25, { from: HOLDER_A });
-        const data = await Promise.all(['name', 'symbol', 'decimals'].map(field => basketAB[field].call()));
+        const data = await Promise.all(['name', 'symbol'].map(field => basketAB[field].call()));
       } catch (err) { assert.throw(`Error retrieving basketAB contract data: ${err.toString()}`); }
     });
 
@@ -400,6 +395,45 @@ contract('TestToken | Basket', (accounts) => {
         assert.strictEqual(initialBasketBalance, Number(_currentBasketBalance), 'basket balance increased');
         assert.strictEqual(initialFactoryBalance, Number(_currentFactoryBalance), 'basket factory balance increased');
       } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+    });
+  });
+
+  describe('Allows burn and withdraw tokens individually', async () => {
+    let balTokenA, balTokenB, balBasketAB;
+    const amountToDebundle = 5e18;
+
+    before('Read initial balance and pause token A', async () => {
+      try {
+        balTokenA = await tokenA.balanceOf(HOLDER_A);
+        balTokenB = await tokenB.balanceOf(HOLDER_A);
+        balBasketAB = await basketAB.balanceOfPromise(HOLDER_A);
+
+        await tokenA.pause({ from: HOLDER_A });
+      } catch (err) { assert.throw(`Error reading balances: ${err.toString()}`); }
+    });
+
+    it('Successfully burns the basket and alters outstanding balance', async () => {
+      try {
+        const result = await basketAB.burnPromise(amountToDebundle, { from: HOLDER_A, gas: 1e6 });
+        const _balTokenA = await tokenA.balanceOf(HOLDER_A);
+        const _balTokenB = await tokenB.balanceOf(HOLDER_A);
+        const _balBasketAB = await basketAB.balanceOf(HOLDER_A);
+        const _outstandingTokenA = Number(basketAB.outstandingBalance(HOLDER_A, tokenA.address));
+        const _outstandingTokenB = Number(basketAB.outstandingBalance(HOLDER_A, tokenB.address));
+        assert.strictEqual(_outstandingTokenA, amountToDebundle, 'tokenA did not increase in outstanding balance');
+        assert.strictEqual(_outstandingTokenB, amountToDebundle, 'tokenB did not increase in outstanding balance');
+        assert.strictEqual(Number(_balTokenA), Number(balTokenA), `tokenA balance is not ${balTokenA / 1e18}`);
+        assert.strictEqual(Number(_balTokenB), Number(balTokenB), `tokenB balance is not ${balTokenB / 1e18}`);
+        assert.strictEqual(Number(_balBasketAB), Number(balBasketAB) - amountToDebundle, 'basketAB balance did not decrease correctly');
+      } catch (err) { assert.throw(`after error: ${err.toString()}`); }
+    });
+
+    it('HOLDER_A should be able to withdraw tokens individually', async () => {
+      try {
+        await basketAB.withdrawPromise(tokenB.address, { from: HOLDER_A });
+        const _balTokenB = await tokenB.balanceOf(HOLDER_A);
+        assert.strictEqual(Number(_balTokenB), Number(balTokenB) + amountToDebundle, 'tokenB balance did not increase');
+      } catch (err) { assert.throw(`after error: ${err.toString()}`); }
     });
   });
 });

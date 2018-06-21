@@ -47,9 +47,9 @@ contract('Basket Factory | Basket Registry', (accounts) => {
     it('initializes basketFactory and basketRegistry correctly', async () => {
       try {
         // check addresses in both contracts have been set correctly
-        const _basketFactoryAddress = await basketRegistry.basketFactoryAddress.call();
+        const _basketFactoryExists = await basketRegistry.basketFactoryMap.call(basketFactory.address);
         const _basketRegistryAddress = await basketFactory.basketRegistryAddress.call();
-        assert.strictEqual(_basketFactoryAddress, basketFactory.address, 'basket factory address not set correctly');
+        assert.strictEqual(_basketFactoryExists, true, 'basket factory address not whitelisted');
         assert.strictEqual(_basketRegistryAddress, basketRegistry.address, 'basket registry address not set correctly');
 
         // check indices initialization in basketRegistry
@@ -63,26 +63,21 @@ contract('Basket Factory | Basket Registry', (accounts) => {
     });
   });
 
-  describe('sets the basket factory correctly', () => {
+  describe('whitelists the basket factory correctly', () => {
     it('lets admin set basket factory correctly', async () => {
       try {
         // check addresses in both contracts have been set correctly
-        const result = await basketRegistry.setBasketFactory(INVALID_ADDRESS, { from: ADMINISTRATOR });
-        const _basketFactoryAddress = await basketRegistry.basketFactoryAddress.call();
-        assert.strictEqual(_basketFactoryAddress, INVALID_ADDRESS, 'basket factory address not set correctly');
+        const result = await basketRegistry.whitelistBasketFactory(INVALID_ADDRESS, { from: ADMINISTRATOR });
+        const _basketFactoryExists = await basketRegistry.basketFactoryMap.call(INVALID_ADDRESS);
+        assert.strictEqual(_basketFactoryExists, true, 'basket factory address not whitelisted');
       } catch (err) { assert.throw(`Failed to set basket factory in registry: ${err.toString()}`); }
     });
 
     it('disallows anyone else to set basket factory', async () => {
       try {
         // check addresses in both contracts have been set correctly
-        const result = await basketRegistry.setBasketFactory(INVALID_ADDRESS, { from: INVALID_ADDRESS });
-        await basketRegistry.basketFactoryAddress.call();
+        await basketRegistry.whitelistBasketFactory(INVALID_ADDRESS, { from: INVALID_ADDRESS });
       } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
-    });
-
-    after('reset basket factory', async () => {
-      await basketRegistry.setBasketFactory(basketFactory.address);
     });
   });
 
@@ -212,6 +207,15 @@ contract('Basket Factory | Basket Registry', (accounts) => {
       try {
         await basketRegistry.incrementBasketsBurned(1e18, INVALID_ADDRESS, { from: INVALID_ADDRESS });
       } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+    });
+  });
+
+  describe('returns the correct arranger', () => {
+    it('returns the correct arranger of a basket', async () => {
+      try {
+        const _arranger = await basketRegistry.getBasketArranger(basketAB.address);
+        assert.strictEqual(_arranger, ARRANGER, 'incorrect arranger');
+      } catch (err) { assert.throw(`Error in returning correct arranger: ${err.toString()}`); }
     });
   });
 

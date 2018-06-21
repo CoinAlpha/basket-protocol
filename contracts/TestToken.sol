@@ -19,6 +19,7 @@ pragma solidity ^0.4.22;
 
 import "./zeppelin/StandardToken.sol";
 import "./zeppelin/Destructible.sol";
+import "./zeppelin/Pausable.sol";
 import "./zeppelin/SafeMath.sol";
 
 /**
@@ -26,7 +27,7 @@ import "./zeppelin/SafeMath.sol";
  * @author CoinAlpha, Inc. <contact@coinalpha.com>
  */
 
-contract TestToken is StandardToken, Destructible {
+contract TestToken is StandardToken, Destructible, Pausable {
   string public name;
   string public symbol;
   uint public decimals;
@@ -61,6 +62,18 @@ contract TestToken is StandardToken, Destructible {
 
   /// @dev Fallback to reject any ether sent to contract
   function () public { revert("Token contract does not accept ETH transfers"); }
+
+  /// @dev Transfer a set amount of token to any address
+  /// @return success           Operation successful
+  function transfer(address _to, uint _value) public whenNotPaused returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  /// @dev Transfer a set amount of token from any address
+  /// @return success           Operation successful
+  function transferFrom(address _from, address _to, uint _value) public whenNotPaused returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
 
   /// @dev Withdraw a set amount of token to any address
   /// @return success           Operation successful

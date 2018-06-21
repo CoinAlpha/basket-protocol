@@ -44,9 +44,9 @@ contract BasketFactory {
   }
 
   // Events
-  event LogBasketCreated(uint basketIndex, address basketAddress, address arranger);
-  event LogProductionFeeRecipientChange(address oldRecipient, address newRecipient);
-  event LogProductionFeeChange(uint oldFee, uint newFee);
+  event LogBasketCreated(uint indexed basketIndex, address indexed basketAddress, address indexed arranger);
+  event LogProductionFeeRecipientChange(address indexed oldRecipient, address indexed newRecipient);
+  event LogProductionFeeChange(uint indexed oldFee, uint indexed newFee);
 
   /// @dev BasketFactory constructor
   /// @param  _basketRegistryAddress               Address of basket registry
@@ -130,5 +130,5 @@ contract BasketFactory {
   }
 
   /// @dev Fallback to reject any ether sent to contract
-  function () public payable { revert("BasketRegistry do not accept ETH transfers"); }
+  function () public payable { revert("BasketFactory does not accept ETH transfers"); }
 }
