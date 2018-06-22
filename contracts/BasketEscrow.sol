@@ -85,7 +85,7 @@ contract BasketEscrow {
   /// @param  _basketRegistryAddress                     Address of basket registry
   /// @param  _transactionFeeRecipient                   Address to send transactionFee
   /// @param  _transactionFee                            Transaction fee in ETH percentage
-  constructor(
+  function BasketEscrow(
     address   _basketRegistryAddress,
     address   _transactionFeeRecipient,
     uint      _transactionFee

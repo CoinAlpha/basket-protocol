@@ -69,7 +69,7 @@ contract Basket is StandardToken {
   /// @param  _arranger                            Address of arranger
   /// @param  _arrangerFeeRecipient                Address to send arranger fees
   /// @param  _arrangerFee                         Amount of fee in ETH for every basket minted
-  constructor (
+  function Basket(
     string    _name,
     string    _symbol,
     address[] _tokens,

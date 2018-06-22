@@ -50,7 +50,7 @@ contract BasketFactory {
 
   /// @dev BasketFactory constructor
   /// @param  _basketRegistryAddress               Address of basket registry
-  constructor(
+  function BasketFactory(
     address   _basketRegistryAddress,
     address   _productionFeeRecipient,
     uint      _productionFee

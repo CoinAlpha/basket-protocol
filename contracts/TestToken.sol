@@ -42,7 +42,7 @@ contract TestToken is StandardToken, Destructible, Pausable {
   /// @param  _decimals         Decimal precision
   /// @param  _initialSupply    Initial total supply of tokens
   /// @param  _faucetAmount     Amount to faucet with each request
-  constructor(
+  function TestToken(
     string    _name,
     string    _symbol,
     uint      _decimals,

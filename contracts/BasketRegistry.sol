@@ -78,7 +78,7 @@ contract BasketRegistry {
   event LogIncrementBasketsBurned(address basketAddress, uint quantity, address sender);
 
   /// @dev BasketRegistry constructor
-  constructor() public {
+  function BasketRegistry() public {
     basketIndex = 1;
     arrangerIndex = 1;
     admin = msg.sender;
