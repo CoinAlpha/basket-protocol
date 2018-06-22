@@ -48,27 +48,26 @@ Allows for users to create buy and sell orders for baskets, fill orders, and tra
 ## Coding Guides
 - [http://solidity.readthedocs.io/en/develop/style-guide.html](http://solidity.readthedocs.io/en/develop/style-guide.html)
 
-## Solicity Compiler
+## Solidity Compiler
 
 The basket protocol uses [Solidity 0.4.21](https://solidity.readthedocs.io/en/v0.4.20/contracts.html#events).
 
 - Introduces "`emit` LogEvent" syntax
-- Note on 0.4.22: compiler version has been downgraded to 0.4.21 due to potential bugs related to ERC20 tokens introduced in 0.4.22 ([read more](https://medium.com/@chris_77367/explaining-unexpected-reverts-starting-with-solidity-0-4-22-3ada6e82308c))
+- Note on 0.4.22: compiler version has been downgraded to 0.4.21 due to potential errors related to ERC20 tokens introduced in 0.4.22 ([read more](https://medium.com/@chris_77367/explaining-unexpected-reverts-starting-with-solidity-0-4-22-3ada6e82308c))
 
 ## Testing
 - [Truffle](http://truffleframework.com/) [v4.1.5](https://github.com/trufflesuite/truffle/releases/tag/v4.1.5)
 
-```
+```sh
 $ truffle install -g truffe@4.1.5
-
 Truffle v4.1.5 (core: 4.1.5)
 Solidity v0.4.21 (solc-js)
+```
 
-# Run Test
+**Run test**
+
+```sh
 $ npm test
-
-# Run Coverage
-$ npm run coverage
 ```
 
 **Running test coverage (solidity-coverage)**
