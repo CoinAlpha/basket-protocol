@@ -63,11 +63,11 @@ contract BasketRegistry {
 
   // Modifiers
   modifier onlyBasket {
-    require(basketIndexFromAddress[msg.sender] > 0, "Only a basket can call this function");
+    require(basketIndexFromAddress[msg.sender] > 0); // "Only a basket can call this function"
     _;
   }
   modifier onlyBasketFactory {
-    require(basketFactoryMap[msg.sender] == true, "Only a basket factory can call this function");
+    require(basketFactoryMap[msg.sender] == true);   // "Only a basket factory can call this function"
     _;
   }
 
@@ -88,7 +88,7 @@ contract BasketRegistry {
   /// @param  _basketFactory                       Basket factory address
   /// @return success                              Operation successful
   function whitelistBasketFactory(address _basketFactory) public returns (bool success) {
-    require(msg.sender == admin, "Only an admin can call this function");
+    require(msg.sender == admin);                  // "Only an admin can call this function"
     basketFactoryMap[_basketFactory] = true;
     emit LogWhitelistBasketFactory(_basketFactory);
     return true;
@@ -188,5 +188,6 @@ contract BasketRegistry {
   }
 
   /// @dev Fallback to reject any ether sent to contract
-  function () public payable { revert("BasketRegistry does not accept ETH transfers"); }
+  //  "BasketRegistry does not accept ETH transfers"
+  function () public payable { revert(); }
 }

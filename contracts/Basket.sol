@@ -48,7 +48,7 @@ contract Basket is StandardToken {
 
   // Modifiers
   modifier onlyArranger {
-    require(msg.sender == arranger, "Only the Arranger can call this function");
+    require(msg.sender == arranger); // "Only the Arranger can call this function"
     _;
   }
 
@@ -79,7 +79,8 @@ contract Basket is StandardToken {
     address   _arrangerFeeRecipient,
     uint      _arrangerFee                         // in wei, i.e. 1e18 = 1 ETH
   ) public {
-    require(_tokens.length > 0 && _tokens.length == _weights.length, "Constructor: invalid number of tokens and weights");
+    // "Constructor: invalid number of tokens and weights"
+    require(_tokens.length > 0 && _tokens.length == _weights.length);
 
     name = _name;
     symbol = _symbol;
@@ -108,7 +109,8 @@ contract Basket is StandardToken {
     // charging suppliers a fee for every new basket minted
     // skip fees if tokens are minted through swaps
     if (arrangerFee > 0) {
-      require(msg.value >= arrangerFee.mul(_quantity).div(10 ** decimals), "Insufficient ETH for arranger fee to bundle");
+      // "Insufficient ETH for arranger fee to bundle"
+      require(msg.value >= arrangerFee.mul(_quantity).div(10 ** decimals));
       arrangerFeeRecipient.transfer(msg.value);
     } else {
       // prevent transfers of unnecessary ether into the contract
@@ -142,7 +144,7 @@ contract Basket is StandardToken {
     address   _sender,
     address   _recipient
   ) internal returns (bool success) {
-    require(balances[_sender] >= _quantity, "Insufficient basket balance to debundle");
+    require(balances[_sender] >= _quantity); // Insufficient basket balance to debundle");
     // decrease holder balance and total supply by _quantity
     balances[_sender] = balances[_sender].sub(_quantity);
     totalSupply_ = totalSupply_.sub(_quantity);
@@ -193,10 +195,8 @@ contract Basket is StandardToken {
   /// @param  _newRecipient                        New fee recipient
   /// @return success                              Operation successful
   function changeArrangerFeeRecipient(address _newRecipient) public onlyArranger returns (bool success) {
-    require(
-      _newRecipient != address(0) && _newRecipient != arrangerFeeRecipient,
-      "New receipient can not be 0x0 or the same as the current recipient"
-    );
+    // "New receipient can not be 0x0 or the same as the current recipient"
+    require(_newRecipient != address(0) && _newRecipient != arrangerFeeRecipient);
     address oldRecipient = arrangerFeeRecipient;
     arrangerFeeRecipient = _newRecipient;
 
@@ -216,5 +216,6 @@ contract Basket is StandardToken {
   }
 
   /// @dev Fallback to reject any ether sent to contract
-  function () public payable { revert("Baskets do not accept ETH transfers"); }
+  //  "Baskets do not accept ETH transfers"
+  function () public payable { revert(); }
 }

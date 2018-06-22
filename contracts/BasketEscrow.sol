@@ -67,7 +67,7 @@ contract BasketEscrow {
 
   // Modifiers
   modifier onlyAdmin {
-    require(msg.sender == admin, "Only the admin can call this function");
+    require(msg.sender == admin);                       // "Only the admin can call this function"
     _;
   }
 
@@ -164,11 +164,11 @@ contract BasketEscrow {
     internal
     returns (uint newOrderIndex)
   {
-    require(_tokenGet == ETH_ADDRESS || basketRegistry.checkBasketExists(_tokenGet), "Order not for ETH or invalid basket");
-    require(_tokenGive == ETH_ADDRESS || basketRegistry.checkBasketExists(_tokenGive), "Order not for ETH or invalid basket");
+    require(_tokenGet == ETH_ADDRESS || basketRegistry.checkBasketExists(_tokenGet)); // "Order not for ETH or invalid basket"
+    require(_tokenGive == ETH_ADDRESS || basketRegistry.checkBasketExists(_tokenGive)); // "Order not for ETH or invalid basket"
 
     bytes32 hash = sha256(this, _tokenGet, _amountGet, _tokenGive, _amountGive, _expiration, _nonce);
-    require(orders[_orderCreator][hash] == 0, "Duplicate order");
+    require(orders[_orderCreator][hash] == 0); // "Duplicate order"
 
     orders[_orderCreator][hash] = orderIndex;
     balances[_orderCreator][_tokenGive] = balances[_orderCreator][_tokenGive].add(_amountGive);
@@ -251,8 +251,8 @@ contract BasketEscrow {
   {
     bytes32 hash = sha256(this, _tokenGet, _amountGet, _tokenGive, _amountGive, _expiration, _nonce);
     uint cancelledOrderIndex = orders[_orderCreator][hash];
-    require(cancelledOrderIndex > 0, "Order does not exist");
-    require(filledOrders[_orderCreator][hash] != true, "Order has been filled");
+    require(cancelledOrderIndex > 0);                    // "Order does not exist"
+    require(filledOrders[_orderCreator][hash] != true);  // "Order has been filled"
 
     orders[_orderCreator][hash] = 0;
     balances[_orderCreator][_tokenGive] = balances[_orderCreator][_tokenGive].sub(_amountGive);
@@ -335,9 +335,9 @@ contract BasketEscrow {
   {
     bytes32 hash = sha256(this, _tokenGet, _amountGet, _tokenGive, _amountGive, _expiration, _nonce);
     uint filledOrderIndex = orders[_orderCreator][hash];
-    require(filledOrderIndex > 0, "Order does not exist");
-    require(filledOrders[_orderCreator][hash] != true, "Order has been filled");
-    require(now <= _expiration, "Order has expired");
+    require(filledOrderIndex > 0);                      // "Order does not exist"
+    require(filledOrders[_orderCreator][hash] != true); // "Order has been filled"
+    require(now <= _expiration);                        // "Order has expired"
 
     filledOrders[_orderCreator][hash] = true;
     balances[_orderCreator][_tokenGive] = balances[_orderCreator][_tokenGive].sub(_amountGive);
@@ -390,5 +390,6 @@ contract BasketEscrow {
   }
 
   /// @dev Fallback to reject any ether sent directly to contract
-  function () public payable { revert("BasketEscrow does not accept ETH transfers"); }
+  //  "BasketEscrow does not accept ETH transfers"
+  function () public payable { revert(); }
 }

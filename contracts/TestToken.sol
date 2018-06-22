@@ -61,7 +61,8 @@ contract TestToken is StandardToken, Destructible, Pausable {
   }
 
   /// @dev Fallback to reject any ether sent to contract
-  function () public { revert("Token contract does not accept ETH transfers"); }
+  //  "Token contract does not accept ETH transfers"
+  function () public { revert(); }
 
   /// @dev Transfer a set amount of token to any address
   /// @return success           Operation successful
