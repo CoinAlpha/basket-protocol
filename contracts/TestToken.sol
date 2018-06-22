@@ -15,7 +15,7 @@
 
 */
 
-pragma solidity ^0.4.22;
+pragma solidity 0.4.21;
 
 import "./zeppelin/StandardToken.sol";
 import "./zeppelin/Destructible.sol";

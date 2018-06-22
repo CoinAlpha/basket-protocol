@@ -15,7 +15,7 @@
 
 */
 
-pragma solidity ^0.4.22;
+pragma solidity 0.4.21;
 
 import "./zeppelin/SafeMath.sol";
 import "./zeppelin/ERC20.sol";
