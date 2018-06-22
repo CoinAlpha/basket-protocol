@@ -39,7 +39,7 @@ contract BasketFactory {
 
   // Modifiers
   modifier onlyAdmin {
-    require(msg.sender == admin);                   // "Only the admin can call this function"
+    require(msg.sender == admin);                   // Check: "Only the admin can call this function"
     _;
   }
 
@@ -85,7 +85,7 @@ contract BasketFactory {
     returns (address newBasket)
   {
     // charging arrangers a fee to deploy new basket
-    require(msg.value >= productionFee);           // "Insufficient ETH for basket creation fee"
+    require(msg.value >= productionFee);           // Check: "Insufficient ETH for basket creation fee"
     productionFeeRecipient.transfer(msg.value);
 
     Basket b = new Basket(
@@ -130,6 +130,6 @@ contract BasketFactory {
   }
 
   /// @dev Fallback to reject any ether sent to contract
-  //  "BasketFactory does not accept ETH transfers"
+  //  Check: "BasketFactory does not accept ETH transfers"
   function () public payable { revert(); }
 }
