@@ -15,7 +15,7 @@
 
 */
 
-pragma solidity ^0.4.22;
+pragma solidity 0.4.21;
 
 import "./zeppelin/StandardToken.sol";
 import "./zeppelin/Destructible.sol";
@@ -42,7 +42,7 @@ contract TestToken is StandardToken, Destructible, Pausable {
   /// @param  _decimals         Decimal precision
   /// @param  _initialSupply    Initial total supply of tokens
   /// @param  _faucetAmount     Amount to faucet with each request
-  constructor(
+  function TestToken(
     string    _name,
     string    _symbol,
     uint      _decimals,
@@ -61,7 +61,8 @@ contract TestToken is StandardToken, Destructible, Pausable {
   }
 
   /// @dev Fallback to reject any ether sent to contract
-  function () public { revert("Token contract does not accept ETH transfers"); }
+  //  "Token contract does not accept ETH transfers"
+  function () public { revert(); }
 
   /// @dev Transfer a set amount of token to any address
   /// @return success           Operation successful

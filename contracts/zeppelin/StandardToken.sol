@@ -1,4 +1,4 @@
-pragma solidity ^0.4.22;
+pragma solidity 0.4.21;
 
 import "./BasicToken.sol";
 import "./ERC20.sol";
@@ -23,9 +23,9 @@ contract StandardToken is ERC20, BasicToken {
    * @param _value uint256 the amount of tokens to be transferred
    */
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0), "Can not transfer to 0x0");
-    require(_value <= balances[_from], "Insufficient balance");
-    require(_value <= allowed[_from][msg.sender], "Insufficient allowance");
+    require(_to != address(0));                       // "Can not transfer to 0x0"
+    require(_value <= balances[_from]);               // "Insufficient balance"
+    require(_value <= allowed[_from][msg.sender]);    // "Insufficient allowance"
 
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);

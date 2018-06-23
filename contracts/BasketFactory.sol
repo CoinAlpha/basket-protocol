@@ -15,7 +15,7 @@
 
 */
 
-pragma solidity ^0.4.22;
+pragma solidity 0.4.21;
 
 import "./zeppelin/SafeMath.sol";
 import "./Basket.sol";
@@ -39,7 +39,7 @@ contract BasketFactory {
 
   // Modifiers
   modifier onlyAdmin {
-    require(msg.sender == admin, "Only the admin can call this function");
+    require(msg.sender == admin);                   // Check: "Only the admin can call this function"
     _;
   }
 
@@ -50,7 +50,7 @@ contract BasketFactory {
 
   /// @dev BasketFactory constructor
   /// @param  _basketRegistryAddress               Address of basket registry
-  constructor(
+  function BasketFactory(
     address   _basketRegistryAddress,
     address   _productionFeeRecipient,
     uint      _productionFee
@@ -85,7 +85,7 @@ contract BasketFactory {
     returns (address newBasket)
   {
     // charging arrangers a fee to deploy new basket
-    require(msg.value >= productionFee, "Insufficient ETH for basket creation fee");
+    require(msg.value >= productionFee);           // Check: "Insufficient ETH for basket creation fee"
     productionFeeRecipient.transfer(msg.value);
 
     Basket b = new Basket(
@@ -130,5 +130,6 @@ contract BasketFactory {
   }
 
   /// @dev Fallback to reject any ether sent to contract
-  function () public payable { revert("BasketFactory does not accept ETH transfers"); }
+  //  Check: "BasketFactory does not accept ETH transfers"
+  function () public payable { revert(); }
 }

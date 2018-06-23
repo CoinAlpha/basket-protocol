@@ -1,4 +1,4 @@
-pragma solidity ^0.4.22;
+pragma solidity 0.4.21;
 
 contract Migrations {
   address public owner;
@@ -8,7 +8,7 @@ contract Migrations {
     if (msg.sender == owner) _;
   }
 
-  constructor() public {
+  function Migrations() public {
     owner = msg.sender;
   }
 
