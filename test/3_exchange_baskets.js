@@ -233,6 +233,19 @@ contract('Basket Escrow', (accounts) => {
       } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
     });
 
+    it('creates and logs buy orders ', async () => {
+      const instantExpiration = 0;
+      try {
+        // exact same params as last order
+        nonce = Math.random() * 1e7;
+        const buyOrderParams = [
+          basketABAddress, amountBasketsToBuy, instantExpiration, nonce,
+          { from: HOLDER_A, value: amountEthToSend, gas: 1e6 },
+        ];
+        await basketEscrow.createBuyOrder(...buyOrderParams);
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+    });
+
     after('update nonce', () => { nonce = Math.random() * 1e7; });
   });
 

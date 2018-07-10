@@ -444,4 +444,12 @@ contract('TestToken | Basket', (accounts) => {
       } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
     });
   });
+
+  describe('Does not allow withdraw when balance is zero', async () => {
+    it('HOLDER_B should not be able to withdraw a single token', async () => {
+      try {
+        await basketAB.withdrawPromise(tokenB.address, { from: HOLDER_B });
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+    });
+  });
 });
