@@ -164,6 +164,7 @@ contract BasketEscrow {
     internal
     returns (uint newOrderIndex)
   {
+    require(_expiration > now);
     require(_tokenGet == ETH_ADDRESS || basketRegistry.checkBasketExists(_tokenGet));   // Check: "Order not for ETH or invalid basket"
     require(_tokenGive == ETH_ADDRESS || basketRegistry.checkBasketExists(_tokenGive)); // Check: "Order not for ETH or invalid basket"
 
