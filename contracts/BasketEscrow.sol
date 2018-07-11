@@ -136,7 +136,7 @@ contract BasketEscrow {
     public
     returns (bool success)
   {
-    assert(ERC20(_basketAddress).transferFrom(msg.sender, this, _amountBasket));
+    require(ERC20(_basketAddress).transferFrom(msg.sender, this, _amountBasket));
     uint index = _createOrder(msg.sender, ETH_ADDRESS, _amountEth, _basketAddress, _amountBasket, _expiration, _nonce);
 
     emit LogSellOrderCreated(index, msg.sender, _basketAddress, _amountEth, _amountBasket, _expiration, _nonce);
@@ -223,7 +223,7 @@ contract BasketEscrow {
   ) public returns (bool success) {
     uint cancelledOrderIndex = _cancelOrder(msg.sender, ETH_ADDRESS, _amountEth, _basketAddress, _amountBasket, _expiration, _nonce);
 
-    assert(ERC20(_basketAddress).transfer(msg.sender, _amountBasket));
+    require(ERC20(_basketAddress).transfer(msg.sender, _amountBasket));
 
     emit LogSellOrderCancelled(cancelledOrderIndex, msg.sender, _basketAddress, _amountEth, _amountBasket);
     return true;
@@ -278,7 +278,7 @@ contract BasketEscrow {
     uint      _nonce
   ) public returns (bool success) {
     uint filledOrderIndex = _fillOrder(_orderCreator, _basketAddress, _amountBasket, ETH_ADDRESS, _amountEth, _expiration, _nonce);
-    assert(ERC20(_basketAddress).transferFrom(msg.sender, _orderCreator, _amountBasket));
+    require(ERC20(_basketAddress).transferFrom(msg.sender, _orderCreator, _amountBasket));
 
     uint fee = _amountEth.mul(transactionFee).div(10 ** FEE_DECIMALS);
     msg.sender.transfer(_amountEth.sub(fee));
@@ -303,7 +303,7 @@ contract BasketEscrow {
     uint      _nonce
   ) public payable returns (bool success) {
     uint filledOrderIndex = _fillOrder(_orderCreator, ETH_ADDRESS, msg.value, _basketAddress, _amountBasket, _expiration, _nonce);
-    assert(ERC20(_basketAddress).transfer(msg.sender, _amountBasket));
+    require(ERC20(_basketAddress).transfer(msg.sender, _amountBasket));
 
     uint fee = msg.value.mul(transactionFee).div(10 ** FEE_DECIMALS);
     _orderCreator.transfer(msg.value.sub(fee));
