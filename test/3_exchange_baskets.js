@@ -233,14 +233,29 @@ contract('Basket Escrow', (accounts) => {
       } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
     });
 
+    it('creates and logs buy orders ', async () => {
+      const instantExpiration = 0;
+      try {
+        // exact same params as last order
+        nonce = Math.random() * 1e7;
+        const buyOrderParams = [
+          basketABAddress, amountBasketsToBuy, instantExpiration, nonce,
+          { from: HOLDER_A, value: amountEthToSend, gas: 1e6 },
+        ];
+        await basketEscrow.createBuyOrder(...buyOrderParams);
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+    });
+
     after('update nonce', () => { nonce = Math.random() * 1e7; });
   });
 
   describe('Holder_A cancels expired buy order', () => {
+    const timeDelta = 10;   // expires in 10 seconds
+
     before('create second buy order and check initial balance', async () => {
       try {
         // set expiration time to now to ensure the order will expire
-        expirationInSeconds = 0;
+        expirationInSeconds = (new Date().getTime() / 1000) + timeDelta;
         const buyOrderParams = [
           basketABAddress, amountBasketsToBuy, expirationInSeconds, nonce,
           { from: HOLDER_A, value: amountEthToSend, gas: 1e6 },
@@ -254,6 +269,12 @@ contract('Basket Escrow', (accounts) => {
         initialEscrowBalance = Number(_initialEscrowBalance);
         initialHolderBalance = Number(_initialHolderBalance);
       } catch (err) { assert.throw(`Error creating second buy order: ${err.toString()}`); }
+    });
+
+    it('waits <timeDelta> seconds before proceeding', async () => {
+      await new Promise((resolve) => {
+        setTimeout(() => { resolve(); }, timeDelta * 1000);
+      });
     });
 
     it('allows and logs cancellation of buy orders ', async () => {
@@ -432,9 +453,11 @@ contract('Basket Escrow', (accounts) => {
     });
   });
 
-  const instantExpiration = 0;
 
   describe('MARKET_MAKER fails to fill expired orders', () => {
+    const timeDelta = 20;   // 10 seconds
+    const instantExpiration = (new Date().getTime() / 1000) + timeDelta;
+
     before('creates an order that expires instantly', async () => {
       try {
         nonce = Math.random() * 1e7;
@@ -443,17 +466,19 @@ contract('Basket Escrow', (accounts) => {
           { from: HOLDER_A, value: amountEthToSend, gas: 1e6 },
         ];
         await basketEscrow.createBuyOrder(...buyOrderParams);
-      } catch (err) { assert.throw(`Error in creating instantly expired order: ${err.toString()}`); }
+      } catch (err) { assert.throw(`Error in creating expired order: ${err.toString()}`); }
     });
 
     it('cannot fill an expired order', async () => {
-      try {
-        const fillBuyParams = [
-          HOLDER_B, basketABAddress, amountBasketsToBuy, amountEthToSend, instantExpiration, nonce,
-          { from: MARKET_MAKER, gas: 1e6 },
-        ];
-        const _fillBuyResults = await basketEscrow.fillBuyOrder(...fillBuyParams);
-      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+      setTimeout(async () => {
+        try {
+          const fillBuyParams = [
+            HOLDER_B, basketABAddress, amountBasketsToBuy, amountEthToSend, instantExpiration, nonce,
+            { from: MARKET_MAKER, gas: 1e6 },
+          ];
+          const _fillBuyResults = await basketEscrow.fillBuyOrder(...fillBuyParams);
+        } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+      }, timeDelta * 1000);
     });
   });
 

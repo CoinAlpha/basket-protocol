@@ -210,7 +210,7 @@ contract('TestToken | Basket', (accounts) => {
     it('should allow HOLDER_A to depositAndBundle', async () => {
       try {
         const fee = await basketAB.arrangerFee.call();
-        const insufficientFee = (amount1 / 2) * (Number(fee) / (10 ** FEE_DECIMALS));
+        const insufficientFee = (amount1 / 3) * (Number(fee) / (10 ** FEE_DECIMALS));
         await basketAB.depositAndBundlePromise(amount1, { from: HOLDER_A, value: insufficientFee, gas: 1e6 });
       } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
     });
@@ -432,8 +432,24 @@ contract('TestToken | Basket', (accounts) => {
       try {
         await basketAB.withdrawPromise(tokenB.address, { from: HOLDER_A });
         const _balTokenB = await tokenB.balanceOf(HOLDER_A);
+        const _outstandingTokenB = Number(basketAB.outstandingBalance(HOLDER_A, tokenB.address));
         assert.strictEqual(Number(_balTokenB), Number(balTokenB) + amountToDebundle, 'tokenB balance did not increase');
+        assert.strictEqual(_outstandingTokenB, 0, 'tokenB balance did not decrease');
       } catch (err) { assert.throw(`after error: ${err.toString()}`); }
+    });
+
+    it('HOLDER_A should revert transfers of locked tokens', async () => {
+      try {
+        await basketAB.withdrawPromise(tokenA.address, { from: HOLDER_A });
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
+    });
+  });
+
+  describe('Does not allow withdraw when balance is zero', async () => {
+    it('HOLDER_B should not be able to withdraw a single token', async () => {
+      try {
+        await basketAB.withdrawPromise(tokenB.address, { from: HOLDER_B });
+      } catch (err) { assert.equal(doesRevert(err), true, 'did not revert as expected'); }
     });
   });
 });

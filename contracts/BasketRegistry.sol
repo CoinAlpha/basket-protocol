@@ -17,6 +17,8 @@
 
 pragma solidity 0.4.21;
 
+import "./zeppelin/SafeMath.sol";
+
 
 contract IBasketRegistry {
   // Called by BasketFactory
@@ -35,6 +37,8 @@ contract IBasketRegistry {
   * @author CoinAlpha, Inc. <contact@coinalpha.com>
   */
 contract BasketRegistry {
+  using SafeMath for uint;
+
   // Constants set at contract inception
   address                           public admin;
   mapping(address => bool)          public basketFactoryMap;
@@ -123,13 +127,13 @@ contract BasketRegistry {
     if (arrangerBasketCount[_arranger] == 0) {
       arrangerList.push(_arranger);
       arrangerIndexFromAddress[_arranger] = arrangerIndex;
-      arrangerIndex += 1;
+      arrangerIndex = arrangerIndex.add(1);
     }
-    arrangerBasketCount[_arranger] += 1;
+    arrangerBasketCount[_arranger] = arrangerBasketCount[_arranger].add(1);
 
     emit LogBasketRegistration(_basketAddress, basketIndex);
-    basketIndex += 1;
-    return basketIndex - 1;
+    basketIndex = basketIndex.add(1);
+    return basketIndex.sub(1);
   }
 
   /// @dev Check if basket exists in registry
@@ -172,7 +176,7 @@ contract BasketRegistry {
   /// @param  _sender                              Address that bundled tokens
   /// @return success                              Operation successful
   function incrementBasketsMinted(uint _quantity, address _sender) public onlyBasket returns (bool) {
-    basketMap[msg.sender].totalMinted += _quantity;
+    basketMap[msg.sender].totalMinted = basketMap[msg.sender].totalMinted.add(_quantity);
     emit LogIncrementBasketsMinted(msg.sender, _quantity, _sender);
     return true;
   }
@@ -182,7 +186,7 @@ contract BasketRegistry {
   /// @param  _sender                              Address that debundled tokens
   /// @return success                              Operation successful
   function incrementBasketsBurned(uint _quantity, address _sender) public onlyBasket returns (bool) {
-    basketMap[msg.sender].totalBurned += _quantity;
+    basketMap[msg.sender].totalBurned = basketMap[msg.sender].totalBurned.add(_quantity);
     emit LogIncrementBasketsBurned(msg.sender, _quantity, _sender);
     return true;
   }
