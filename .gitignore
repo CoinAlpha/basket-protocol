@@ -10,4 +10,3 @@ coverage/*
 coverage.json
 coverageEnv/*
 .coveralls.yml
-DEPLOYMENT.MD
