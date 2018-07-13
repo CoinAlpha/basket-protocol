@@ -1,6 +1,6 @@
 # Basket Protocol
 
-[![Build Status](http://jenkins.coinalpha.com:8080/buildStatus/icon?job=basket-protocol)](http://jenkins.coinalpha.com:8080/job/basket-protocol/) [![Coverage Status](https://coveralls.io/repos/github/CoinAlpha/basket-protocol/badge.svg?t=4jqZIE)](https://coveralls.io/github/CoinAlpha/basket-protocol)
+[![Build Status](https://jenkins.coinalpha.com/buildStatus/icon?job=basket-protocol)](https://jenkins.coinalpha.com/job/basket-protocol/) [![Coverage Status](https://coveralls.io/repos/github/CoinAlpha/basket-protocol/badge.svg?t=4jqZIE)](https://coveralls.io/github/CoinAlpha/basket-protocol)
 
 **A new paradigm for asset management**
 
