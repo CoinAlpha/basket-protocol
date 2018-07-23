@@ -103,7 +103,7 @@ contract Basket is StandardToken {
     for (uint i = 0; i < tokens.length; i++) {
       address t = tokens[i];
       uint w = weights[i];
-      require(ERC20(t).transferFrom(msg.sender, this, w.mul(_quantity).div(10 ** decimals)));
+      ERC20(t).transferFrom(msg.sender, this, w.mul(_quantity).div(10 ** decimals));
     }
 
     // charging suppliers a fee for every new basket minted
@@ -185,7 +185,7 @@ contract Basket is StandardToken {
     uint bal = outstandingBalance[msg.sender][_token];
     require(bal > 0);
     outstandingBalance[msg.sender][_token] = 0;
-    require(ERC20(_token).transfer(msg.sender, bal));
+    ERC20(_token).transfer(msg.sender, bal);
 
     emit LogWithdraw(msg.sender, _token, bal);
     return true;
