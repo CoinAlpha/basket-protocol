@@ -78,7 +78,15 @@ npm run coverage
 ```
 
 ## Deployed Contracts: Ropsten Testnet
-- Current version 2.0 deployed on Ropsten
+We have currently deployed a testnet version of the protocol on Ropsten Ethereum.
+We have also created a DApp to test the protocol.
+
+
+Site | Description
+---|---
+https://cryptobaskets.io | Description of the first application of the Basket Protocol
+https://ropsten.cryptobaskets.io | First DApp deployed as an example of functionality of the Basket Protocol, with a simulation of real world use-case functionality
+
 
 ### Testnet ERC20 Tokens
 - Token Replicas on the Ropsten Testnet: [Test Tokens](TEST-TOKENS.md)
@@ -103,7 +111,16 @@ The CoinAlpha team, to the extent possible, aims to follow industry best practic
 - [OpenZeppelin contracts](https://github.com/OpenZeppelin/zeppelin-solidity): the Basket Protocol uses some of the standardized and widely accepted OpenZeppelin contracts
 - [ConsenSys: Smart Contract Security Best Practices](https://github.com/ConsenSys/smart-contract-best-practices)
 
+### [Hosho](https://hosho.io) Security Audit 
+![Hosho Audited](image/hosho.png)
+- In July 2018, we hired Hosho, a global leader in blockchain security.
+- Our protocol passed Hosho's comprehensive audit.  The full report can be found here: [Hosho Security Audit Report](files/hosho-basket-audit.pdf).
+
+### 🐞 Bug Bounty Program
+We are also running a bug bounty program.
 If you find a security issue, please email [dev@coinalpha.com](mailto:dev@coinalpha.com).
+For more information on the Bug Bounty program, click here: [Basket Protocol Bug Bounty Program](https://medium.com/finance-3)
+
 
 ## Contributions Are Welcome!
 - [Contributing](CONTRIBUTING.md): git workflow
