@@ -119,7 +119,7 @@ The CoinAlpha team, to the extent possible, aims to follow industry best practic
 ### 🐞 Bug Bounty Program
 We are also running a bug bounty program.
 If you find a security issue, please email [dev@coinalpha.com](mailto:dev@coinalpha.com).
-For more information on the Bug Bounty program, click here: [Basket Protocol Bug Bounty Program](https://medium.com/finance-3)
+For more information on the Bug Bounty program, click here: [Basket Protocol Bug Bounty Program](https://medium.com/finance-3/cryptobaskets-hosho-security-audit-bug-bounty-program-24311c22a9d6)
 
 
 ## Contributions Are Welcome!
