@@ -4,13 +4,13 @@
 
 **A new paradigm for asset management**
 
-The Basket protocol establishes a decentralized ecosystem that trustlessly fulfills the primary functions of asset management: selection, execution, and custody. Unlike a traditional investment fund, a Basket is a non-custodial financial instrument collateralized by a portfolio of assets over which the investor has full control and agency.
+The Basket protocol establishes a decentralized ecosystem that trustlessly fulfills the primary functions of asset management: selection, execution, and custody. A Basket is a wallet-like instrument that contains a portfolio of digital assets. Unlike a fund, the owner of the Basket has full control and agency of the digital assets that it contains.
 
 **Roles in the Basket Protocol Ecosystem**
 
 The Basket Protocol deconstructs the traditional asset management model into three functional roles, allowing for specialization, efficiency, and decentralization.  Market participants can act in any or all capacities.  Meanwhile, the protocol's registry capabilities facilitate the evaluation of and tracking of baskets as well as of the arrangers that created them.
 
-- **Arranger**: "fund manager" in the traditional sense, that selects tokens and weights for basket contracts
+- **Arranger**: creates a new basket contract by specifying the composition of tokens and their weights that the basket tokens should contain
 - **Supplier**: accumulates ERC20 tokens for compiling into baskets and "minting" of basket tokens
 - **Buyer**: the ultimate holder of the basket token, who owns and controls the basket tokens and the underlying ERC20 tokens they represent
 
