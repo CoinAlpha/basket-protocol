@@ -79,14 +79,6 @@ npm run coverage
 
 ## Deployed Contracts: Ropsten Testnet
 We have currently deployed a testnet version of the protocol on Ropsten Ethereum.
-We have also created a DApp to test the protocol.
-
-
-Site | Description
----|---
-https://cryptobaskets.io | Description of the first application of the Basket Protocol
-https://ropsten.cryptobaskets.io | First DApp deployed as an example of functionality of the Basket Protocol, with a simulation of real world use-case functionality
-
 
 ### Testnet ERC20 Tokens
 - Token Replicas on the Ropsten Testnet: [Test Tokens](TEST-TOKENS.md)

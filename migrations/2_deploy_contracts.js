@@ -2,26 +2,26 @@ const BasketFactory = artifacts.require('./BasketFactory.sol');
 // const SwappableBasketFactory = artifacts.require('./SwappableBasketFactory.sol');
 const BasketRegistry = artifacts.require('./BasketRegistry.sol');
 const BasketEscrow = artifacts.require('./BasketEscrow.sol');
-const { TRANSACTION_FEE, PRODUCTION_FEE, SWAPPABLE_PRODUCTION_FEE } = require('../config');
+const { TRANSACTION_FEE, PRODUCTION_FEE, SWAPPABLE_PRODUCTION_FEE, DEPLOYER_ADDRESS } = require('../config');
 
 
 module.exports = (deployer, network, accounts) => {
   // Accounts
-  const ADMINISTRATOR = accounts[0];    // Protocol administrator, BasketFactory deployer
+  const DEPLOY_ACCOUNT = DEPLOYER_ADDRESS || accounts[0]; // Protocol administrator, BasketFactory deployer
 
   // Contract instances
   let basketRegistry, basketEscrow, basketFactory, swappableBasketFactory;
 
   // 1. Deploy BasketRegistry contract
-  deployer.deploy(BasketRegistry, { from: ADMINISTRATOR })
+  deployer.deploy(BasketRegistry, { from: DEPLOY_ACCOUNT })
     .then(() => BasketRegistry.deployed())
     .then(_instance => basketRegistry = _instance)
 
     // 2. Deploy BasketEscrow contract with basketRegistry address
     // BasketEscrow(_basketRegistryAddress, _transactionFeeRecipient, _transactionFee)
     .then(() => deployer.deploy(
-      BasketEscrow, basketRegistry.address, ADMINISTRATOR, TRANSACTION_FEE,
-      { from: ADMINISTRATOR },
+      BasketEscrow, basketRegistry.address, DEPLOY_ACCOUNT, TRANSACTION_FEE,
+      { from: DEPLOY_ACCOUNT },
     ))
     .then(() => BasketEscrow.deployed())
     .then(_instance => basketEscrow = _instance)
@@ -29,8 +29,8 @@ module.exports = (deployer, network, accounts) => {
     // 3. Deploy BasketFactory contract with basketRegistry address
     // BasketFactory(_basketRegistryAddress, _productionFeeRecipient, _productionFee)
     .then(() => deployer.deploy(
-      BasketFactory, basketRegistry.address, ADMINISTRATOR, PRODUCTION_FEE,
-      { from: ADMINISTRATOR },
+      BasketFactory, basketRegistry.address, DEPLOY_ACCOUNT, PRODUCTION_FEE,
+      { from: DEPLOY_ACCOUNT },
     ))
     .then(() => BasketFactory.deployed())
     .then(_instance => basketFactory = _instance)
@@ -46,7 +46,7 @@ module.exports = (deployer, network, accounts) => {
     // 5. Whitelist basketFactory address
     .then(() => basketRegistry.whitelistBasketFactory(
       basketFactory.address,
-      { from: ADMINISTRATOR },
+      { from: DEPLOY_ACCOUNT },
     ))
 
     // 6. Whitelist swappableBasketFactory address
