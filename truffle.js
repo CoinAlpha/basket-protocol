@@ -27,7 +27,7 @@ module.exports = {
       network_id: '1',
     },
     parrotMn: {
-      host: '<ETHEREUM_NOD_IP>',
+      host: '<ETHEREUM_NODE_IP>',
       port: 8545,
       // gas: 7984452,            // Current Ropsten limit is approx 4712388
       gasPrice: 2e9,           // 30 GWei
@@ -35,7 +35,7 @@ module.exports = {
       from: DEPLOYER_ADDRESS,
     },
     parrotRp: {
-      host: '<ETHEREUM_NOD_IP>',
+      host: '<ETHEREUM_NODE_IP>',
       port: 7545,
       gas: 4712388,             // Current Ropsten limit is approx 4712388
       gasPrice: 20e9,           // 30 GWei
